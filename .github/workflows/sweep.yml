@@ -1,0 +1,19 @@
+name: Sweep AI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '/sweep') || github.event.pull_request
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Sweep AI
+        uses: sweepai/sweep-action@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
