@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: ai-generate-tests
+        name: Generate missing tests with AI
+        entry: python .git/hooks/ai-generate-tests.py
+        language: python
+        types: [python]
+        require_serial: true
+        pass_filenames: false
