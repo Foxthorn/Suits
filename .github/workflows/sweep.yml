@@ -14,6 +14,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Sweep AI
-        uses: sweepai/sweep-action@v3
+        uses: sweepai/sweep/.github/workflows/sweep.yml@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
