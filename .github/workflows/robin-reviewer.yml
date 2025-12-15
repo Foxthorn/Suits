@@ -1,23 +1,23 @@
-name: Robin AI Reviewer
+# name: Robin AI Reviewer
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Robin AI Reviewer
-        uses: Integral-Healthcare/robin-ai-reviewer@v1.8.0
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AI_PROVIDER: claude
-          AI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AI_MODEL: claude-3-5-sonnet-20241022
-          files_to_ignore: |
-            "README.md"
-            "assets/*"
-            "package-lock.json"
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#       - name: Robin AI Reviewer
+#         uses: Integral-Healthcare/robin-ai-reviewer@v1.8.0
+#         with:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           AI_PROVIDER: claude
+#           AI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+#           AI_MODEL: claude-3-5-sonnet-20241022
+#           files_to_ignore: |
+#             "README.md"
+#             "assets/*"
+#             "package-lock.json"

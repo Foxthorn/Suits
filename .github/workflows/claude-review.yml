@@ -1,29 +1,25 @@
-# name: Claude PR Review
+name: Claude PR Review
 
-# on:
-#   pull_request:
-#     types: [opened, synchronize, reopened]  # Triggers on PR open or push
+on:
+  pull_request:
+    types: [opened, synchronize]
 
-# jobs:
-#     claude-pr-review:  # This makes the check appear as "claude-pr-review"
-#       name: Claude PR Review
-#       runs-on: ubuntu-latest
-#       permissions:
-#         contents: read          # For checking out code
-#         pull-requests: write    # For posting review comments
-#         id-token: write         # Required for OIDC token (fixes your error)
+permissions:
+  contents: read
+  pull-requests: write
 
-#       steps:
-#         - uses: actions/checkout@v4  # Use v4 or v5; latest is fine
-
-#         - uses: anthropics/claude-code-action@v1
-#           with:
-#             anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-#             prompt: |
-#               Review this pull request for:
-#               - Code quality, structure, and best practices
-#               - Potential bugs, logic errors, or edge cases
-#               - Performance and efficiency issues
-#               - Security vulnerabilities
-#               - Test coverage and suggestions for improvements
-#               Provide specific, actionable feedback with inline suggestions where possible.
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@main
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review the pull request changes. Focus on:
+            - Logical errors or bugs
+            - Security vulnerabilities (e.g., injection, auth issues, secrets exposure)
+            - Adherence to coding standards (readability, naming, structure)
+            Provide concise suggestions with code fixes where possible.
+            Prioritize critical issues; approve if none found.
