@@ -27,11 +27,16 @@ jobs:
           
           # Explicit prompt activates Agent Mode
           prompt: |
-            REPO: ${{ github.repository }}
-            PR_NUMBER: ${{ github.event.pull_request.number }}
-            
-            Review this pull request for code quality, potential bugs, and best practices.
-            Post inline comments on specific lines that need attention.
+            Automatically review this pull request for:
+            - Logical bugs and errors
+            - Security vulnerabilities (injections, hard-coded secrets, etc.)
+            - Coding standards violations (naming, structure, Godot best practices)
+
+            Use git diff to analyze changes.
+            Output a detailed review in markdown.
+            For each issue: file, line, explanation, and suggested fix code.
+            If no major issues, say "LGTM" and approve.
+            End with your full review summary.
           
           # Restrict tools for security
           claude_args: |
