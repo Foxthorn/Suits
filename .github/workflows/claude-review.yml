@@ -1,29 +1,34 @@
-name: Claude PR Review
+name: Claude PR Auto Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]  # Triggers on PR open or push
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-    claude-pr-review:  # This makes the check appear as "claude-pr-review"
-      name: Claude PR Review
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read          # For checking out code
-        pull-requests: write    # For posting review comments
-        id-token: write         # Required for OIDC token (fixes your error)
+  auto_review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      steps:
-        - uses: actions/checkout@v4  # Use v4 or v5; latest is fine
+      - name: Determine changed files
+        id: changes
+        run: |
+          echo "files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' | tr 'n' ' ')" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
 
-        - uses: anthropics/claude-code-action@v1
-          with:
-            anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-            prompt: |
-              Review this pull request for:
-              - Code quality, structure, and best practices
-              - Potential bugs, logic errors, or edge cases
-              - Performance and efficiency issues
-              - Security vulnerabilities
-              - Test coverage and suggestions for improvements
-              Provide specific, actionable feedback with inline suggestions where possible.
+      - name: Run Claude Code Action (auto-review)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are an expert reviewer. Review only security-relevant changes.
+            - Focus on: auth, access control, SQL/NoSQL queries, secrets, input validation, deserialization, SSRF/XXE.
+            - If no issues, leave a brief "no material risk found" summary.
+            - Avoid style nitpicks.
+          # Example: restrict review to backend paths via claude_args or pre-filter your diffs
