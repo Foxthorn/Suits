@@ -1,0 +1,14 @@
+name: Claude PR Review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]  # Auto-review on changes
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: "Review this PR for code quality, potential bugs, performance issues, security vulnerabilities, and adherence to best practices. Suggest specific fixes and explain why."
