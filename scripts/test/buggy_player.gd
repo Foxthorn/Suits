@@ -1,7 +1,8 @@
 extends CharacterBody2D
-
+var speed: float = 300.0
+var health: int = 100
 var speed: float = 300.0  # Typed variable
-var health = 100
+var health: int = 100
 
 func _ready():
     print("Player ready")  # Fine, but add more
