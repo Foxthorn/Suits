@@ -1,0 +1,29 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]  # Triggers on PR open or push
+
+jobs:
+    claude-pr-review:  # This makes the check appear as "claude-pr-review"
+      name: Claude PR Review
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read          # For checking out code
+        pull-requests: write    # For posting review comments
+        id-token: write         # Required for OIDC token (fixes your error)
+
+      steps:
+        - uses: actions/checkout@v4  # Use v4 or v5; latest is fine
+
+        - uses: anthropics/claude-code-action@v1
+          with:
+            anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+            prompt: |
+              Review this pull request for:
+              - Code quality, structure, and best practices
+              - Potential bugs, logic errors, or edge cases
+              - Performance and efficiency issues
+              - Security vulnerabilities
+              - Test coverage and suggestions for improvements
+              Provide specific, actionable feedback with inline suggestions where possible.

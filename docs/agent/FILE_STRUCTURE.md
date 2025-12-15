@@ -4,6 +4,10 @@
 ├── .github/
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── addons/                      # Only vetted plugins (e.g. godot-kenney-ui, hex-tools)
+├── docs/
+│   └── agent/                   # AI agent instructions (ALWAYS read before coding)
+│       ├── PROJECT_CONTEXT.md   # Core vision, tech stack, coding standards
+│       └── FILE_STRUCTURE.md    # This file — project organization rules
 ├── assets/
 │   ├── imported/                # NEVER commit — .import folder is gitignored
 │   ├── raw/                     # Original .png/.gltf from Kenney / AI generation
@@ -56,9 +60,7 @@
 │   ├── sfx/
 │   └── music/
 ├── tests/                       # Future unit tests (GUT or manual)
-├── PROJECT_CONTEXT.md
-├── FILE_STRUCTURE.md
-└── README.md
+└── README.md                    # User-facing project overview
 
 ## Naming & Grouping Rules (non-negotiable)
 - Scenes & scripts: PascalCase (MySystem.tscn + MySystem.gd)
@@ -69,4 +71,4 @@
 - All balance numbers live in GameConfig.gd — no magic numbers in logic
 - UI scenes always under /src/ui/, never mixed with gameplay
 
-Last updated: 2025-12-11
+Last updated: 2025-12-12

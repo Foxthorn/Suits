@@ -1,0 +1,12 @@
+# .sweep.yaml
+description: "Mech farming tower-defense game in Godot 4.3+ (GDScript/C#)"
+branch: "sweep/auto-fix"
+sandbox:
+  install:
+    - pip install pre-commit ruff
+  command: pre-commit run --all-files
+rules:
+  - "All new code must have 100% test coverage or a comment explaining why not"
+  - "Use Godot best practices: prefer signals, avoid _process when possible"
+  - "Hex grid code must use coordinate system from RedBlobGames hexagonal guide"
+  - "No Godot built-in nodes when a lightweight custom Node will do"
