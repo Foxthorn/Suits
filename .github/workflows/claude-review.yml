@@ -19,21 +19,13 @@ jobs:
         with:
           fetch-depth: 0  # Full history for better context
       
-      - name: Run Claude Code Review
-        uses: anthropics/claude-code-action@v1
+      - name: AI Pull Request Review
+        uses: diekotto/ai-pull-review@v2
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Or use OAuth: claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          
-          # Explicit prompt activates Agent Mode
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR_NUMBER: ${{ github.event.pull_request.number }}
-            
-            Review this pull request for code quality, potential bugs, and best practices.
-            Post inline comments on specific lines that need attention.
-          
-          # Restrict tools for security
-          claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request,mcp__github__list_pull_request_files,mcp__github__create_issue_comment,mcp__github__create_pull_request_review"
-            --max-turns 10
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Optional but helps with large PRs
+          file_patterns: '**/*.gd,**/*.cs,**/*'  # Adjust for your Godot files (GDScript/CS)
+          analysis_level: deep  # basic/standard/deep — deep for thorough logic/security
+          model: claude-3-5-sonnet-20241022  # Or latest, e.g., claude-3-5-sonnet-latest
+          comment_threshold: 0.5  # Lower = more comments
+          max_files: 10
