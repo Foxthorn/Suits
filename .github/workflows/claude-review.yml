@@ -1,38 +1,29 @@
-name: Automated PR Review
+name: Claude PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
+    types: [opened, synchronize, reopened]  # Triggers on PR open or push
 
 jobs:
-  review:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      id-token: write  # Required for Bedrock/Vertex if used
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0  # Full history for better context
-      
-      - name: Run Claude Code Review
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Or use OAuth: claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          
-          # Explicit prompt activates Agent Mode
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR_NUMBER: ${{ github.event.pull_request.number }}
-            
-            Review this pull request for code quality, potential bugs, and best practices.
-            Post inline comments on specific lines that need attention.
-          
-          # Restrict tools for security
-          claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request"
-            --max-turns 10
+    claude-pr-review:  # This makes the check appear as "claude-pr-review"
+      name: Claude PR Review
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read          # For checking out code
+        pull-requests: write    # For posting review comments
+        id-token: write         # Required for OIDC token (fixes your error)
+
+      steps:
+        - uses: actions/checkout@v4  # Use v4 or v5; latest is fine
+
+        - uses: anthropics/claude-code-action@v1
+          with:
+            anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+            prompt: |
+              Review this pull request for:
+              - Code quality, structure, and best practices
+              - Potential bugs, logic errors, or edge cases
+              - Performance and efficiency issues
+              - Security vulnerabilities
+              - Test coverage and suggestions for improvements
+              Provide specific, actionable feedback with inline suggestions where possible.
