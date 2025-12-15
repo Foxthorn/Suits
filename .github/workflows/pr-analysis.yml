@@ -28,13 +28,13 @@ jobs:
           exclude_patterns: '**/node_modules/**,**/dist/**,**/export/**,**/addons/**'
 
           # Thorough analysis - 'deep' gives the most detailed feedback
-          analysis_level: standard
+          analysis_level: basic
 
           # Use a powerful model (Sonnet is excellent for code reasoning; switch to Opus if you want max quality)
           model: claude-3-5-sonnet-20241022
 
           # Limit to avoid huge PRs overwhelming the context
-          max_files: 20
+          max_files: 5
 
           # Lower threshold means more comments (even on moderate-confidence issues)
           comment_threshold: 0.6
