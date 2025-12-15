@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-var speed = 300  # No type - should be int or float
+var speed: float = 300.0  # Typed variable
 var health = 100
 
 func _ready():
