@@ -11,6 +11,7 @@ jobs:
       contents: read
       pull-requests: write
       id-token: write  # Required for Bedrock/Vertex if used
+      actions: read  # Required for CI tools
     
     steps:
       - name: Checkout repository
@@ -34,5 +35,5 @@ jobs:
           
           # Restrict tools for security
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request,mcp__github__list_pull_request_files,mcp__github__create_issue_comment,mcp__github__create_pull_request_review"
             --max-turns 10
