@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write  # Required for git commit + push
       pull-requests: write  # For potential comments
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
