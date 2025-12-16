@@ -1,16 +1,37 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0  # Latest stable; run `pre-commit autoupdate` periodically
     hooks:
-      - id: ruff
-      - id: ruff-format
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: detect-private-key
 
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.9  # Latest as of Dec 2025
     hooks:
-      - id: ai-generate-tests
-        name: Generate missing tests with AI
-        entry: python .git/hooks/ai-generate-tests.py
-        language: python
-        types: [python]
-        require_serial: true
-        pass_filenames: false
+      - id: ruff-format  # Auto-formatting (replaces Black + isort)
+      - id: ruff  # Linting with auto-fix where possible
+        args: [--fix]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1  # Matches mypy 1.19.1
+    hooks:
+      - id: mypy
+        # Recommended strict settings to enforce type hints (adjust as needed)
+        args: [--strict, --pretty]
+        # If your project has third-party dependencies without stubs, add them here:
+        # additional_dependencies: [types-requests, types-PyYAML, ...]
+        # Or install project deps in the hook env if needed (advanced)
+
+  # Optional: Keep the local hook for AI test generation (unchanged from before)
+  # - repo: local
+  #   hooks:
+  #     - id: generate-tests
+  #       name: AI Generate Unit Tests
+  #       entry: python scripts/generate_tests.py
+  #       language: python
+  #       types: [python]
+  #       require_serial: true

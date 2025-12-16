@@ -410,7 +410,7 @@ var current_state = "idle"  # Typo-prone, no autocomplete
 
 ```gdscript
 ## Spawns a wave of enemies at the specified positions.
-## 
+##
 ## @param positions: Array of spawn points for enemies
 ## @param enemy_type: Type of enemy to spawn
 ## @return: Number of enemies successfully spawned
@@ -586,5 +586,5 @@ Before committing code, verify:
 
 ---
 
-**Last Updated**: 2025-12-12  
+**Last Updated**: 2025-12-12
 **Enforced by**: Pre-commit hooks + AI agent reviews

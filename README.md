@@ -42,7 +42,7 @@ A top-down/isometric hex-grid farming & wave-defense game where every crop you p
 
 ## 🏗️ Development Status
 
-**Current Phase**: Pre-production / Vertical Slice  
+**Current Phase**: Pre-production / Vertical Slice
 **Goal**: One fully working day/night cycle with 3 crop types, 2 enemy types, 1 tower, and basic mech combat.
 
 ## 📋 Core Systems
