@@ -20,7 +20,7 @@ jobs:
       - name: Install Godot (for potential validation if needed)
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: 4.3  # Or your Godot version, e.g., 4.4 / stable
+          version: 4.5  # Or your Godot version, e.g., 4.4 / stable
 
       - uses: anthropics/claude-code-action@v1
         with:
