@@ -1,3 +1,11 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1765538114
+::res://::1765867580
+.pre-commit-config.yaml::TextFile::-1::1765453540::0::1::::<><><>0<>0<><>::
+.sweep.yaml::TextFile::-1::1765542661::0::1::::<><><>0<>0<><>::
+bad_hex_math.gd::GDScript::1373938150083880957::1765808125::0::1::::<>Node<><>0<>0<><>::
 icon.svg::CompressedTexture2D::1449384987504840801::1765538081::1765538115::1::::<><><>0<>0<>3fd1392dada2aa9d5432530bfba046b4<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+README.md::TextFile::-1::1765540673::0::1::::<><><>0<>0<><>::
+::res://docs/::1765543026
+::res://docs/agent/::1765543047
+FILE_STRUCTURE.md::TextFile::-1::1765543069::0::1::::<><><>0<>0<><>::
+PROJECT_CONTEXT.md::TextFile::-1::1765455707::0::1::::<><><>0<>0<><>::
