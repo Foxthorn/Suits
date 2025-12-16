@@ -1,0 +1,54 @@
+name: Claude Generate Tests
+on:
+  pull_request:
+    types: [opened, synchronize]  # Triggers on PR open and every new push
+    paths:
+      - '**.gd'  # Optional: Only run if GDScript files changed (saves cost)
+      - '**.cs'  # Optional: Only run if C# files changed (saves cost)
+
+jobs:
+  claude-generate-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for git commit + push
+      pull-requests: write  # For potential comments
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Full history needed for accurate diffs
+
+      - name: Install Godot (for potential validation if needed)
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3  # Or your Godot version, e.g., 4.4 / stable
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            This is a Godot 4 project using GDScript (.gd files) and the GUT testing framework.
+            Tests are located in res://tests/ (or res://test/unit/ if you prefer).
+
+            Analyze the changed .gd files in this PR.
+            For any modified or new script without corresponding comprehensive GUT tests:
+            - Generate high-quality unit tests in GDScript using GUT conventions:
+              * Extend GutTest
+              * Use meaningful test names starting with "test_"
+              * Cover logic, edge cases, signals, Godot node behavior, error handling
+              * Use GUT features like doubles, spies, stubs where needed (e.g., for nodes/signals)
+              * Mock dependencies appropriately
+            - Create or update test files named test_<original_script_name>.gd in the tests directory.
+            - Follow Godot/GDScript best practices (typed properties if used, @onready, etc.).
+
+            After generating/updating tests:
+            - Stage the new or modified test files.
+            - Commit them with message: "chore(tests): add/update GUT tests for recent changes"
+            - Push the commit directly to this PR branch.
+
+            If no new tests are needed or all changed scripts already have sufficient coverage, comment on the PR: "No missing GUT tests detected."
+
+            Do not modify production code unless explicitly fixing a test-related issue.
+          claude_args: |
+            --model claude-3-5-sonnet-20241022  # Or claude-3-opus-20240229 for deeper reasoning
+            --max-turns 20
+            --allowed-tools "Bash(git:*),Edit,Write,View,GlobTool,GrepTool"
