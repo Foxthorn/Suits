@@ -27,29 +27,19 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            This is a Godot 4 project using GDScript (.gd files) and the GUT testing framework.
-            Tests are located in res://tests/ (or res://test/unit/ if you prefer).
+            This is a Godot 4 project using GDScript and the GUT testing framework.
+            Tests are in res://tests/ and named test_<script_name>.gd.
 
             Analyze the changed .gd files in this PR.
-            For any modified or new script without corresponding comprehensive GUT tests:
-            - Generate high-quality unit tests in GDScript using GUT conventions:
-              * Extend GutTest
-              * Use meaningful test names starting with "test_"
-              * Cover logic, edge cases, signals, Godot node behavior, error handling
-              * Use GUT features like doubles, spies, stubs where needed (e.g., for nodes/signals)
-              * Mock dependencies appropriately
-            - Create or update test files named test_<original_script_name>.gd in the tests directory.
-            - Follow Godot/GDScript best practices (typed properties if used, @onready, etc.).
+            For each modified or new script that lacks comprehensive tests:
+            - Generate high-quality GUT tests covering logic, edge cases, signals, and Godot-specific behavior.
+            - Output the full test file content clearly labeled (e.g., "### Suggested tests for player.gd ###" followed by the code).
 
-            After generating/updating tests:
-            - Stage the new or modified test files.
-            - Commit them with message: "chore(tests): add/update GUT tests for recent changes"
-            - Push the commit directly to this PR branch.
+            If tests already exist and are sufficient, say "All changed scripts have good test coverage."
 
-            If no new tests are needed or all changed scripts already have sufficient coverage, comment on the PR: "No missing GUT tests detected."
-
-            Do not modify production code unless explicitly fixing a test-related issue.
+            Post your response as a PR comment only. Do not attempt to commit or push changes.
           claude_args: |
             --model claude-3-5-sonnet-20241022  # Or claude-3-opus-20240229 for deeper reasoning
             --max-turns 20
             --allowed-tools "Bash(git:*),Edit,Write,View,GlobTool,GrepTool"
+            --show-full-output true
