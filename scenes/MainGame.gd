@@ -19,7 +19,7 @@ func _ready() -> void:
 		mech.health_changed.connect(_on_mech_health_changed)
 		mech.died.connect(_on_mech_died)
 
-	# Connect camera to follow mech
+	# Initialize camera at mech position (HexGrid will handle following)
 	if camera and mech:
 		camera.position = mech.global_position
 
@@ -27,9 +27,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Smooth camera follow
-	if camera and mech:
-		camera.global_position = camera.global_position.lerp(mech.global_position, 0.1)
+	# Camera following is now handled by HexGrid
+	pass
 
 
 func _position_mech_at_center() -> void:

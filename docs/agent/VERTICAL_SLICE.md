@@ -4,6 +4,13 @@
 **Estimated Scope:** 2-4 weeks for solo dev with AI assistance
 **Success Criteria:** One complete day → plant → night → defend → survive loop that's actually fun
 
+## Related Documentation
+- [ARCHITECTURE.md](/ARCHITECTURE.md) - System design and how everything connects
+- [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) - Project vision and requirements
+- [CODING_STANDARDS.md](CODING_STANDARDS.md) - Code quality guidelines
+
+**Update Policy**: As you implement each step, update ARCHITECTURE.md with new systems, signal flows, and architectural decisions.
+
 ---
 
 ## What the Vertical Slice Must Include

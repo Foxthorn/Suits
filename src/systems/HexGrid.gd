@@ -23,6 +23,9 @@ signal tile_hovered(hex_coords: Vector2i, world_pos: Vector2)
 ## Reference to the TileMapLayer node
 @export var tile_map_layer: TileMapLayer
 
+## Reference to the Camera2D node (must be set from parent scene)
+@export var camera: Camera2D
+
 ## Whether to enable debug visualization
 @export var debug_mode: bool = false:
 	set(value):
@@ -54,7 +57,6 @@ signal tile_hovered(hex_coords: Vector2i, world_pos: Vector2)
 #endregion
 
 #region Private Variables
-var _camera: Camera2D
 var _current_hover_hex: Vector2i = Vector2i.MAX
 var _last_click_hex: Vector2i = Vector2i.MAX
 var _is_following_mech: bool = true  # Whether camera should follow mech
@@ -73,12 +75,10 @@ const HEX_DIRECTIONS: Array[Vector2i] = [
 #endregion
 
 #region Initialization
-	# Emit position change if moved significantly
-	const POSITION_CHANGE_THRESHOLD_SQ: float = 100.0  # ~10 pixels squared
-	if global_position.distance_squared_to(_last_position) > POSITION_CHANGE_THRESHOLD_SQ:
-		position_changed.emit(global_position)
-		_last_position = global_position
-	_setup_camera()
+func _ready() -> void:
+	if not camera:
+		push_error("HexGrid: No Camera2D assigned! Please set the camera reference in the editor.")
+		return
 
 	if not tile_map_layer:
 		push_warning("HexGrid: No TileMapLayer assigned! Trying to find one...")
@@ -94,15 +94,6 @@ const HEX_DIRECTIONS: Array[Vector2i] = [
 		else:
 			print("HexGrid: No Mech node assigned - manual camera control only")
 
-func _setup_camera() -> void:
-	_camera = Camera2D.new()
-	_camera.name = "Camera2D"
-	add_child(_camera)
-	_camera.enabled = true
-
-	# Start at a reasonable position (center of a 15x15 grid)
-	_camera.position = Vector2(900, 600)
-
 #endregion
 
 #region Input Handling
@@ -116,15 +107,21 @@ func _process(delta: float) -> void:
 	_handle_mouse_hover()
 
 func _handle_camera_zoom(event: InputEvent) -> void:
+	if not camera:
+		return
+
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			_camera.zoom = _camera.zoom * (1.0 + zoom_speed)
-			_camera.zoom = _camera.zoom.clamp(Vector2(min_zoom, min_zoom), Vector2(max_zoom, max_zoom))
+			camera.zoom = camera.zoom * (1.0 + zoom_speed)
+			camera.zoom = camera.zoom.clamp(Vector2(min_zoom, min_zoom), Vector2(max_zoom, max_zoom))
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			_camera.zoom = _camera.zoom * (1.0 - zoom_speed)
-			_camera.zoom = _camera.zoom.clamp(Vector2(min_zoom, min_zoom), Vector2(max_zoom, max_zoom))
+			camera.zoom = camera.zoom * (1.0 - zoom_speed)
+			camera.zoom = camera.zoom.clamp(Vector2(min_zoom, min_zoom), Vector2(max_zoom, max_zoom))
 
 func _handle_camera_pan(delta: float) -> void:
+	if not camera:
+		return
+
 	# Skip manual panning if following mech and manual control is disabled
 	if _is_following_mech and mech_node and not allow_manual_pan_while_following:
 		return
@@ -141,14 +138,14 @@ func _handle_camera_pan(delta: float) -> void:
 		pan_direction.y -= 1
 
 	if pan_direction != Vector2.ZERO:
-		var pan_amount := pan_direction.normalized() * pan_speed * delta / _camera.zoom.x
+		var pan_amount := pan_direction.normalized() * pan_speed * delta / camera.zoom.x
 
 		if _is_following_mech and allow_manual_pan_while_following:
 			# Add to offset instead of moving camera directly
 			_manual_camera_offset += pan_amount
 		else:
 			# Manual camera control (not following mech)
-			_camera.position += pan_amount
+			camera.position += pan_amount
 
 func _handle_mouse_clicks(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -308,7 +305,7 @@ func _draw() -> void:
 #region Camera Follow Functions
 ## Update camera position to follow mech
 func _handle_camera_follow(delta: float) -> void:
-	if not _is_following_mech or not mech_node:
+	if not camera or not _is_following_mech or not mech_node:
 		return
 
 	if not is_instance_valid(mech_node):
@@ -319,28 +316,31 @@ func _handle_camera_follow(delta: float) -> void:
 	var target_position := mech_node.global_position + _manual_camera_offset
 
 	if smooth_camera:
-		_camera.position = _camera.position.lerp(target_position, camera_lerp_speed * delta)
+		camera.position = camera.position.lerp(target_position, camera_lerp_speed * delta)
 	else:
-		_camera.position = target_position
+		camera.position = target_position
 
 #endregion
 
 #region Public Utility Functions
 ## Get the camera node (for external systems that need camera access)
 func get_camera() -> Camera2D:
-	return _camera
+	return camera
 
 ## Set camera position (useful for centering on player/mech)
 func set_camera_position(pos: Vector2) -> void:
+	if not camera:
+		return
+
 	if smooth_camera:
 		# Smooth camera will be handled in _process
-		_camera.position = pos
+		camera.position = pos
 	else:
-		_camera.position = pos
+		camera.position = pos
 
 ## Get current camera position
 func get_camera_position() -> Vector2:
-	return _camera.position if _camera else Vector2.ZERO
+	return camera.position if camera else Vector2.ZERO
 
 ## Set the mech node to follow
 func set_follow_target(target: Node2D) -> void:
