@@ -314,6 +314,15 @@ func _handle_camera_follow(delta: float) -> void:
 		return
 
 	var target_position := mech_node.global_position + _manual_camera_offset
+	
+	# Skip update if already close enough (sub-pixel precision)
+	if camera.position.distance_squared_to(target_position) < 0.01:
+		return
+
+	if smooth_camera:
+		camera.position = camera.position.lerp(target_position, camera_lerp_speed * delta)
+	else:
+		camera.position = target_position
 
 	if smooth_camera:
 		camera.position = camera.position.lerp(target_position, camera_lerp_speed * delta)

@@ -60,7 +60,11 @@ func _on_mech_died() -> void:
 	"""Handle mech death"""
 	print("[MainGame] Mech destroyed! Game Over")
 	# TODO: Step 9 - Show defeat screen
-	get_tree().paused = true
+	print("[MainGame] Mech destroyed! Game Over")
+	# Disable mech controls instead of pausing entire tree
+	if mech:
+		mech.set_controls_enabled(false)
+	# TODO: Step 9 - Show defeat screen
 
 
 ## Debug: Press R to reset mech health

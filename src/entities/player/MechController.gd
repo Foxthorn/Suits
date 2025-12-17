@@ -82,7 +82,15 @@ func _handle_movement(_delta: float) -> void:
 	var input_direction := Vector2.ZERO
 
 	# Use custom actions or specific keys (not ui_* to avoid conflicts)
-	if Input.is_key_pressed(KEY_D):
+	# Use input actions (defined in Project Settings → Input Map)
+	if Input.is_action_pressed("move_right"):
+		input_direction.x += 1
+	if Input.is_action_pressed("move_left"):
+		input_direction.x -= 1
+	if Input.is_action_pressed("move_down"):
+		input_direction.y += 1
+	if Input.is_action_pressed("move_up"):
+		input_direction.y -= 1
 		input_direction.x += 1
 	if Input.is_key_pressed(KEY_A):
 		input_direction.x -= 1
@@ -181,7 +189,10 @@ func _flash_damage() -> void:
 	modulate = Color.RED
 
 	# Use a timer to restore color
-	var timer := get_tree().create_timer(0.1)
+	# Use a timer to restore color
+	await get_tree().create_timer(0.1).timeout
+	if _is_alive and is_instance_valid(self):
+		modulate = original_modulate
 	timer.timeout.connect(func(): 
 		if _is_alive and is_instance_valid(self):
 			modulate = original_modulate
