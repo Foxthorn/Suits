@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=4 uid="uid://bawvq3fxipuja"]
 
-[ext_resource type="Script" uid="uid://dr50pvpe8cpfl" path="res://src/utils/hex_placement_example.gd" id="1"]
+[ext_resource type="Script" uid="uid://dr50pvpe8cpfl" path="res://demos/mechanics/HexGrid/hex_placement_example.gd" id="1"]
 [ext_resource type="Script" uid="uid://c4vnp8twlir6t" path="res://src/utils/hex_placement_preview.gd" id="2"]
 [ext_resource type="Texture2D" uid="uid://ts4vrtg70u02" path="res://assets/kennyshexagon/PNG/Tiles/Terrain/Grass/grass_05.png" id="3"]
 
@@ -24,9 +24,6 @@ tile_set = SubResource("TileSet_demo")
 [node name="HexPlacementPreview" type="Node2D" parent="."]
 visible = false
 script = ExtResource("2")
-enabled = false
-hex_size_multiplier = 0.55
-hex_size_offset = Vector2(2, -5)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(577, 325)

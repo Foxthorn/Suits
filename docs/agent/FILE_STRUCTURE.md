@@ -59,6 +59,15 @@
 ├── audio/
 │   ├── sfx/
 │   └── music/
+├── demos/                       # Demo scenes & tutorial scripts (NOT for production)
+│   ├── mechanics/               # Individual system demos
+│   │   ├── HexGridDemo.tscn     # Hex placement & highlighting test
+│   │   ├── PathfindingDemo.tscn # A* visualization
+│   │   └── WaveSpawnerDemo.tscn # Enemy wave testing
+│   ├── tutorials/               # Step-by-step tutorial scenes
+│   │   ├── Tutorial01_Movement.tscn
+│   │   └── Tutorial02_Farming.tscn
+│   └── prototypes/              # Quick throwaway experiments
 ├── tests/                       # Future unit tests (GUT or manual)
 └── README.md                    # User-facing project overview
 
@@ -70,5 +79,7 @@
 - Every new system gets its own folder under /src/systems/ or /src/entities/
 - All balance numbers live in GameConfig.gd — no magic numbers in logic
 - UI scenes always under /src/ui/, never mixed with gameplay
+- Demos/tutorials live in /demos/ — never reference from production code
+- Demo scenes can be messy/experimental — exempt from strict standards
 
 Last updated: 2025-12-12
