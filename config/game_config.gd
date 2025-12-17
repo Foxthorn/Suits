@@ -4,9 +4,6 @@ class_name GameConfig
 
 #region Mech / Player Settings
 const MECH_MOVE_SPEED: float = 200.0  # pixels per second
-
-#region Mech / Player Settings
-const MECH_MOVE_SPEED: float = 200.0  # pixels per second
 const MECH_MAX_HEALTH: float = 100.0
 const MECH_STARTING_HEALTH: float = 100.0
 const MECH_ROTATION_SPEED: float = 0.0  # 0 = instant snap to mouse (can add lerp later)

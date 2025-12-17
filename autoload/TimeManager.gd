@@ -92,10 +92,6 @@ func _advance_phase() -> void:
 			current_day += 1
 			start_day()
 
-			# Night complete, move to next day
-			current_day += 1
-			start_day()
-
 		Phase.TRANSITION:
 			# Future: handle transition state if needed
 			pass

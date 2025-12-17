@@ -15,18 +15,7 @@ func _ready() -> void:
 	assert(timer_label != null, "TimerLabel not found in HUD")
 	assert(wave_label != null, "WaveLabel not found in HUD")
 	assert(health_bar != null, "HealthBar not found in HUD")
-	
-	# Connect to TimeManager signals
-	TimeManager.day_started.connect(_on_day_started)
-	TimeManager.night_started.connect(_on_night_started)
-	TimeManager.phase_time_remaining.connect(_on_phase_time_remaining)
 
-	# TODO: Connect to EconomyManager when it exists (Step 5)
-	# EconomyManager.credits_changed.connect(_on_credits_changed)
-
-	# Initialize display
-	_update_credits_display(100)  # Starting credits
-	_update_health_display(100.0, 100.0)
 	# Connect to TimeManager signals
 	TimeManager.day_started.connect(_on_day_started)
 	TimeManager.night_started.connect(_on_night_started)

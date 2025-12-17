@@ -590,8 +590,3 @@ Before committing code, verify:
 - [ ] File naming: PascalCase for .gd/.tscn, snake_case for folders
 - [ ] Code follows scene hierarchy rules (inherited scenes)
 - [ ] **'self.' used for all public variables/functions** (not needed for private ones)
-
----
-
-**Last Updated**: 2025-12-12
-**Enforced by**: Pre-commit hooks + AI agent reviews
