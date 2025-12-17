@@ -81,7 +81,6 @@ func _physics_process(delta: float) -> void:
 func _handle_movement(_delta: float) -> void:
 	var input_direction := Vector2.ZERO
 
-	# Use custom actions or specific keys (not ui_* to avoid conflicts)
 	# Use input actions (defined in Project Settings → Input Map)
 	if Input.is_action_pressed("move_right"):
 		input_direction.x += 1
@@ -91,13 +90,6 @@ func _handle_movement(_delta: float) -> void:
 		input_direction.y += 1
 	if Input.is_action_pressed("move_up"):
 		input_direction.y -= 1
-		input_direction.x += 1
-	if Input.is_key_pressed(KEY_A):
-		input_direction.x -= 1
-	if Input.is_key_pressed(KEY_S):
-		input_direction.y += 1
-	if Input.is_key_pressed(KEY_W):
-		input_direction.y -= 1
 
 	# Normalize to prevent faster diagonal movement
 	if input_direction.length() > 0:
@@ -106,6 +98,7 @@ func _handle_movement(_delta: float) -> void:
 	# Set velocity and move
 	velocity = input_direction * move_speed
 	move_and_slide()
+
 func _handle_rotation(delta: float) -> void:
 	# Get mouse position in world space
 	var mouse_pos := get_global_mouse_position()
@@ -189,14 +182,9 @@ func _flash_damage() -> void:
 	modulate = Color.RED
 
 	# Use a timer to restore color
-	# Use a timer to restore color
 	await get_tree().create_timer(0.1).timeout
 	if _is_alive and is_instance_valid(self):
 		modulate = original_modulate
-	timer.timeout.connect(func(): 
-		if _is_alive and is_instance_valid(self):
-			modulate = original_modulate
-	)
 #endregion
 
 #region Upgrade System (for Step 5)
