@@ -2,6 +2,13 @@
 
 > **Purpose**: Enforce consistent, performant, maintainable code patterns for a hex-grid wave-defense game optimized for 1000+ simultaneous enemies.
 
+## Related Documentation
+- [ARCHITECTURE.md](/ARCHITECTURE.md) - System design, data flow, and architectural decisions
+- [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) - Project vision and core requirements
+- [FILE_STRUCTURE.md](FILE_STRUCTURE.md) - File organization rules
+
+**Update Policy**: When establishing new coding patterns or architectural standards, update relevant sections in ARCHITECTURE.md as well.
+
 ---
 
 ## 🎯 Core Principles
