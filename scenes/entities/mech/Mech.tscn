@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://dmv3pmancj3wr"]
+
+[ext_resource type="Script" uid="uid://do5lbimmm8aql" path="res://src/entities/player/MechController.gd" id="1_gh3es"]
+[ext_resource type="Texture2D" uid="uid://uwdfn12i4ap2" path="res://icon.svg" id="2_wnlj4"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_luqct"]
+radius = 30.0
+
+[node name="CharacterBody2D" type="CharacterBody2D"]
+collision_mask = 2
+motion_mode = 1
+script = ExtResource("1_gh3es")
+debug_draw = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_luqct")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.58383155, 0.7977378, 1, 1)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_wnlj4")
+
+[node name="Marker2D" type="Marker2D" parent="."]
+position = Vector2(40, 0)

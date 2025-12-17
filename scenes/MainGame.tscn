@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3 uid="uid://c4t01bya1mxc"]
+
+[ext_resource type="Script" uid="uid://dsx5bt6kiil6y" path="res://scenes/MainGame.gd" id="1_x628s"]
+[ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2_7fyak"]
+[ext_resource type="PackedScene" uid="uid://dmv3pmancj3wr" path="res://scenes/entities/mech/Mech.tscn" id="3_fpdtd"]
+[ext_resource type="Script" uid="uid://b3m7pt2ykwdws" path="res://scenes/world/DayNightTint.gd" id="4_1hpqh"]
+[ext_resource type="PackedScene" uid="uid://ctjyqdw1aq276" path="res://scenes/ui/HUD.tscn" id="5_7f7ne"]
+
+[node name="MainGame" type="Node2D"]
+script = ExtResource("1_x628s")
+
+[node name="HexGrid" parent="." node_paths=PackedStringArray("mech_node") instance=ExtResource("2_7fyak")]
+mech_node = NodePath("../Mech")
+
+[node name="Mech" parent="." instance=ExtResource("3_fpdtd")]
+position = Vector2(584, 308)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+
+[node name="DayNightTint" type="CanvasModulate" parent="."]
+script = ExtResource("4_1hpqh")
+
+[node name="HUD" parent="." instance=ExtResource("5_7f7ne")]
