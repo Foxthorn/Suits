@@ -1,0 +1,17 @@
+# Ignore build/export folders
+export/
+exports/
+
+# Ignore temporary Godot files
+.import/
+*.import
+
+# Ignore large asset folders you don't want indexed
+addons/
+assets/
+assets/audio/raw/
+assets/models/large/
+
+# Ignore specific files
+temp.log
+*.tmp
