@@ -66,5 +66,14 @@ You are helping build a solo-dev Godot 4 hex-grid farming wave-defense game.
 - Never suggest Unity, Unreal, or GameMaker
 - If unsure about scope, bias toward “vertical slice first” (one fully working day/night cycle with 3 crop types, 2 enemy types, 1 tower, basic mech)
 
-Last updated: 2025-12-11
-Main developer: [Your Name] – solo, experienced programmer, zero art skills, heavy AI-assisted workflow
+### Related Documentation
+- [ARCHITECTURE.md](/ARCHITECTURE.md) - System design, data flow, and architectural decisions
+- [FILE_STRUCTURE.md](FILE_STRUCTURE.md) - Project organization and file naming
+- [CODING_STANDARDS.md](CODING_STANDARDS.md) - Code style and best practices
+- [VERTICAL_SLICE.md](VERTICAL_SLICE.md) - Implementation roadmap
+
+### Documentation Update Rules
+- **When making architectural changes** (new systems, signal flows, camera changes, etc.), update `/ARCHITECTURE.md`
+- **When changing system responsibilities or interactions**, update relevant sections in `/ARCHITECTURE.md`
+- **When adding/removing files or folders**, update `FILE_STRUCTURE.md`
+- **When establishing new coding patterns**, update `CODING_STANDARDS.md`

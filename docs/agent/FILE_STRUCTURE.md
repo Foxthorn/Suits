@@ -71,6 +71,13 @@
 ├── tests/                       # Future unit tests (GUT or manual)
 └── README.md                    # User-facing project overview
 
+## Related Documentation
+- [ARCHITECTURE.md](/ARCHITECTURE.md) - System design and architectural decisions
+- [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) - Project vision and tech stack
+- [CODING_STANDARDS.md](CODING_STANDARDS.md) - Code style guidelines
+
+**Update Policy**: When adding new folders, files, or reorganizing structure, update both this file and relevant sections in ARCHITECTURE.md.
+
 ## Naming & Grouping Rules (non-negotiable)
 - Scenes & scripts: PascalCase (MySystem.tscn + MySystem.gd)
 - Folders: snake_case
@@ -81,5 +88,3 @@
 - UI scenes always under /src/ui/, never mixed with gameplay
 - Demos/tutorials live in /demos/ — never reference from production code
 - Demo scenes can be messy/experimental — exempt from strict standards
-
-Last updated: 2025-12-12

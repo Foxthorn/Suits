@@ -1,0 +1,5 @@
+---
+description: Rate limiting rules
+---
+
+To avoid being rate limited, when extra context is needed please prompt the user for clarification, or if there are files that specify such. Do not attempt to read or search through large numbers of files speculatively.

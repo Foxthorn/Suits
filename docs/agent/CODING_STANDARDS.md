@@ -2,6 +2,13 @@
 
 > **Purpose**: Enforce consistent, performant, maintainable code patterns for a hex-grid wave-defense game optimized for 1000+ simultaneous enemies.
 
+## Related Documentation
+- [ARCHITECTURE.md](/ARCHITECTURE.md) - System design, data flow, and architectural decisions
+- [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) - Project vision and core requirements
+- [FILE_STRUCTURE.md](FILE_STRUCTURE.md) - File organization rules
+
+**Update Policy**: When establishing new coding patterns or architectural standards, update relevant sections in ARCHITECTURE.md as well.
+
 ---
 
 ## 🎯 Core Principles
@@ -583,8 +590,3 @@ Before committing code, verify:
 - [ ] File naming: PascalCase for .gd/.tscn, snake_case for folders
 - [ ] Code follows scene hierarchy rules (inherited scenes)
 - [ ] **'self.' used for all public variables/functions** (not needed for private ones)
-
----
-
-**Last Updated**: 2025-12-12
-**Enforced by**: Pre-commit hooks + AI agent reviews

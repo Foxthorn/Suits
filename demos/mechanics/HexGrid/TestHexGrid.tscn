@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=4 uid="uid://dk4vy2k8qmq3r"]
+
+[ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="1_hexgrid"]
+
+[node name="TestHexGrid" type="Node2D"]
+
+[node name="HexGrid" parent="." instance=ExtResource("1_hexgrid")]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Instructions" type="Label" parent="UI"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 500.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 16
+text = "STEP 1: HEX GRID TEST
+• Click any tile to see hex coordinates in console
+• Arrow keys to pan camera
+• Mouse wheel to zoom in/out
+• Hover over tiles to see coordinates (debug mode)"
