@@ -86,6 +86,13 @@ enum HighlightStyle {
 ## Pulse effect intensity (0.0 = none, 1.0 = full)
 @export_range(0.0, 1.0) var pulse_intensity: float = 0.3
 
+@export_group("Hexagon Sizing")
+## Size multiplier for the hexagon preview (default 0.5)
+@export_range(0.1, 2.0, 0.01) var hex_size_multiplier: float = 0.5
+
+## Additional size offset in pixels
+@export var hex_size_offset: Vector2 = Vector2.ZERO
+
 #endregion
 
 #region Private Variables
@@ -271,8 +278,7 @@ func _calculate_hex_polygon() -> void:
 		return
 
 	var tile_size := tile_set.tile_size
-	var hex_size := Vector2(tile_size) * 0.5
-
+	var hex_size := Vector2(tile_size) * hex_size_multiplier + hex_size_offset
 	# Calculate hex vertices for pointy-top hexagon
 	_hex_polygon.clear()
 	for i in range(6):
