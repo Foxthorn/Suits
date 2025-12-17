@@ -1,8 +1,9 @@
-extends Node
+class_name GameConfig
 ## Global game configuration constants
 ## All tunable gameplay values live here - NO MAGIC NUMBERS in gameplay code!
 
-class_name GameConfig
+#region Mech / Player Settings
+const MECH_MOVE_SPEED: float = 200.0  # pixels per second
 
 #region Mech / Player Settings
 const MECH_MOVE_SPEED: float = 200.0  # pixels per second

@@ -80,9 +80,6 @@ func _advance_phase() -> void:
 			start_night()
 
 		Phase.NIGHT:
-			# Check if wave is still active - if so, extend night
-			if wave_active:
-				print("[TimeManager] Night extended - wave still active")
 			# Check if wave is still active - if so, extend night ONCE
 			if wave_active:
 				print("[TimeManager] Night extended - wave still active")
@@ -90,7 +87,10 @@ func _advance_phase() -> void:
 				wave_active = false
 				time_remaining = 5.0
 				return
-				return
+
+			# Night complete, move to next day
+			current_day += 1
+			start_day()
 
 			# Night complete, move to next day
 			current_day += 1

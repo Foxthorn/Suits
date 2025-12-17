@@ -73,7 +73,11 @@ const HEX_DIRECTIONS: Array[Vector2i] = [
 #endregion
 
 #region Initialization
-func _ready() -> void:
+	# Emit position change if moved significantly
+	const POSITION_CHANGE_THRESHOLD_SQ: float = 100.0  # ~10 pixels squared
+	if global_position.distance_squared_to(_last_position) > POSITION_CHANGE_THRESHOLD_SQ:
+		position_changed.emit(global_position)
+		_last_position = global_position
 	_setup_camera()
 
 	if not tile_map_layer:
