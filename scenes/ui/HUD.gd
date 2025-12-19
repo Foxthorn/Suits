@@ -79,22 +79,3 @@ func update_mech_health(current_hp: float, max_hp: float) -> void:
 ## Called by economy manager when credits change (Step 5)
 func update_credits(amount: int) -> void:
 	_update_credits_display(amount)
-func _ready() -> void:
-	# Validate UI nodes exist
-	assert(credits_label != null, "CreditsLabel not found in HUD")
-	assert(phase_label != null, "PhaseLabel not found in HUD")
-	assert(timer_label != null, "TimerLabel not found in HUD")
-	assert(wave_label != null, "WaveLabel not found in HUD")
-	assert(health_bar != null, "HealthBar not found in HUD")
-	
-	# Connect to TimeManager signals
-	TimeManager.day_started.connect(_on_day_started)
-	TimeManager.night_started.connect(_on_night_started)
-	TimeManager.phase_time_remaining.connect(_on_phase_time_remaining)
-
-	# TODO: Connect to EconomyManager when it exists (Step 5)
-	# EconomyManager.credits_changed.connect(_on_credits_changed)
-
-	# Initialize display
-	_update_credits_display(100)  # Starting credits
-	_update_health_display(100.0, 100.0)
