@@ -82,30 +82,43 @@
 
 ---
 
-## Step 4: Crop System (Planting, Growth, Harvest)
+## Step 4: Crop System (Planting, Growth, Harvest) ✅ COMPLETED
 **Why Fourth:** Core economic engine—no crops = no money = no upgrades.
 
 ### Deliverables:
-- [ ] Create `res://scenes/entities/crops/BaseCrop.tscn` (Area2D or Node2D)
-- [ ] Define crop data in `res://config/CropDatabase.gd`:
-  ```gdscript
-  const CROPS = {
-      "wheat": { "name": "Wheat", "grow_time": 30.0, "cost": 10, "value": 25 },
-      "corn": { "name": "Corn", "grow_time": 60.0, "cost": 25, "value": 80 },
-      "alien_fruit": { "name": "Alien Fruit", "grow_time": 90.0, "cost": 50, "value": 200 }
-  }
-  ```
-- [ ] Implement `BaseCrop.gd`:
-  - Growth states: PLANTED → GROWING → HARVESTABLE
-  - Visual: Sprite changes per state (temp colored squares OK)
-  - Only grows during DAY phase
-  - Click to harvest when ready → emit `harvested(crop_type, value)`
-- [ ] Create PlantingSystem:
-  - Hold 1/2/3 key + click farmable tile → plant crop (if player has credits)
-  - Visual ghost preview on mouse hover (green = valid, red = invalid)
-- [ ] Connect to economy (next step): deduct cost on plant, add value on harvest
+- [x] Create `res://scenes/entities/crops/BaseCrop.tscn` (Area2D)
+- [x] Define crop data in `res://src/systems/CropDatabase.gd`:
+  - Extensible registration system (easy to add new crops)
+  - CropType enum: WHEAT, CORN, ALIEN_FRUIT
+  - CropData class with all stats (grow_time, cost, value, color)
+- [x] Implement `BaseCrop.gd`:
+  - Growth states: PLANTED → GROWING → HARVESTABLE ✅
+  - Visual: Colored sprites with scaling animation ✅
+  - Only grows during DAY phase (integrates with TimeManager) ✅
+  - Click to harvest when ready → emit `harvested(crop_type, value, hex_coords)` ✅
+  - Hover indicator for interaction feedback ✅
+  - Harvest particle effect ✅
+- [x] Create PlantingSystem (`src/systems/PlantingSystem.gd`):
+  - Press 1/2/3 key → enter placement mode for crop type ✅
+  - Ghost preview on hover (green = valid, red = invalid) ✅
+  - Click to plant if valid tile and enough credits ✅
+  - ESC to cancel placement mode ✅
+  - Tracks all planted crops by hex coordinates ✅
+- [x] Connect to EconomyManager:
+  - Deduct cost on plant ✅
+  - Add value on harvest ✅
+  - Credit validation before planting ✅
+- [x] Created EconomyManager autoload (early implementation for Step 5)
+- [x] Added input actions (crop_1, crop_2, crop_3) to project.godot
+- [x] Updated ARCHITECTURE.md with farming system documentation
 
-**Acceptance Test:** Plant 3 wheat, watch them grow over 30s of day-time, click to harvest, see value gained.
+**Acceptance Test:** Plant 3 wheat, watch them grow over 30s of day-time, click to harvest, see credits increase.
+
+**Implementation Notes:**
+- Crops use placeholder colored textures (will be replaced with sprites later)
+- Growth is time-based and only progresses during DAY phase
+- PlantingSystem validates tile placement (no overlap, valid tiles only)
+- Visual feedback for valid/invalid placement and hover states
 
 ---
 

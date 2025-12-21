@@ -1,0 +1,115 @@
+[gd_scene load_steps=7 format=3 uid="uid://18lechicbp0i"]
+
+[ext_resource type="Script" uid="uid://c6b4geyrey0c8" path="res://demos/mechanics/CropSystem/CropSystemDemo.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2"]
+[ext_resource type="Script" uid="uid://cygocd1g5i4q3" path="res://src/systems/PlantingSystem.gd" id="3"]
+[ext_resource type="PackedScene" uid="uid://bqxm7w8vp1234" path="res://scenes/entities/crops/BaseCrop.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/entities/mech/Mech.tscn" id="5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0, 0, 0, 0.7)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="CropSystemDemo" type="Node2D"]
+script = ExtResource("1")
+
+[node name="HexGrid" parent="." instance=ExtResource("2")]
+camera = NodePath("../Camera2D")
+mech_node = NodePath("../Mech")
+smooth_camera = true
+camera_lerp_speed = 5.0
+
+[node name="Mech" parent="." instance=ExtResource("5")]
+position = Vector2(600, 500)
+
+[node name="PlantingSystem" type="Node" parent="."]
+script = ExtResource("3")
+hex_grid = NodePath("../HexGrid")
+crop_scene = ExtResource("4")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(600, 500)
+zoom = Vector2(1, 1)
+
+[node name="DayNightTint" type="CanvasModulate" parent="."]
+color = Color(1, 0.95, 0.8, 1)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="InstructionsPanel" type="PanelContainer" parent="HUD"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 420.0
+offset_bottom = 400.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/InstructionsPanel"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="HUD/InstructionsPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.4, 1)
+theme_override_font_sizes/font_size = 20
+text = "🌾 CROP SYSTEM DEMO 🌾"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="HUD/InstructionsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="InstructionsLabel" type="RichTextLabel" parent="HUD/InstructionsPanel/VBoxContainer"]
+custom_minimum_size = Vector2(380, 300)
+layout_mode = 2
+bbcode_enabled = true
+text = "Instructions loading..."
+fit_content = true
+
+[node name="StatusPanel" type="PanelContainer" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 200.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/StatusPanel"]
+layout_mode = 2
+
+[node name="StatusTitleLabel" type="Label" parent="HUD/StatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 18
+text = "📊 STATUS"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="HUD/StatusPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusLabel" type="RichTextLabel" parent="HUD/StatusPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+bbcode_enabled = true
+text = "DAY 1"
+fit_content = true
+
+[node name="TimeLabel" type="Label" parent="HUD/StatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Time: 01:00"
+
+[node name="CreditsLabel" type="Label" parent="HUD/StatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 16
+text = "Credits: 100"
+
+[node name="CropsLabel" type="Label" parent="HUD/StatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Planted: 0 | Harvested: 0 | Earned: 0"
+autowrap_mode = 2

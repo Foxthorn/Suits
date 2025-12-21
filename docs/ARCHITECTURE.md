@@ -65,6 +65,8 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 |-----------|---------|---------------------|
 | `EventBus` | Central signal hub | Global event routing (wave_started, day_ended, etc.) |
 | `GameConfig` | Configuration constants | All balance values, enums, and tunable settings |
+| `TimeManager` | Day/night cycle | Phase management, timer progression, wave blocking |
+| `EconomyManager` | Player economy | Credits tracking, spending validation, balance management |
 | `SaveManager` | Persistence | Save/load game state, player progression |
 | `WaveManager` | Wave spawning & scaling | Enemy wave generation, difficulty progression |
 | `AudioManager` | Audio playback | Music, SFX, volume control |
@@ -174,6 +176,114 @@ func set_camera_position(pos: Vector2) -> void
 
 ---
 
+### TimeManager System (Autoload)
+
+**Purpose**: Manages the day/night cycle, game phase timing, and wave blocking.
+
+**Location**: `autoload/TimeManager.gd`
+
+**Key Responsibilities**:
+- Track current phase (DAY, NIGHT, TRANSITION)
+- Manage phase timers and transitions
+- Block night from ending while wave is active
+- Emit phase change signals for system coordination
+
+**Signals**:
+- `day_started(day_number: int)`
+- `night_started(night_number: int)`
+- `phase_time_remaining(seconds_left: float)`
+- `phase_changed(new_phase: Phase)`
+
+**Public API**:
+```gdscript
+func is_day() -> bool
+func is_night() -> bool
+func pause_cycle() -> void
+func resume_cycle() -> void
+func set_wave_active(active: bool) -> void
+```
+
+---
+
+### EconomyManager System (Autoload)
+
+**Purpose**: Manages player credits, spending validation, and economic transactions.
+
+**Location**: `autoload/EconomyManager.gd`
+
+**Key Responsibilities**:
+- Track player credit balance
+- Validate spending transactions
+- Emit credit change events for UI updates
+
+**Signals**:
+- `credits_changed(new_amount: int)`
+- `insufficient_credits(attempted_cost: int, current_credits: int)`
+
+**Public API**:
+```gdscript
+func add_credits(amount: int) -> void
+func spend_credits(amount: int) -> bool
+func can_afford(amount: int) -> bool
+func get_credits() -> int
+```
+
+---
+
+### Farming System
+
+**Purpose**: Manages crop planting, growth, and harvest mechanics.
+
+**Key Components**:
+
+#### CropDatabase (`src/systems/CropDatabase.gd`)
+- Centralized crop definitions with extensible registration system
+- Defines crop types (WHEAT, CORN, ALIEN_FRUIT)
+- Stores crop stats: grow time, cost, value, appearance
+
+**Extensibility Pattern**:
+```gdscript
+# To add a new crop:
+# 1. Add to CropType enum
+# 2. Call register_crop() with new CropData
+CropDatabase.register_crop(CropData.new(
+    CropType.NEW_CROP,
+    "Crop Name",
+    grow_time,
+    cost,
+    value,
+    "Description",
+    Color.BLUE
+))
+```
+
+#### BaseCrop (`src/entities/crops/BaseCrop.gd`)
+- Individual crop entity with three growth states:
+  - PLANTED: Just planted, small sprite
+  - GROWING: Actively growing (only during DAY phase)
+  - HARVESTABLE: Ready to harvest, player can click
+- Emits `harvested(crop_type, value, hex_coords)` signal
+- Visual feedback: hover indicator, growth scaling, harvest particles
+
+#### PlantingSystem (`src/systems/PlantingSystem.gd`)
+- Handles crop placement mode (keys 1/2/3 for crop selection)
+- Validates tile placement (farmable, unoccupied)
+- Ghost preview with valid/invalid coloring
+- Integrates with EconomyManager for cost deduction
+- Tracks all planted crops by hex coordinates
+
+**Signals**:
+- `crop_planted(hex_coords: Vector2i, crop_type: CropType)`
+- `placement_mode_changed(active: bool, crop_type: CropType)`
+
+**Input Actions**:
+- `crop_1`: Select Wheat (Key: 1)
+- `crop_2`: Select Corn (Key: 2)
+- `crop_3`: Select Alien Fruit (Key: 3)
+- `ui_cancel`: Exit placement mode (ESC)
+
+---
+
 ### WaveManager System (Autoload)
 
 **Purpose**: Manages enemy wave spawning, difficulty scaling, and wave progression.
@@ -227,19 +337,28 @@ func _on_wave_completed(wave_number: int):
 
 ## Data Flow
 
-### Farming System Flow (Future)
+### Farming System Flow
 
 ```
-Player clicks hex → HexGrid.tile_clicked signal
+Player presses 1/2/3 → PlantingSystem.enter_placement_mode(crop_type)
     ↓
-BuildMenu validates placement
+Player hovers tile → HexGrid.tile_hovered signal
     ↓
-PlacementSystem.place_crop(hex, crop_type)
+PlantingSystem shows ghost preview (green=valid, red=invalid)
     ↓
-EventBus.crop_planted.emit(hex, crop_type)
+Player clicks → HexGrid.tile_clicked signal
     ↓
-├──► FarmSystem tracks growth timer
-└──► HUD updates crop count
+PlantingSystem validates placement + cost
+    ↓
+EconomyManager.spend_credits(cost)
+    ↓
+PlantingSystem instantiates BaseCrop at hex position
+    ↓
+BaseCrop.start_growing() → Growth only during DAY phase
+    ↓
+Player clicks harvestable crop → BaseCrop.harvested signal
+    ↓
+EconomyManager.add_credits(value)
 ```
 
 ### Combat System Flow
@@ -412,7 +531,7 @@ func _on_screen_entered():
 
 ### Planned Systems (Not Yet Implemented)
 
-1. **FarmingSystem**: Crop planting, growth, harvesting
+1. ✅ **FarmingSystem**: Crop planting, growth, harvesting (COMPLETED - Step 4)
 2. **TowerSystem**: Automated turret placement and targeting
 3. **UpgradeSystem**: Mech and tower upgrade trees
 4. **SaveSystem**: Persistent progression between runs

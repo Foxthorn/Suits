@@ -1,0 +1,25 @@
+---
+alwaysApply: true
+---
+
+Always use explicit type annotations for variables that could be inferred as Variant, especially:
+1. Chained method calls (e.g., create_tween().set_loops()) - break into separate lines with explicit Tween type
+2. Array/Dictionary indexing (e.g., my_dict.keys()[index]) - annotate as String, int, etc.
+3. Node tree queries (e.g., get_node(), find_child()) - annotate with specific node type
+4. JSON parsing or external data - annotate expected type
+5. Function returns that aren't strictly typed - annotate the variable
+
+CORRECT:
+var tween: Tween = create_tween()
+tween.set_loops()
+
+var state_name: String = GrowthState.keys()[new_state]
+
+var sprite: Sprite2D = get_node("Sprite2D")
+
+INCORRECT:
+var tween := create_tween().set_loops()  # Inferred as Variant
+var state_name := GrowthState.keys()[new_state]  # Inferred as Variant
+var sprite := get_node("Sprite2D")  # Inferred as Variant
+
+RATIONALE: Godot 4.x treats "Warning as Error" by default. Explicit typing prevents Variant inference warnings and improves code clarity.

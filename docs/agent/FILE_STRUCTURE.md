@@ -5,9 +5,15 @@
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── addons/                      # Only vetted plugins (e.g. godot-kenney-ui, hex-tools)
 ├── docs/
-│   └── agent/                   # AI agent instructions (ALWAYS read before coding)
-│       ├── PROJECT_CONTEXT.md   # Core vision, tech stack, coding standards
-│       └── FILE_STRUCTURE.md    # This file — project organization rules
+│   ├── agent/                   # AI agent instructions (ALWAYS read before coding)
+│   │   ├── PROJECT_CONTEXT.md   # Core vision, tech stack, coding standards
+│   │   ├── FILE_STRUCTURE.md    # This file — project organization rules
+│   │   ├── CODING_STANDARDS.md  # Code style and best practices
+│   │   └── step_summaries/      # Implementation summaries for vertical slice steps
+│   ├── verticalslice/           # Vertical slice planning and progress tracking
+│   │   ├── VERTICAL_SLICE.md    # 10-step implementation plan
+│   │   └── STEP_*_*.md          # Individual step completion summaries
+│   └── ARCHITECTURE.md          # System design and architectural decisions
 ├── assets/
 │   ├── imported/                # NEVER commit — .import folder is gitignored
 │   ├── raw/                     # Original .png/.gltf from Kenney / AI generation
