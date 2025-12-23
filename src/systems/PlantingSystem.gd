@@ -126,8 +126,15 @@ func enter_placement_mode(crop_type: CropDatabase.CropType) -> void:
 	if _preview_sprite:
 		var crop_data := CropDatabase.get_crop(crop_type)
 		if crop_data:
-			_preview_sprite.texture = _create_placeholder_texture(32, 32, crop_data.color)
-			_preview_sprite.scale = Vector2(0.75, 0.75)
+			# Try to load actual sprite
+			var sprite_texture: Texture2D = crop_data.get_sprite()
+			if sprite_texture:
+				_preview_sprite.texture = sprite_texture
+			else:
+				# Fallback to placeholder
+				_preview_sprite.texture = _create_placeholder_texture(32, 32, crop_data.color)
+			var preview_scale: float = CropConfig.PREVIEW_SCALE
+			_preview_sprite.scale = Vector2(preview_scale, preview_scale)
 
 	placement_mode_changed.emit(true, crop_type)
 	print("PlantingSystem: Entered placement mode for %s" % CropDatabase.get_crop_name(crop_type))

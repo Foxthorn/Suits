@@ -115,10 +115,12 @@
 **Acceptance Test:** Plant 3 wheat, watch them grow over 30s of day-time, click to harvest, see credits increase.
 
 **Implementation Notes:**
-- Crops use placeholder colored textures (will be replaced with sprites later)
+- Crops load real sprites from `/assets/Fruit and Veg/` with fallback to colored placeholders
 - Growth is time-based and only progresses during DAY phase
 - PlantingSystem validates tile placement (no overlap, valid tiles only)
 - Visual feedback for valid/invalid placement and hover states
+- All crop constants centralized in `config/crop_config.gd` (NO magic numbers)
+- Established config separation pattern for future systems (tower_config, enemy_config, etc.)
 
 ---
 

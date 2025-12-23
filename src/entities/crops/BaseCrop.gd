@@ -62,16 +62,25 @@ func _ready() -> void:
 		print("BaseCrop: Planted %s at hex %v (grow time: %.1fs)" % [crop_data.name, hex_coords, total_grow_time])
 
 func _setup_visuals() -> void:
-	# Create main sprite (colored square for now, will be replaced with actual sprites later)
+	# Create main sprite from asset
 	_sprite = Sprite2D.new()
-	_sprite.texture = _create_placeholder_texture(32, 32, crop_data.color)
-	_sprite.scale = Vector2(0.5, 0.5)  # Start small for PLANTED state
+
+	# Try to load actual sprite from CropData
+	var sprite_texture: Texture2D = crop_data.get_sprite()
+	if sprite_texture:
+		_sprite.texture = sprite_texture
+	else:
+		# Fallback to placeholder if sprite fails to load
+		_sprite.texture = _create_placeholder_texture(32, 32, crop_data.color)
+
+	var planted_scale: float = CropConfig.PLANTED_SCALE
+	_sprite.scale = Vector2(planted_scale, planted_scale)
 	add_child(_sprite)
 
-	# Create hover indicator (white outline)
+	# Create hover indicator (white outline circle)
 	_hover_indicator = Sprite2D.new()
-	_hover_indicator.texture = _create_placeholder_texture(40, 40, Color.WHITE)
-	_hover_indicator.modulate = Color(1, 1, 1, 0.5)
+	_hover_indicator.texture = _create_circle_texture(CropConfig.HOVER_INDICATOR_SIZE, Color.WHITE)
+	_hover_indicator.modulate = Color(1, 1, 1, 0.3)
 	_hover_indicator.z_index = -1
 	_hover_indicator.visible = false
 	add_child(_hover_indicator)
@@ -117,26 +126,28 @@ func _update_visuals() -> void:
 	"""Update sprite based on current growth state"""
 	match current_state:
 		GrowthState.PLANTED:
-			_sprite.scale = Vector2(0.5, 0.5)
-			_sprite.modulate = crop_data.color.darkened(0.4)
+			var scale_val: float = CropConfig.PLANTED_SCALE
+			_sprite.scale = Vector2(scale_val, scale_val)
+			_sprite.modulate = Color(1, 1, 1, CropConfig.PLANTED_OPACITY)
 
 		GrowthState.GROWING:
 			# Scale will be updated in _update_growth_visuals()
-			_sprite.modulate = crop_data.color.darkened(0.2)
+			_sprite.modulate = Color(1, 1, 1, CropConfig.GROWING_OPACITY)
 
 		GrowthState.HARVESTABLE:
-			_sprite.scale = Vector2(1.0, 1.0)
-			_sprite.modulate = crop_data.color
+			var scale_val: float = CropConfig.HARVESTABLE_SCALE
+			_sprite.scale = Vector2(scale_val, scale_val)
+			_sprite.modulate = Color(1, 1, 1, CropConfig.HARVESTABLE_OPACITY)
 			# Add a subtle "ready" indicator (pulsing glow)
 			var tween: Tween = create_tween()
 			var _ignored: Tween = tween.set_loops()  # set_loops() returns Tween for chaining
-			tween.tween_property(_sprite, "modulate:a", 0.7, 0.5)
-			tween.tween_property(_sprite, "modulate:a", 1.0, 0.5)
+			tween.tween_property(_sprite, "modulate:a", 0.7, CropConfig.PULSE_SPEED)
+			tween.tween_property(_sprite, "modulate:a", 1.0, CropConfig.PULSE_SPEED)
 
 func _update_growth_visuals() -> void:
 	"""Gradually scale up sprite as crop grows"""
 	var growth_progress: float = growth_timer / total_grow_time
-	var target_scale: float = lerp(0.5, 1.0, growth_progress)
+	var target_scale: float = lerp(CropConfig.PLANTED_SCALE, CropConfig.HARVESTABLE_SCALE, growth_progress)
 	_sprite.scale = Vector2(target_scale, target_scale)
 
 #endregion
@@ -169,8 +180,8 @@ func _play_harvest_effect() -> void:
 	"""Simple harvest particle effect (placeholder)"""
 	# Create a quick "poof" effect
 	var particles := CPUParticles2D.new()
-	particles.amount = 16
-	particles.lifetime = 0.5
+	particles.amount = CropConfig.HARVEST_PARTICLE_COUNT
+	particles.lifetime = CropConfig.HARVEST_PARTICLE_LIFETIME
 	particles.explosiveness = 1.0
 	particles.spread = 180
 	particles.initial_velocity_min = 50.0
@@ -233,9 +244,26 @@ func is_harvestable() -> bool:
 
 #region Utility
 func _create_placeholder_texture(width: int, height: int, color: Color) -> ImageTexture:
-	"""Create a simple colored square texture (placeholder until we have real sprites)"""
+	"""Create a simple colored square texture (placeholder fallback)"""
 	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
 	image.fill(color)
+	return ImageTexture.create_from_image(image)
+
+func _create_circle_texture(diameter: int, color: Color) -> ImageTexture:
+	"""Create a circular texture for hover indicator"""
+	var image := Image.create(diameter, diameter, false, Image.FORMAT_RGBA8)
+	var center := Vector2(diameter / 2.0, diameter / 2.0)
+	var radius: float = diameter / 2.0
+
+	for x in range(diameter):
+		for y in range(diameter):
+			var dist: float = Vector2(x, y).distance_to(center)
+			if dist <= radius:
+				# Create soft edge
+				var alpha: float = 1.0 if dist < radius - 2 else (radius - dist) / 2.0
+				var pixel_color := Color(color.r, color.g, color.b, alpha)
+				image.set_pixel(x, y, pixel_color)
+
 	return ImageTexture.create_from_image(image)
 
 #endregion
