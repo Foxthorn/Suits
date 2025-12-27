@@ -29,14 +29,14 @@ const FARMABLE_TILE_ID: int = 0  # Adjust this based on your TileMap setup
 
 #region Initialization
 func _ready() -> void:
-	if not hex_grid:
+	if not self.hex_grid:
 		push_error("PlantingSystem: hex_grid not assigned!")
 		return
 
-	if not crop_scene:
+	if not self.crop_scene:
 		# Try to load default crop scene
-		crop_scene = load("res://scenes/entities/crops/BaseCrop.tscn")
-		if not crop_scene:
+		self.crop_scene = load("res://scenes/entities/crops/BaseCrop.tscn")
+		if not self.crop_scene:
 			push_error("PlantingSystem: crop_scene not found!")
 			return
 
@@ -47,7 +47,7 @@ func _ready() -> void:
 
 func _setup_preview() -> void:
 	"""Create ghost preview sprite"""
-	if not show_preview:
+	if not self.show_preview:
 		return
 
 	_preview_sprite = Sprite2D.new()
@@ -58,9 +58,9 @@ func _setup_preview() -> void:
 
 func _connect_signals() -> void:
 	"""Connect to input and TimeManager signals"""
-	if hex_grid:
-		hex_grid.tile_clicked.connect(_on_tile_clicked)
-		hex_grid.tile_hovered.connect(_on_tile_hovered)
+	if self.hex_grid:
+		self.hex_grid.tile_clicked.connect(_on_tile_clicked)
+		self.hex_grid.tile_hovered.connect(_on_tile_hovered)
 
 #endregion
 
@@ -85,7 +85,7 @@ func _on_tile_clicked(hex_coords: Vector2i, world_pos: Vector2) -> void:
 		return
 
 	# Validate placement
-	if not can_place_crop_at(hex_coords):
+	if not self.can_place_crop_at(hex_coords):
 		_show_invalid_feedback(world_pos)
 		return
 
@@ -109,7 +109,7 @@ func _on_tile_hovered(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	_preview_sprite.visible = true
 
 	# Change color based on validity
-	if can_place_crop_at(hex_coords):
+	if self.can_place_crop_at(hex_coords):
 		_preview_sprite.modulate = Color(0, 1, 0, 0.5)  # Green = valid
 	else:
 		_preview_sprite.modulate = Color(1, 0, 0, 0.5)  # Red = invalid
@@ -136,7 +136,7 @@ func enter_placement_mode(crop_type: CropDatabase.CropType) -> void:
 			var preview_scale: float = CropConfig.PREVIEW_SCALE
 			_preview_sprite.scale = Vector2(preview_scale, preview_scale)
 
-	placement_mode_changed.emit(true, crop_type)
+	self.placement_mode_changed.emit(true, crop_type)
 	print("PlantingSystem: Entered placement mode for %s" % CropDatabase.get_crop_name(crop_type))
 
 func exit_placement_mode() -> void:
@@ -146,13 +146,13 @@ func exit_placement_mode() -> void:
 	if _preview_sprite:
 		_preview_sprite.visible = false
 
-	placement_mode_changed.emit(false, _selected_crop_type)
+	self.placement_mode_changed.emit(false, _selected_crop_type)
 	print("PlantingSystem: Exited placement mode")
 
 func can_place_crop_at(hex_coords: Vector2i) -> bool:
 	"""Check if a crop can be placed at the given hex coordinates"""
 	# Check if tile exists
-	if not hex_grid.has_tile(hex_coords):
+	if not self.hex_grid.has_tile(hex_coords):
 		return false
 
 	# Check if tile is farmable (you'll need to implement this in HexGrid)
@@ -169,7 +169,7 @@ func _is_farmable_tile(hex_coords: Vector2i) -> bool:
 	"""Check if tile is marked as farmable in the TileMap"""
 	# For now, assume all tiles are farmable
 	# TODO: Implement proper tile type checking via HexGrid
-	return hex_grid.has_tile(hex_coords)
+	return self.hex_grid.has_tile(hex_coords)
 
 func _plant_crop_at(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	"""Instantiate and place a crop at the given position"""
@@ -192,7 +192,7 @@ func _plant_crop_at(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	crop_instance.start_growing()
 
 	# Emit signal
-	crop_planted.emit(hex_coords, _selected_crop_type)
+	self.crop_planted.emit(hex_coords, _selected_crop_type)
 
 	print("PlantingSystem: Planted %s at hex %v for %d credits" % [
 		CropDatabase.get_crop_name(_selected_crop_type),
@@ -223,7 +223,7 @@ func _show_invalid_feedback(world_pos: Vector2) -> void:
 	get_tree().current_scene.add_child(feedback)
 
 	# Fade out and destroy
-	var tween: Tween = create_tween()
+	var tween: Tween = self.create_tween()
 	tween.tween_property(feedback, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(feedback.queue_free)
 

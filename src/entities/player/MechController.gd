@@ -22,6 +22,9 @@ signal position_changed(new_position: Vector2)
 ## Movement speed in pixels per second
 @export var move_speed: float = GameConfig.MECH_MOVE_SPEED
 
+## Current health (set on ready)
+@export var current_health: float = GameConfig.MECH_STARTING_HEALTH
+
 ## Whether to use smooth rotation (false = instant snap to mouse)
 @export var smooth_rotation: bool = false
 
@@ -31,9 +34,6 @@ signal position_changed(new_position: Vector2)
 @export_group("Health")
 ## Maximum health points
 @export var max_health: float = GameConfig.MECH_MAX_HEALTH
-
-## Current health (set on ready)
-@export var current_health: float = GameConfig.MECH_STARTING_HEALTH
 
 @export_group("Debug")
 ## Show debug visuals (health bar, direction indicator)
@@ -50,17 +50,17 @@ var _last_position: Vector2 = Vector2.ZERO
 #region Initialization
 func _ready() -> void:
 	# Initialize health
-	current_health = min(current_health, max_health)
+	self.current_health = min(self.current_health, self.max_health)
 	_last_position = global_position
 
 	# Emit initial health state
-	health_changed.emit(current_health, max_health)
+	self.health_changed.emit(self.current_health, self.max_health)
 
-	if debug_draw:
+	if self.debug_draw:
 		print("MechController: Initialized at position ", global_position)
 
 func _process(_delta: float) -> void:
-	if debug_draw:
+	if self.debug_draw:
 		queue_redraw()
 
 func _physics_process(delta: float) -> void:
@@ -72,7 +72,7 @@ func _physics_process(delta: float) -> void:
 
 	# Emit position change if moved significantly
 	if global_position.distance_squared_to(_last_position) > 100.0:  # ~10 pixels
-		position_changed.emit(global_position)
+		self.position_changed.emit(global_position)
 		_last_position = global_position
 
 #endregion
@@ -96,18 +96,18 @@ func _handle_movement(_delta: float) -> void:
 		input_direction = input_direction.normalized()
 
 	# Set velocity and move
-	velocity = input_direction * move_speed
+	velocity = input_direction * self.move_speed
 	move_and_slide()
 
 func _handle_rotation(delta: float) -> void:
 	# Get mouse position in world space
-	var mouse_pos := get_global_mouse_position()
-	var direction := global_position.direction_to(mouse_pos)
-	var target_rotation := direction.angle()
+	var mouse_pos: Vector2 = get_global_mouse_position()
+	var direction: Vector2 = global_position.direction_to(mouse_pos)
+	var target_rotation: float = direction.angle()
 
-	if smooth_rotation:
+	if self.smooth_rotation:
 		# Smooth lerp rotation
-		rotation = lerp_angle(rotation, target_rotation, rotation_speed * delta)
+		rotation = lerp_angle(rotation, target_rotation, self.rotation_speed * delta)
 	else:
 		# Instant snap to mouse
 		rotation = target_rotation
@@ -120,16 +120,16 @@ func take_damage(amount: float) -> void:
 	if not _is_alive:
 		return
 
-	current_health -= amount
-	current_health = max(current_health, 0.0)
+	self.current_health -= amount
+	self.current_health = max(self.current_health, 0.0)
 
-	health_changed.emit(current_health, max_health)
+	self.health_changed.emit(self.current_health, self.max_health)
 
-	if debug_draw:
-		print("MechController: Took %.1f damage. Health: %.1f/%.1f" % [amount, current_health, max_health])
+	if self.debug_draw:
+		print("MechController: Took %.1f damage. Health: %.1f/%.1f" % [amount, self.current_health, self.max_health])
 
 	# Check for death
-	if current_health <= 0:
+	if self.current_health <= 0:
 		_die()
 	else:
 		_flash_damage()
@@ -139,25 +139,25 @@ func heal(amount: float) -> void:
 	if not _is_alive:
 		return
 
-	current_health += amount
-	current_health = min(current_health, max_health)
+	self.current_health += amount
+	self.current_health = min(self.current_health, self.max_health)
 
-	health_changed.emit(current_health, max_health)
+	self.health_changed.emit(self.current_health, self.max_health)
 
-	if debug_draw:
-		print("MechController: Healed %.1f. Health: %.1f/%.1f" % [amount, current_health, max_health])
+	if self.debug_draw:
+		print("MechController: Healed %.1f. Health: %.1f/%.1f" % [amount, self.current_health, self.max_health])
 
 ## Set health to a specific value
 func set_health(value: float) -> void:
-	current_health = clamp(value, 0.0, max_health)
-	health_changed.emit(current_health, max_health)
+	self.current_health = clamp(value, 0.0, self.max_health)
+	self.health_changed.emit(self.current_health, self.max_health)
 
-	if current_health <= 0 and _is_alive:
+	if self.current_health <= 0 and _is_alive:
 		_die()
 
 ## Get current health percentage (0.0 to 1.0)
 func get_health_percentage() -> float:
-	return current_health / max_health if max_health > 0 else 0.0
+	return self.current_health / self.max_health if self.max_health > 0 else 0.0
 
 ## Check if mech is alive
 func is_alive() -> bool:
@@ -171,7 +171,7 @@ func _die() -> void:
 	velocity = Vector2.ZERO
 
 	print("MechController: DIED!")
-	died.emit()
+	self.died.emit()
 
 	# Visual feedback (can be expanded with particles, animation, etc.)
 	modulate = Color.RED
@@ -190,22 +190,22 @@ func _flash_damage() -> void:
 #region Upgrade System (for Step 5)
 ## Increase maximum health
 func upgrade_max_health(amount: float) -> void:
-	max_health += amount
-	current_health += amount  # Also heal by the upgrade amount
-	health_changed.emit(current_health, max_health)
+	self.max_health += amount
+	self.current_health += amount  # Also heal by the upgrade amount
+	self.health_changed.emit(self.current_health, self.max_health)
 
-	if debug_draw:
-		print("MechController: Max health upgraded to %.1f" % max_health)
+	if self.debug_draw:
+		print("MechController: Max health upgraded to %.1f" % self.max_health)
 
 ## Get current max health
 func get_max_health() -> float:
-	return max_health
+	return self.max_health
 
 #endregion
 
 #region Debug Visualization
 func _draw() -> void:
-	if not debug_draw:
+	if not self.debug_draw:
 		return
 
 	# Draw health bar above mech
@@ -217,17 +217,17 @@ func _draw() -> void:
 	draw_rect(Rect2(bar_offset, Vector2(bar_width, bar_height)), Color.BLACK)
 
 	# Health fill
-	var health_percent := get_health_percentage()
-	var fill_width := bar_width * health_percent
-	var health_color := Color.GREEN.lerp(Color.RED, 1.0 - health_percent)
+	var health_percent: float = self.get_health_percentage()
+	var fill_width: float = bar_width * health_percent
+	var health_color: Color = Color.GREEN.lerp(Color.RED, 1.0 - health_percent)
 	draw_rect(Rect2(bar_offset, Vector2(fill_width, bar_height)), health_color)
 
 	# Border
 	draw_rect(Rect2(bar_offset, Vector2(bar_width, bar_height)), Color.WHITE, false, 1.0)
 
 	# Draw direction indicator (line to mouse)
-	var mouse_pos := get_global_mouse_position()
-	var direction := global_position.direction_to(mouse_pos)
+	var mouse_pos: Vector2 = get_global_mouse_position()
+	var direction: Vector2 = global_position.direction_to(mouse_pos)
 	draw_line(Vector2.ZERO, direction * 40, Color.YELLOW, 2.0)
 
 #endregion

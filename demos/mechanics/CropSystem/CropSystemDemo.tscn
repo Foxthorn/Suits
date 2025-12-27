@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2"]
 [ext_resource type="Script" uid="uid://cygocd1g5i4q3" path="res://src/systems/PlantingSystem.gd" id="3"]
 [ext_resource type="PackedScene" uid="uid://bqxm7w8vp1234" path="res://scenes/entities/crops/BaseCrop.tscn" id="4"]
-[ext_resource type="PackedScene" path="res://scenes/entities/mech/Mech.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://dmv3pmancj3wr" path="res://scenes/entities/mech/Mech.tscn" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0, 0, 0, 0.7)
@@ -19,20 +19,17 @@ script = ExtResource("1")
 [node name="HexGrid" parent="." instance=ExtResource("2")]
 camera = NodePath("../Camera2D")
 mech_node = NodePath("../Mech")
-smooth_camera = true
-camera_lerp_speed = 5.0
 
 [node name="Mech" parent="." instance=ExtResource("5")]
 position = Vector2(600, 500)
 
-[node name="PlantingSystem" type="Node" parent="."]
+[node name="PlantingSystem" type="Node" parent="." node_paths=PackedStringArray("hex_grid")]
 script = ExtResource("3")
 hex_grid = NodePath("../HexGrid")
 crop_scene = ExtResource("4")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(600, 500)
-zoom = Vector2(1, 1)
 
 [node name="DayNightTint" type="CanvasModulate" parent="."]
 color = Color(1, 0.95, 0.8, 1)

@@ -6,7 +6,7 @@ description: Always check ARCHITECTURE.md before proposing system changes. Apply
 alwaysApply: false
 ---
 
-**Step 1: Check Existing Architecture FIRST**
+"**Step 1: Check Existing Architecture FIRST**
 - Read /docs/ARCHITECTURE.md to understand current system design
 - Read /docs/agent/PROJECT_CONTEXT.md for core vision and non-negotiable standards
 - Read /docs/agent/FILE_STRUCTURE.md to verify correct file placement
@@ -24,7 +24,7 @@ alwaysApply: false
 **Step 3: Update /docs/ARCHITECTURE.md** with:
 1. **Key Systems section**: Add purpose, location (`/src/systems/X.gd`), responsibilities, signals, and public API
 2. **System Diagrams**: Update if new EventBus signals or system communication patterns change
-3. **Data Flow**: Document new signal flows (e.g., "crop_harvested → EconomyManager → UI")
+3. **Data Flow**: Document new signal flows (e.g., \"crop_harvested → EconomyManager → UI\")
 4. **Scene Hierarchy**: Update if MainGame.tscn or entity node structures change
 5. **Performance Considerations**: Document if adding pooling, shared paths, MultiMesh, or optimization patterns
 6. **Autoload Singletons table**: Add new autoloads with purpose and key responsibilities
@@ -35,4 +35,4 @@ alwaysApply: false
 - If establishing new coding patterns → also update CODING_STANDARDS.md
 - If implementing vertical slice steps → update VERTICAL_SLICE.md checkboxes
 
-Keep entries concise but informative. Use code blocks for technical examples. Follow hex-grid farming + wave-defense game context.
+Keep entries concise but informative. Use code blocks for technical examples. Follow hex-grid farming + wave-defense game context."

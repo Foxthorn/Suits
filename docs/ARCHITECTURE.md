@@ -259,11 +259,19 @@ CropDatabase.register_crop(CropData.new(
 
 #### BaseCrop (`src/entities/crops/BaseCrop.gd`)
 - Individual crop entity with three growth states:
-  - PLANTED: Just planted, small sprite
-  - GROWING: Actively growing (only during DAY phase)
-  - HARVESTABLE: Ready to harvest, player can click
+  - PLANTED: Just planted, small sprite (frame 1)
+  - GROWING: Actively growing (frames 1-8, interpolated by progress)
+  - HARVESTABLE: Ready to harvest, player can click (frame 8)
 - Emits `harvested(crop_type, value, hex_coords)` signal
 - Visual feedback: hover indicator, growth scaling, harvest particles
+
+**Sprite Sheet Animation System**:
+- Uses `AtlasTexture` to extract frames from multi-frame sprite sheets
+- Standard format: 9 frames in a single horizontal row
+  - Frame 0: Menu icon (not used in-game)
+  - Frames 1-8: Growth progression (planted to harvestable)
+- Frame mapping: `frame_index = 1 + (growth_progress * 7.0)` where progress is 0.0-1.0
+- Frame width calculation: `texture.width / 9`
 
 #### PlantingSystem (`src/systems/PlantingSystem.gd`)
 - Handles crop placement mode (keys 1/2/3 for crop selection)
