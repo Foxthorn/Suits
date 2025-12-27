@@ -20,6 +20,8 @@ const GRID_SIZE: Vector2i = Vector2i(15, 15)  # 15x15 for vertical slice
 #region Day/Night Cycle (Step 3)
 const DAY_DURATION: float = 60.0  # seconds
 const NIGHT_DURATION: float = 45.0  # seconds
+const DAY_TINT: Color = Color.WHITE
+const NIGHT_TINT: Color = Color(0.2, 0.2, 0.4, 1.0)
 
 #endregion
 

@@ -68,7 +68,7 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 | `TimeManager` | Day/night cycle | Phase management, timer progression, wave blocking |
 | `EconomyManager` | Player economy | Credits tracking, spending validation, balance management |
 | `SaveManager` | Persistence | Save/load game state, player progression |
-| `WaveManager` | Wave spawning & scaling | Enemy wave generation, difficulty progression |
+| `WaveManager` | Wave spawning & scaling | Enemy spawn calculation, wave tracking, progression signals |
 | `AudioManager` | Audio playback | Music, SFX, volume control |
 
 ---
@@ -101,17 +101,21 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 ### Signal Flow Example: Enemy Death
 
 ```
-Enemy.died signal
+Enemy.took_damage() → Enemy.health <= 0
     │
-    ├──► WaveManager._on_enemy_died()
-    │       └──► Checks if wave complete
-    │               └──► EventBus.wave_completed.emit()
-    │
-    ├──► HUD._on_enemy_died()
-    │       └──► Updates enemy count display
-    │
-    └──► (Future) DropSystem._on_enemy_died()
-            └──► Spawns loot/resources
+    └──► Enemy.die()
+        └──► Enemy.died.emit(self)
+            │
+            ├──► WaveManager._on_enemy_died()
+            │       └──► Remove from enemies_in_wave array
+            │           └──► If array empty: wave_completed.emit()
+            │               └──► TimeManager.set_wave_active(false)
+            │
+            ├──► HUD._on_enemy_died()
+            │       └──► Updates enemy count display
+            │
+            └──► (Future) DropSystem._on_enemy_died()
+                    └──► Spawns loot/resources
 ```
 
 ---
@@ -230,9 +234,113 @@ func get_credits() -> int
 
 ---
 
+### Enemy System (Hierarchy)
+
+**Purpose**: Defines the enemy entity structure with extensible types for different behaviors.
+
+**Location**: `src/entities/enemies/`
+
+**Architecture**:
+
+**BaseEnemy** (`src/entities/enemies/BaseEnemy.gd`)
+- Base class for all enemy types (extends CharacterBody2D)
+- Health and damage system with signals (`health_changed`, `died`)
+- Direct movement toward mech via target tracking
+- Death handling with particle effects
+- Sprite fallback to colored rectangles if sprite assets unavailable
+- Collision detection and physics-based movement
+
+**Signals**:
+- `died(enemy: BaseEnemy)` - Emitted when health reaches 0
+- `health_changed(current_hp: float, max_hp: float)` - Emitted on damage
+
+**Enemy Types**:
+
+**RusherEnemy** (`src/entities/enemies/RusherEnemy.gd`)
+- Fast melee attacker that rushes the mech
+- Speed: 150 px/s (configured via EnemyConfig.RUSHER_SPEED)
+- Health: 30 HP (EnemyConfig.RUSHER_MAX_HP)
+- Damage: 10 per collision with cooldown (EnemyConfig.RUSHER_COLLISION_COOLDOWN: 1.0s)
+- Behavior: Charges toward mech, deals damage on contact
+- Sprite: Loads from assets with colored rectangle fallback
+- Configuration: All values in `config/enemy_config.gd` RUSHER_* constants
+
+**ShooterEnemy** (`src/entities/enemies/ShooterEnemy.gd`)
+- Ranged attacker that maintains distance and fires projectiles
+- Speed: 80 px/s (EnemyConfig.SHOOTER_SPEED)
+- Health: 50 HP (EnemyConfig.SHOOTER_MAX_HP)
+- Fire Rate: 2.0 seconds (EnemyConfig.SHOOTER_FIRE_RATE)
+- Projectile Range: 400px (EnemyConfig.SHOOTER_PROJECTILE_RANGE)
+- Behavior: Maintains distance, fires at mech when in range (TODO: projectile spawning in Step 7)
+- Configuration: All values in `config/enemy_config.gd` SHOOTER_* constants
+
+**Extensibility Pattern**:
+- New enemy types inherit from BaseEnemy
+- Override `_ready()` to set type-specific stats
+- Override `_physics_process()` for unique behaviors
+- All configuration values live in EnemyConfig, never hardcoded
+
+---
+
+### WaveManager System (Autoload)
+
+**Purpose**: Manages enemy wave spawning, difficulty scaling, and wave progression.
+
+**Location**: `autoload/WaveManager.gd` (✅ IMPLEMENTED)
+
+**Key Responsibilities**:
+- Calculate enemy counts per wave using exponential scaling formula
+- Spawn enemies at calculated points around the mech
+- Track active enemies via signal connections to `Enemy.died`
+- Signal wave start/completion to control day/night progression
+- Manage wave state (active, completed, progression)
+
+**Signals**:
+- `wave_started(wave_number: int)` - Emitted when enemies spawn
+- `wave_completed(wave_number: int)` - Emitted when all enemies defeated
+- `all_waves_cleared()` - Emitted when full progression complete
+
+**Configuration** (via `config/enemy_config.gd`):
+```gdscript
+const WAVE_BASE_COUNT: int = 5              # Base enemies for wave 1
+const WAVE_COUNT_PER_LEVEL: int = 3         # +3 enemies per wave
+const WAVE_RUSHER_PERCENTAGE: float = 0.7   # 70% rushers, 30% shooters
+const SPAWN_DISTANCE_FROM_MECH: float = 500.0  # Spawn 500px from mech
+const SPAWN_POINTS_PER_WAVE: int = 4        # 4 spawn locations
+const SPAWN_SPREAD_ANGLE: float = PI * 0.25 # 45° variation around points
+```
+
+**Wave Scaling Formula**:
+```
+enemy_count = 5 + (wave_number * 3)
+Wave 1: 5 enemies
+Wave 2: 8 enemies
+Wave 3: 11 enemies
+```
+
+**Spawn Pattern**:
+- Enemies spawn in 4 cardinal directions around mech
+- Distance: 500px from mech center
+- Random spread ±45° around cardinal points
+- 70% spawn as RusherEnemy, 30% as ShooterEnemy
+
+**Integration with TimeManager**:
+- WaveManager listens to `TimeManager.night_started` signal
+- On night start, calls `start_wave(night_number)`
+- Calls `TimeManager.set_wave_active(true)` to block day progression
+- On `wave_completed`, calls `TimeManager.set_wave_active(false)` to allow day
+
+**Enemy Tracking**:
+- Maintains `enemies_in_wave: Array[BaseEnemy]`
+- Connects to each enemy's `died` signal
+- Removes dead enemies from array
+- When array is empty, emits `wave_completed`
+
+---
+
 ### Farming System
 
-**Purpose**: Manages crop planting, growth, and harvest mechanics.
+**Purpose**: Manages crop planting, growth, and harvest mechanics (✅ COMPLETED Step 4)
 
 **Key Components**:
 
@@ -322,24 +430,7 @@ const WHEAT_SPRITE: String = "Wheat.png"
 
 ---
 
-### WaveManager System (Autoload)
 
-**Purpose**: Manages enemy wave spawning, difficulty scaling, and wave progression.
-
-**Location**: `autoload/WaveManager.gd` *(Planned)*
-
-**Key Responsibilities**:
-- Calculate enemy counts per wave (exponential scaling)
-- Spawn enemies at designated points
-- Track active enemies
-- Signal wave start/completion
-
-**Planned Signals**:
-- `wave_started(wave_number: int)`
-- `wave_completed(wave_number: int)`
-- `all_enemies_defeated()`
-
----
 
 ### EventBus System (Autoload)
 
@@ -573,10 +664,14 @@ func _on_screen_entered():
 - `config/game_config.gd`: Global game constants (day/night duration, economy multipliers, universal settings)
 - `config/crop_config.gd`: Crop-specific constants (stats, visuals, asset paths, harvest effects)
 
+**Current Structure**:
+- `config/game_config.gd`: Global game constants (day/night duration, economy multipliers, universal settings)
+- `config/crop_config.gd`: Crop-specific constants (stats, visuals, asset paths, harvest effects)
+- `config/enemy_config.gd`: Enemy types, stats, wave scaling, spawn rules (✅ IMPLEMENTED)
+
 **Future Expansion** (when implemented):
 - `config/tower_config.gd`: Tower types, damage, range, costs
-- `config/enemy_config.gd`: Enemy types, health, speed, wave scaling
-- `config/wave_config.gd`: Wave progression, spawn rules, difficulty curves
+- `config/wave_config.gd`: Advanced wave progression and difficulty curves
 
 **Benefits**:
 - **Separation of Concerns**: Each system's config is self-contained
@@ -603,13 +698,18 @@ const ENTITY_A_COLOR: Color = Color.RED
 
 ## Future Architecture Plans
 
-### Planned Systems (Not Yet Implemented)
+### Completed Systems
 
 1. ✅ **FarmingSystem**: Crop planting, growth, harvesting (COMPLETED - Step 4)
-2. **TowerSystem**: Automated turret placement and targeting
-3. **UpgradeSystem**: Mech and tower upgrade trees
-4. **SaveSystem**: Persistent progression between runs
-5. **AIDirector**: Dynamic difficulty adjustment
+2. ✅ **WaveManager**: Enemy spawning and wave progression (COMPLETED - Step 6)
+
+### Planned Systems (Not Yet Implemented)
+
+3. **CombatSystem**: Mech weapon and projectile system (Step 7)
+4. **TowerSystem**: Automated turret placement and targeting (Step 8)
+5. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
+6. **SaveSystem**: Persistent progression between runs
+7. **AIDirector**: Dynamic difficulty adjustment
 
 ### Planned Optimizations
 

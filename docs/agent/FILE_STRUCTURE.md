@@ -27,14 +27,16 @@
 │       ├── enemies/
 │       └── effects/
 ├── autoload/                    # Global singletons only
-│   ├── GameConfig.gd            # All tunable constants
-│   ├── SaveManager.gd
-│   ├── WaveManager.gd
-│   ├── AudioManager.gd
-│   └── EventBus.gd              # Central signal hub
+│   ├── TimeManager.gd           # Day/night cycle management
+│   ├── EconomyManager.gd        # Credits and economy system
+│   ├── WaveManager.gd           # Enemy wave spawning and tracking
+│   ├── SaveManager.gd           # Save/load persistence
+│   ├── AudioManager.gd          # Music and SFX control
+│   └── EventBus.gd              # Central signal hub (future)
 ├── config/
 │   ├── game_config.gd           # Global game constants & balance values
-│   └── crop_config.gd           # Crop-specific constants (NO magic numbers)
+│   ├── crop_config.gd           # Crop-specific constants (NO magic numbers)
+│   └── enemy_config.gd          # Enemy types, stats, and wave scaling
 ├── src/                         # ALL gameplay code lives here
 │   ├── core/                    # Fundamental systems
 │   │   ├── DayNightCycle.gd
