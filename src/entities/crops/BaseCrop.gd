@@ -212,7 +212,9 @@ func _update_visuals() -> void:
 				shape.size = Vector2(CropConfig.COLLISION_SIZE_HARVESTABLE, CropConfig.COLLISION_SIZE_HARVESTABLE)
 			# Add a subtle "ready" indicator (pulsing glow)
 			var tween: Tween = create_tween()
-			var _ignored: Tween = tween.set_loops()  # set_loops() returns Tween for chaining
+			var tween: Tween = create_tween()
+			tween.set_loops()  # Returns Tween for chaining, but we don't need it
+			tween.tween_property(_sprite, "modulate:a", 0.7, CropConfig.PULSE_SPEED)
 			tween.tween_property(_sprite, "modulate:a", 0.7, CropConfig.PULSE_SPEED)
 			tween.tween_property(_sprite, "modulate:a", 1.0, CropConfig.PULSE_SPEED)
 
