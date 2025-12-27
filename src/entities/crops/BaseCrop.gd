@@ -250,14 +250,17 @@ func _harvest() -> void:
 	if self.debug_draw:
 		print("BaseCrop: Harvested %s at hex %v for %d credits!" % [_crop_data.name, _hex_coords, _crop_data.value])
 
-	# Visual feedback before destruction
-	_play_harvest_effect()
+	# Visual feedback before destruction - await completion
+	await _play_harvest_effect()
 
 	# Cleanup
 	queue_free()
 
 func _play_harvest_effect() -> void:
-	"""Simple harvest particle effect (placeholder)"""
+	"""Simple harvest particle effect
+
+	Creates particles and waits for them to finish before returning.
+	"""
 	# Create a quick "poof" effect
 	var particles := CPUParticles2D.new()
 	particles.amount = CropConfig.HARVEST_PARTICLE_COUNT
@@ -276,9 +279,13 @@ func _play_harvest_effect() -> void:
 	particles.global_position = global_position
 	particles.emitting = true
 
-	# Auto-cleanup after lifetime
-	await get_tree().create_timer(particles.lifetime + 0.1).timeout
+	# Wait for particles to finish emitting and cleanup
+	var particle_lifetime: float = particles.lifetime + 0.1
+	await get_tree().create_timer(particle_lifetime).timeout
+
+	# Stop emitting and cleanup
 	if is_instance_valid(particles):
+		particles.emitting = false
 		particles.queue_free()
 
 func _on_mouse_entered() -> void:

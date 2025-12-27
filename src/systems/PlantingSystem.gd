@@ -129,7 +129,7 @@ func enter_placement_mode(crop_type: CropDatabase.CropType) -> void:
 			# Try to load actual sprite
 			var sprite_texture: Texture2D = crop_data.get_sprite()
 			if sprite_texture:
-				_preview_sprite.texture = sprite_texture
+				_setup_preview_sprite(sprite_texture)
 			else:
 				# Fallback to placeholder
 				_preview_sprite.texture = _create_placeholder_texture(32, 32, crop_data.color)
@@ -258,6 +258,29 @@ func is_in_placement_mode() -> bool:
 ## Get currently selected crop type
 func get_selected_crop_type() -> CropDatabase.CropType:
 	return _selected_crop_type
+
+#endregion
+
+#region Preview Sprite Setup
+func _setup_preview_sprite(sprite_texture: Texture2D) -> void:
+	"""Setup preview sprite to show final growth frame
+
+	Matches BaseCrop logic: multi-frame sheets show final frame,
+	single-frame sprites use full texture.
+	"""
+	# Detect if this is a sprite sheet (multi-frame) or single sprite
+	# Sprite sheets typically have width >= height * 4 (at least 4 frames wide)
+	var is_sprite_sheet: bool = sprite_texture.get_width() >= sprite_texture.get_height() * 4
+
+	if is_sprite_sheet:
+		# Multi-frame sprite sheet (9 frames: menu icon + 8 growth frames)
+		_preview_sprite.texture = sprite_texture
+		_preview_sprite.hframes = 9  # 9 frames horizontally
+		_preview_sprite.vframes = 1  # 1 row vertically
+		_preview_sprite.frame = 8  # Show final frame (harvestable state)
+	else:
+		# Single-frame sprite - display as-is
+		_preview_sprite.texture = sprite_texture
 
 #endregion
 
