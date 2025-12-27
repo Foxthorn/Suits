@@ -1,7 +1,6 @@
 class_name CropConfig
-extends Node
 ## Centralized crop configuration - NO MAGIC NUMBERS!
-## Similar to GameConfig, all crop values are defined as constants
+## Static-only class, all crop values are defined as constants
 
 #region Asset Paths
 const ASSET_BASE_PATH: String = "res://assets/Fruit and Veg/Fruit and Veg/"

@@ -1,7 +1,6 @@
 class_name CropDatabase
-extends Node
 ## Central database for all crop definitions
-## Easily extensible: Just call register_crop() to add new crop types
+## Static-only class - easily extensible: Just call register_crop() to add new crop types
 
 ## Crop types enum - add new entries here when adding crops
 enum CropType {

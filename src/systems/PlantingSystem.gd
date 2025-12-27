@@ -180,7 +180,7 @@ func _plant_crop_at(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	crop_instance.global_position = world_pos
 	crop_instance.z_index = 10  # Draw above tiles but below UI
 
-	# Connect harvest signal to cleanup
+	# Connect harvest signals: cleanup + economy
 	crop_instance.harvested.connect(_on_crop_harvested)
 
 	# Add to HexGrid so crops are part of the grid system
@@ -206,11 +206,11 @@ func _plant_crop_at(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	])
 
 func _on_crop_harvested(crop_type: CropDatabase.CropType, value: int, hex_coords: Vector2i) -> void:
-	"""Handle crop harvest - cleanup and add credits"""
+	"""Handle crop harvest - cleanup and awards"""
 	# Remove from tracking
 	_planted_crops.erase(hex_coords)
 
-	# Add credits to economy (EconomyManager already listening to BaseCrop.harvested)
+	# Award credits to player (economy integration)
 	EconomyManager.add_credits(value)
 
 	print("PlantingSystem: Crop harvested at hex %v, earned %d credits" % [hex_coords, value])
