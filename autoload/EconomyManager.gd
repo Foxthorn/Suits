@@ -16,7 +16,7 @@ signal insufficient_credits(attempted_cost: int, current_credits: int)
 var credits: int = GameConfig.STARTING_CREDITS:
 	set(value):
 		credits = value
-		credits_changed.emit(credits)
+		self.credits_changed.emit(credits)
 
 #endregion
 
@@ -33,8 +33,8 @@ func add_credits(amount: int) -> void:
 		push_warning("EconomyManager: Attempted to add non-positive amount: %d" % amount)
 		return
 
-	credits += amount
-	print("EconomyManager: +%d credits (total: %d)" % [amount, credits])
+	self.credits += amount
+	print("EconomyManager: +%d credits (total: %d)" % [amount, self.credits])
 
 ## Attempt to spend credits (returns true if successful)
 func spend_credits(amount: int) -> bool:
@@ -42,30 +42,30 @@ func spend_credits(amount: int) -> bool:
 		push_warning("EconomyManager: Attempted to spend non-positive amount: %d" % amount)
 		return false
 
-	if credits < amount:
-		insufficient_credits.emit(amount, credits)
-		print("EconomyManager: Cannot afford %d credits (have: %d)" % [amount, credits])
+	if self.credits < amount:
+		self.insufficient_credits.emit(amount, self.credits)
+		print("EconomyManager: Cannot afford %d credits (have: %d)" % [amount, self.credits])
 		return false
 
-	credits -= amount
-	print("EconomyManager: -%d credits (remaining: %d)" % [amount, credits])
+	self.credits -= amount
+	print("EconomyManager: -%d credits (remaining: %d)" % [amount, self.credits])
 	return true
 
 ## Check if player can afford a cost
 func can_afford(amount: int) -> bool:
-	return credits >= amount
+	return self.credits >= amount
 
 ## Get current credit balance
 func get_credits() -> int:
-	return credits
+	return self.credits
 
 ## Set credits to specific value (for debugging/cheats)
 func set_credits(amount: int) -> void:
-	credits = max(0, amount)
+	self.credits = max(0, amount)
 
 ## Reset to starting credits (for new game)
 func reset() -> void:
-	credits = GameConfig.STARTING_CREDITS
-	print("EconomyManager: Reset to %d credits" % credits)
+	self.credits = GameConfig.STARTING_CREDITS
+	print("EconomyManager: Reset to %d credits" % self.credits)
 
 #endregion

@@ -139,6 +139,69 @@ func _process(delta: float) -> void:
     $UI/HealthBar.value = health  # Don't do this every frame!
 ```
 
+### Sprite Animation with AtlasTexture (Sprite Sheets)
+
+**Pattern**: When using multi-frame sprite sheets, use `AtlasTexture` to extract specific frames and manage frame progression based on entity state or progress.
+
+```gdscript
+# ✅ GOOD: Handle sprite sheets with AtlasTexture
+func _setup_visuals() -> void:
+    _sprite = Sprite2D.new()
+    var sprite_texture: Texture2D = load_sprite_asset()
+
+    if sprite_texture:
+        # Create AtlasTexture for sprite sheet handling
+        var atlas: AtlasTexture = AtlasTexture.new()
+        atlas.atlas = sprite_texture
+
+        # Calculate frame dimensions (assumes frames are in a grid)
+        var frame_count: int = 3  # e.g., PLANTED, GROWING, HARVESTABLE
+        var frame_width: int = int(sprite_texture.get_width() / frame_count)
+        var frame_height: int = sprite_texture.get_height()
+
+        # Set region to first frame
+        atlas.region = Rect2(0, 0, frame_width, frame_height)
+        _sprite.texture = atlas
+        _sprite.hframes = frame_count  # Tell sprite there are N frames horizontally
+        _sprite.frame = 0  # Start at frame 0
+    else:
+        # Fallback to procedural placeholder
+        _sprite.texture = _create_placeholder_texture(32, 32, Color.GRAY)
+
+    add_child(_sprite)
+
+func _update_frame_for_progress(progress: float) -> void:
+    """Update sprite frame based on progress (0.0 to 1.0)"""
+    if _sprite.hframes <= 0:
+        return
+
+    # Map progress to frame index
+    var frame_index: int = int(progress * (_sprite.hframes - 1))
+    _sprite.frame = clamp(frame_index, 0, _sprite.hframes - 1)
+
+# ❌ BAD: Direct sprite texture assignment without frame management
+func _setup_visuals_bad() -> void:
+    _sprite = Sprite2D.new()
+    _sprite.texture = load("res://assets/crops/wheat.png")  # Shows ALL frames at once!
+    add_child(_sprite)
+```
+
+**Key Points**:
+- Use `AtlasTexture` to wrap sprite sheet and define visible region
+- Set `hframes` property to tell Sprite2D how many frames exist
+- Use `_sprite.frame` to switch between frames programmatically
+- Calculate frame width as `texture.get_width() / frame_count`
+- Always provide a procedural fallback if sprite fails to load
+
+**Standard Sprite Sheet Formats** (project-wide standards):
+- **Crops**: 9 frames total (frame 0=menu icon, frames 1-8=growth stages)
+  - Width per frame: `texture.width / 9`
+  - Progress formula: `frame = 1 + (progress * 7.0)` where progress is 0.0 to 1.0
+  - At 0% growth: shows frame 1, at 100% growth: shows frame 8
+- **Enemies**: 4+ frames (IDLE → WALK → ATTACK → DIE animations)
+- **Towers**: 2-3 frames (IDLE → TARGETING → FIRING)
+- **VFX**: Variable frames for sequential effect progression
+
 ### @export for Designer Values
 
 ```gdscript

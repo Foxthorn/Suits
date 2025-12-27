@@ -19,16 +19,29 @@ class CropData:
 	var cost: int  # credits to plant
 	var value: int  # credits gained on harvest
 	var description: String
-	var color: Color  # temporary visual until we have sprites
+	var sprite_path: String  # Path to crop sprite texture
+	var color: Color  # fallback color if sprite fails to load
+	var debug_draw: bool = false  # Print debug information
 
-	func _init(p_id: CropType, p_name: String, p_grow_time: float, p_cost: int, p_value: int, p_description: String, p_color: Color):
+	func _init(p_id: CropType, p_name: String, p_description: String, p_grow_time: float, p_cost: int, p_value: int, p_sprite_path: String, p_color: Color, p_debug_draw: bool = false):
 		id = p_id
 		name = p_name
+		description = p_description
 		grow_time = p_grow_time
 		cost = p_cost
 		value = p_value
-		description = p_description
+		sprite_path = p_sprite_path
 		color = p_color
+		debug_draw = p_debug_draw
+
+	## Load and return the crop sprite texture
+	func get_sprite() -> Texture2D:
+		if sprite_path.is_empty():
+			return null
+		var texture: Texture2D = load(sprite_path)
+		if not texture:
+			push_warning("CropData: Failed to load sprite at %s" % sprite_path)
+		return texture
 
 static var _registry: Dictionary = {}  # CropType -> CropData
 static var _initialized: bool = false
@@ -40,35 +53,38 @@ static func _ensure_initialized() -> void:
 
 	_initialized = true
 
-	# Register default crops (vertical slice)
+	# Register all crops using CropConfig constants
 	register_crop(CropData.new(
 		CropType.WHEAT,
-		"Wheat",
-		GameConfig.CROP_WHEAT_GROW_TIME,
-		GameConfig.CROP_WHEAT_COST,
-		GameConfig.CROP_WHEAT_VALUE,
-		"Fast-growing, low profit. Good for early game.",
-		Color.GOLDENROD
+		CropConfig.WHEAT_NAME,
+		CropConfig.WHEAT_DESCRIPTION,
+		CropConfig.WHEAT_GROW_TIME,
+		CropConfig.WHEAT_COST,
+		CropConfig.WHEAT_VALUE,
+		CropConfig.ASSET_BASE_PATH + CropConfig.WHEAT_SPRITE,
+		CropConfig.WHEAT_COLOR
 	))
 
 	register_crop(CropData.new(
 		CropType.CORN,
-		"Corn",
-		GameConfig.CROP_CORN_GROW_TIME,
-		GameConfig.CROP_CORN_COST,
-		GameConfig.CROP_CORN_VALUE,
-		"Medium growth, medium profit. Balanced choice.",
-		Color.YELLOW
+		CropConfig.CORN_NAME,
+		CropConfig.CORN_DESCRIPTION,
+		CropConfig.CORN_GROW_TIME,
+		CropConfig.CORN_COST,
+		CropConfig.CORN_VALUE,
+		CropConfig.ASSET_BASE_PATH + CropConfig.CORN_SPRITE,
+		CropConfig.CORN_COLOR
 	))
 
 	register_crop(CropData.new(
 		CropType.ALIEN_FRUIT,
-		"Alien Fruit",
-		GameConfig.CROP_ALIEN_FRUIT_GROW_TIME,
-		GameConfig.CROP_ALIEN_FRUIT_COST,
-		GameConfig.CROP_ALIEN_FRUIT_VALUE,
-		"Slow-growing, high profit. Risky investment.",
-		Color.PURPLE
+		CropConfig.ALIEN_FRUIT_NAME,
+		CropConfig.ALIEN_FRUIT_DESCRIPTION,
+		CropConfig.ALIEN_FRUIT_GROW_TIME,
+		CropConfig.ALIEN_FRUIT_COST,
+		CropConfig.ALIEN_FRUIT_VALUE,
+		CropConfig.ASSET_BASE_PATH + CropConfig.ALIEN_FRUIT_SPRITE,
+		CropConfig.ALIEN_FRUIT_COLOR
 	))
 
 	print("CropDatabase: Initialized with %d crops" % _registry.size())

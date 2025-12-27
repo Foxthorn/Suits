@@ -43,61 +43,54 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not is_active:
+	if not self.is_active:
 		return
 
-	time_remaining -= delta
-	phase_time_remaining.emit(time_remaining)
+	self.time_remaining -= delta
+	self.phase_time_remaining.emit(self.time_remaining)
 
 	# Check if phase should end
-	if time_remaining <= 0.0:
+	if self.time_remaining <= 0.0:
 		_advance_phase()
 
 
 func start_day() -> void:
 	"""Begin day phase"""
-	current_phase = Phase.DAY
+	self.current_phase = Phase.DAY
 	if not GameConfig:
 		push_error("TimeManager: GameConfig not loaded!")
 		return
-	current_phase = Phase.DAY
-	time_remaining = GameConfig.DAY_DURATION
-	day_started.emit(current_day)
-	phase_changed.emit(Phase.DAY)
-	print("[TimeManager] Day %d started (%d seconds)" % [current_day, GameConfig.DAY_DURATION])
+	self.time_remaining = GameConfig.DAY_DURATION
+	self.day_started.emit(self.current_day)
+	self.phase_changed.emit(Phase.DAY)
+	print("[TimeManager] Day %d started (%d seconds)" % [self.current_day, GameConfig.DAY_DURATION])
 
 
 func start_night() -> void:
 	"""Begin night phase"""
-	current_phase = Phase.NIGHT
-	current_night += 1
-	time_remaining = GameConfig.NIGHT_DURATION
-	night_started.emit(current_night)
-	phase_changed.emit(Phase.NIGHT)
-	print("[TimeManager] Night %d started (%d seconds)" % [current_night, GameConfig.NIGHT_DURATION])
+	self.current_phase = Phase.NIGHT
+	self.current_night += 1
+	self.time_remaining = GameConfig.NIGHT_DURATION
+	self.night_started.emit(self.current_night)
+	self.phase_changed.emit(Phase.NIGHT)
+	print("[TimeManager] Night %d started (%d seconds)" % [self.current_night, GameConfig.NIGHT_DURATION])
 
 
 func _advance_phase() -> void:
 	"""Automatically advance to next phase"""
-	match current_phase:
+	match self.current_phase:
 		Phase.DAY:
 			start_night()
 
 		Phase.NIGHT:
 			# Check if wave is still active - if so, extend night ONCE
 			# Don't end night if wave is still active
-			if wave_active:
+			if self.wave_active:
 				# Keep extending in small increments
-				time_remaining = 1.0
+				self.time_remaining = 1.0
 				return
-				print("[TimeManager] Night extended - wave still active")
-				# Force day after extension to prevent infinite loop
-				wave_active = false
-				time_remaining = 5.0
-				return
-
 			# Night complete, move to next day
-			current_day += 1
+			self.current_day += 1
 			start_day()
 
 		Phase.TRANSITION:
@@ -107,33 +100,33 @@ func _advance_phase() -> void:
 
 func pause_cycle() -> void:
 	"""Pause the day/night cycle"""
-	is_active = false
+	self.is_active = false
 
 
 func resume_cycle() -> void:
 	"""Resume the day/night cycle"""
-	is_active = true
+	self.is_active = true
 
 
 func set_wave_active(active: bool) -> void:
 	"""Called by WaveManager to block night from ending"""
-	wave_active = active
+	self.wave_active = active
 
 
 func is_day() -> bool:
 	"""Convenience check for day phase"""
-	return current_phase == Phase.DAY
+	return self.current_phase == Phase.DAY
 
 
 func is_night() -> bool:
 	"""Convenience check for night phase"""
-	return current_phase == Phase.NIGHT
+	return self.current_phase == Phase.NIGHT
 
 
 func get_phase_progress() -> float:
 	"""Returns 0.0 to 1.0 progress through current phase"""
-	var total_duration: float = GameConfig.DAY_DURATION if is_day() else GameConfig.NIGHT_DURATION
-	return 1.0 - (time_remaining / total_duration)
+	var total_duration: float = GameConfig.DAY_DURATION if self.is_day() else GameConfig.NIGHT_DURATION
+	return 1.0 - (self.time_remaining / total_duration)
 
 
 func format_time(seconds: float) -> String:

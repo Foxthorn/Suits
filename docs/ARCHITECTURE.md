@@ -259,11 +259,19 @@ CropDatabase.register_crop(CropData.new(
 
 #### BaseCrop (`src/entities/crops/BaseCrop.gd`)
 - Individual crop entity with three growth states:
-  - PLANTED: Just planted, small sprite
-  - GROWING: Actively growing (only during DAY phase)
-  - HARVESTABLE: Ready to harvest, player can click
+  - PLANTED: Just planted, small sprite (frame 1)
+  - GROWING: Actively growing (frames 1-8, interpolated by progress)
+  - HARVESTABLE: Ready to harvest, player can click (frame 8)
 - Emits `harvested(crop_type, value, hex_coords)` signal
 - Visual feedback: hover indicator, growth scaling, harvest particles
+
+**Sprite Sheet Animation System**:
+- Uses `AtlasTexture` to extract frames from multi-frame sprite sheets
+- Standard format: 9 frames in a single horizontal row
+  - Frame 0: Menu icon (not used in-game)
+  - Frames 1-8: Growth progression (planted to harvestable)
+- Frame mapping: `frame_index = 1 + (growth_progress * 7.0)` where progress is 0.0-1.0
+- Frame width calculation: `texture.width / 9`
 
 #### PlantingSystem (`src/systems/PlantingSystem.gd`)
 - Handles crop placement mode (keys 1/2/3 for crop selection)
@@ -281,6 +289,36 @@ CropDatabase.register_crop(CropData.new(
 - `crop_2`: Select Corn (Key: 2)
 - `crop_3`: Select Alien Fruit (Key: 3)
 - `ui_cancel`: Exit placement mode (ESC)
+
+#### CropConfig (`config/crop_config.gd`)
+- Centralized crop configuration following "NO MAGIC NUMBERS" standard
+- Separates crop-specific config from global GameConfig
+- Defines shared visual settings (scales, opacities, harvest effects) for ALL crops
+- Defines per-crop data (names, descriptions, grow times, costs, values, sprite paths, fallback colors)
+- **Extensibility**: Add new crop types by adding constants (e.g., CARROT_NAME, CARROT_GROW_TIME, etc.)
+
+**Configuration Pattern**:
+```gdscript
+# config/crop_config.gd
+class_name CropConfig extends Node
+
+# Shared visual settings
+const PLANTED_SCALE: float = 0.4
+const HARVESTABLE_SCALE: float = 1.2
+const HOVER_INDICATOR_SIZE: int = 48
+
+# Per-crop data
+const WHEAT_GROW_TIME: float = 30.0
+const WHEAT_COST: int = 10
+const WHEAT_VALUE: int = 25
+const WHEAT_SPRITE: String = "Wheat.png"
+```
+
+**Benefits**:
+- Eliminates magic numbers from entity scripts
+- Clear visual hierarchy (shared vs per-crop settings)
+- Easy to balance by tweaking one file
+- **Future Pattern**: Similar configs for `tower_config.gd`, `enemy_config.gd`, `wave_config.gd`
 
 ---
 
@@ -353,6 +391,8 @@ PlantingSystem validates placement + cost
 EconomyManager.spend_credits(cost)
     ↓
 PlantingSystem instantiates BaseCrop at hex position
+    ↓
+BaseCrop loads sprite from CropData.get_sprite() → fallback to placeholder if sprite fails
     ↓
 BaseCrop.start_growing() → Growth only during DAY phase
     ↓
@@ -523,6 +563,40 @@ func _on_screen_exited():
 
 func _on_screen_entered():
     set_physics_process(true)
+```
+
+### Configuration Architecture
+
+**Pattern**: Separate config files per system to avoid monolithic GameConfig
+
+**Current Structure**:
+- `config/game_config.gd`: Global game constants (day/night duration, economy multipliers, universal settings)
+- `config/crop_config.gd`: Crop-specific constants (stats, visuals, asset paths, harvest effects)
+
+**Future Expansion** (when implemented):
+- `config/tower_config.gd`: Tower types, damage, range, costs
+- `config/enemy_config.gd`: Enemy types, health, speed, wave scaling
+- `config/wave_config.gd`: Wave progression, spawn rules, difficulty curves
+
+**Benefits**:
+- **Separation of Concerns**: Each system's config is self-contained
+- **Maintainability**: Easy to find and modify system-specific values
+- **Scalability**: Prevents GameConfig from becoming 1000+ line monolith
+- **AI-Friendly**: Agents can update specific configs without touching global state
+- **Collaboration**: Multiple developers/agents can work on different configs without merge conflicts
+
+**Implementation Pattern**:
+```gdscript
+# All system configs follow this structure:
+class_name SystemConfig extends Node
+
+# Shared settings (apply to all entities in system)
+const SHARED_SETTING: float = 1.0
+
+# Per-entity settings (each entity type has constants)
+const ENTITY_A_STAT: int = 10
+const ENTITY_A_SPRITE: String = "entity_a.png"
+const ENTITY_A_COLOR: Color = Color.RED
 ```
 
 ---

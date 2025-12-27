@@ -27,22 +27,22 @@ func _ready() -> void:
 
 	# Set camera to center of grid (hex grid origin is at 0,0)
 	# With flat-top hexagons, approximate center
-	var grid_center := Vector2(600, 500)  # Approximate center for a small hex grid
-	camera.position = grid_center
+	var grid_center: Vector2 = Vector2(600, 500)  # Approximate center for a small hex grid
+	self.camera.position = grid_center
 
 	# Position mech at same location
 	if is_instance_valid($Mech):
 		$Mech.position = grid_center
 
 	# Set camera zoom for better view
-	camera.zoom = Vector2(1.0, 1.0)
+	self.camera.zoom = Vector2(1.0, 1.0)
 
 	# Connect signals
 	_connect_signals()
 
 	# Force camera to initial mech position
-	if hex_grid and is_instance_valid($Mech):
-		hex_grid.resume_following()
+	if self.hex_grid and is_instance_valid($Mech):
+		self.hex_grid.resume_following()
 
 	# Initialize UI
 	_update_instructions()
@@ -63,14 +63,14 @@ func _connect_signals() -> void:
 	planting_system.placement_mode_changed.connect(_on_placement_mode_changed)
 
 func _update_instructions() -> void:
-	var mode_text := ""
-	if planting_system.is_in_placement_mode():
-		var crop_type := planting_system.get_selected_crop_type()
+	var mode_text: String = ""
+	if self.planting_system.is_in_placement_mode():
+		var crop_type := self.planting_system.get_selected_crop_type()
 		var crop_data := CropDatabase.get_crop(crop_type)
 		mode_text = "[COLOR=yellow]PLANTING MODE: %s[/COLOR]\n" % crop_data.name
 		mode_text += "Cost: %d | Value: %d | Grow Time: %.0fs\n\n" % [crop_data.cost, crop_data.value, crop_data.grow_time]
 
-	instructions_label.text = mode_text + """[b]CONTROLS:[/b]
+	self.instructions_label.text = mode_text + """[b]CONTROLS:[/b]
 [1] Plant Wheat (10 credits, 30s, +25)
 [2] Plant Corn (25 credits, 60s, +80)
 [3] Plant Alien Fruit (50 credits, 90s, +200)
@@ -91,12 +91,12 @@ func _update_instructions() -> void:
 [b]TIP:[/b] Crops only grow during DAY!"""
 
 func _update_status() -> void:
-	var phase_text := "DAY %d" % TimeManager.current_day if TimeManager.is_day() else "NIGHT %d" % TimeManager.current_night
-	var phase_color := Color.YELLOW if TimeManager.is_day() else Color.CYAN
+	var phase_text: String = "DAY %d" % TimeManager.current_day if TimeManager.is_day() else "NIGHT %d" % TimeManager.current_night
+	var phase_color: Color = Color.YELLOW if TimeManager.is_day() else Color.CYAN
 
-	status_label.text = "[COLOR=#%s]%s[/COLOR]" % [phase_color.to_html(false), phase_text]
-	credits_label.text = "Credits: %d" % EconomyManager.get_credits()
-	crops_label.text = "Planted: %d | Harvested: %d | Total Earned: %d" % [_crop_count, _total_harvested, _total_earned]
+	self.status_label.text = "[COLOR=#%s]%s[/COLOR]" % [phase_color.to_html(false), phase_text]
+	self.credits_label.text = "Credits: %d" % EconomyManager.get_credits()
+	self.crops_label.text = "Planted: %d | Harvested: %d | Total Earned: %d" % [_crop_count, _total_harvested, _total_earned]
 
 func _on_credits_changed(new_amount: int) -> void:
 	_update_status()
@@ -105,14 +105,14 @@ func _on_phase_changed(new_phase) -> void:
 	_update_status()
 
 func _on_time_remaining(seconds_left: float) -> void:
-	time_label.text = "Time: %s" % TimeManager.format_time(seconds_left)
+	self.time_label.text = "Time: %s" % TimeManager.format_time(seconds_left)
 
 func _on_crop_planted(hex_coords: Vector2i, crop_type: CropDatabase.CropType) -> void:
 	_crop_count += 1
 	_update_status()
 
 	# Connect to individual crop's harvest signal
-	var crop := planting_system.get_crop_at(hex_coords)
+	var crop := self.planting_system.get_crop_at(hex_coords)
 	if crop:
 		crop.harvested.connect(_on_crop_harvested)
 
