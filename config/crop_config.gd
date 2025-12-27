@@ -9,13 +9,15 @@ const ASSET_BASE_PATH: String = "res://assets/Fruit and Veg/Fruit and Veg/"
 #endregion
 
 #region Visual Settings - Apply to ALL crops
-const PLANTED_SCALE: float = 0.4  # Scale when just planted
-const HARVESTABLE_SCALE: float = 1.2  # Scale when ready to harvest
+const PLANTED_SCALE: float = 0.8  # Scale when just planted
+const HARVESTABLE_SCALE: float = 2.0  # Scale when ready to harvest
 const PLANTED_OPACITY: float = 0.6  # Opacity when just planted
 const GROWING_OPACITY: float = 0.85  # Opacity while growing
 const HARVESTABLE_OPACITY: float = 1.0  # Opacity when ready to harvest
-const PREVIEW_SCALE: float = 0.8  # Scale for ghost preview
-const HOVER_INDICATOR_SIZE: int = 48  # Size of hover circle indicator
+const PREVIEW_SCALE: float = 1.2  # Scale for ghost preview
+const HOVER_INDICATOR_SIZE: int = 96  # Size of hover circle indicator
+const COLLISION_SIZE_PLANTED: float = 80.0  # Collision box size when planted
+const COLLISION_SIZE_HARVESTABLE: float = 160.0  # Collision box size when harvestable
 
 #endregion
 

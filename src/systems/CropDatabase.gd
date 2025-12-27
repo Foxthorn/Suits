@@ -21,8 +21,9 @@ class CropData:
 	var description: String
 	var sprite_path: String  # Path to crop sprite texture
 	var color: Color  # fallback color if sprite fails to load
+	var debug_draw: bool = false  # Print debug information
 
-	func _init(p_id: CropType, p_name: String, p_description: String, p_grow_time: float, p_cost: int, p_value: int, p_sprite_path: String, p_color: Color):
+	func _init(p_id: CropType, p_name: String, p_description: String, p_grow_time: float, p_cost: int, p_value: int, p_sprite_path: String, p_color: Color, p_debug_draw: bool = false):
 		id = p_id
 		name = p_name
 		description = p_description
@@ -31,6 +32,7 @@ class CropData:
 		value = p_value
 		sprite_path = p_sprite_path
 		color = p_color
+		debug_draw = p_debug_draw
 
 	## Load and return the crop sprite texture
 	func get_sprite() -> Texture2D:

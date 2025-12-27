@@ -35,6 +35,7 @@ var _crop_data: CropDatabase.CropData = null
 
 # Visual nodes (created in _ready)
 var _sprite: Sprite2D = null
+var _is_multiframe: bool = false  # True if sprite is a multi-frame sheet
 var _collision_shape: CollisionShape2D = null
 var _hover_indicator: Sprite2D = null  # Shows when mouse hovers
 
@@ -51,6 +52,13 @@ func _ready() -> void:
 
 	_total_grow_time = _crop_data.grow_time
 
+	# Allow debug_draw override from inspector
+	if not self.debug_draw and _crop_data.debug_draw:
+		self.debug_draw = true
+
+	# Set z-index for proper rendering order (above tiles, below UI)
+	z_index = 10
+
 	_setup_visuals()
 	_setup_collision()
 	_connect_signals()
@@ -64,23 +72,12 @@ func _ready() -> void:
 func _setup_visuals() -> void:
 	# Create main sprite from asset
 	_sprite = Sprite2D.new()
+	_sprite.centered = true
 
 	# Try to load actual sprite from CropData
 	var sprite_texture: Texture2D = _crop_data.get_sprite()
 	if sprite_texture:
-		# Handle sprite sheets with AtlasTexture
-		# Sprite sheet format: Frame 0 = menu icon, Frames 1-8 = growth progression (8 frames)
-		var total_frames: int = 9  # Menu icon + 8 growth frames
-		var frame_width: int = int(sprite_texture.get_width() / total_frames)
-		var frame_height: int = sprite_texture.get_height()
-
-		var atlas_texture: AtlasTexture = AtlasTexture.new()
-		atlas_texture.atlas = sprite_texture
-		# Start at frame 1 (skip menu icon at frame 0)
-		atlas_texture.region = Rect2(frame_width, 0, frame_width, frame_height)
-		_sprite.texture = atlas_texture
-		_sprite.hframes = total_frames  # Total frames for reference
-		_sprite.frame = 1  # Start at frame 1 (first growth frame)
+		_setup_sprite_with_atlas(sprite_texture)
 	else:
 		# Fallback to placeholder if sprite fails to load
 		_sprite.texture = _create_placeholder_texture(32, 32, _crop_data.color)
@@ -98,10 +95,10 @@ func _setup_visuals() -> void:
 	add_child(_hover_indicator)
 
 func _setup_collision() -> void:
-	# Collision shape for click detection
+	# Collision shape for click detection - scales with crop growth
 	_collision_shape = CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(48, 48)
+	shape.size = Vector2(CropConfig.COLLISION_SIZE_PLANTED, CropConfig.COLLISION_SIZE_PLANTED)
 	_collision_shape.shape = shape
 	add_child(_collision_shape)
 
@@ -110,6 +107,55 @@ func _connect_signals() -> void:
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 	input_event.connect(_on_input_event)
+
+#endregion
+
+#region Sprite Setup
+func _setup_sprite_with_atlas(sprite_texture: Texture2D) -> void:
+	"""Setup sprite with AtlasTexture, handling both single and multi-frame sheets"""
+	# Detect if this is a sprite sheet (multi-frame) or single sprite
+	# Sprite sheets typically have width >= height * 4 (at least 4 frames wide)
+	var is_sprite_sheet: bool = sprite_texture.get_width() >= sprite_texture.get_height() * 4
+
+	if is_sprite_sheet:
+		# Multi-frame sprite sheet (9 frames: menu icon + 8 growth frames)
+		_setup_multiframe_sprite(sprite_texture)
+	else:
+		# Single frame sprite - scale it up to simulate growth
+		_setup_single_frame_sprite(sprite_texture)
+
+func _setup_multiframe_sprite(sprite_texture: Texture2D) -> void:
+	"""Setup a multi-frame sprite sheet using Sprite2D animation frames
+
+	Frames layout (9 total, horizontal):
+	  Frame 0: Menu icon (skipped in-game)
+	  Frames 1-8: Growth progression from planted to harvestable
+	"""
+	var total_frames: int = 9  # Menu icon (frame 0) + 8 growth frames (1-8)
+	var frame_width: int = int(sprite_texture.get_width() / total_frames)
+	var frame_height: int = sprite_texture.get_height()
+
+	# Use Sprite2D's built-in frame animation (simpler than AtlasTexture)
+	_sprite.texture = sprite_texture
+	_sprite.hframes = total_frames  # 9 frames horizontally
+	_sprite.vframes = 1  # 1 row vertically
+	_sprite.frame = 1  # Start at frame 1 (skip menu icon frame 0)
+	_is_multiframe = true
+
+	if _crop_data.debug_draw:
+		print("BaseCrop: Setup multi-frame sprite (%d frames, %dx%d px each) for %s" % [total_frames, frame_width, frame_height, _crop_data.name])
+
+func _setup_single_frame_sprite(sprite_texture: Texture2D) -> void:
+	"""Setup a single-frame sprite and use scale to simulate growth
+
+	Single-frame sprites (like from Fruit and Veg asset pack) don't have
+	multiple animation frames. Growth is shown through scale changes.
+	"""
+	_sprite.texture = sprite_texture
+	_is_multiframe = false
+
+	if _crop_data.debug_draw:
+		print("BaseCrop: Setup single-frame sprite for %s" % _crop_data.name)
 
 #endregion
 
@@ -138,22 +184,32 @@ func _update_visuals() -> void:
 	"""Update sprite based on current growth state"""
 	match _current_state:
 		GrowthState.PLANTED:
-			# Show first growth frame (frame 1, skipping menu icon at frame 0)
-			_sprite.frame = 1
+			# Show first growth frame (frame 1 for multi-frame, min scale for single-frame)
+			if _is_multiframe:
+				_sprite.frame = 1
 			var scale_val: float = CropConfig.PLANTED_SCALE
 			_sprite.scale = Vector2(scale_val, scale_val)
 			_sprite.modulate = Color(1, 1, 1, CropConfig.PLANTED_OPACITY)
+			# Update collision size for planted state
+			if _collision_shape and _collision_shape.shape:
+				var shape: RectangleShape2D = _collision_shape.shape as RectangleShape2D
+				shape.size = Vector2(CropConfig.COLLISION_SIZE_PLANTED, CropConfig.COLLISION_SIZE_PLANTED)
 
 		GrowthState.GROWING:
 			# Frames 1-8 will be updated smoothly in _update_growth_visuals()
 			_sprite.modulate = Color(1, 1, 1, CropConfig.GROWING_OPACITY)
 
 		GrowthState.HARVESTABLE:
-			# Show final growth frame (frame 8, the last frame)
-			_sprite.frame = 8
+			# Show final growth frame (frame 8 for multi-frame, max scale for single-frame)
+			if _is_multiframe:
+				_sprite.frame = 8
 			var scale_val: float = CropConfig.HARVESTABLE_SCALE
 			_sprite.scale = Vector2(scale_val, scale_val)
 			_sprite.modulate = Color(1, 1, 1, CropConfig.HARVESTABLE_OPACITY)
+			# Update collision size for harvestable state
+			if _collision_shape and _collision_shape.shape:
+				var shape: RectangleShape2D = _collision_shape.shape as RectangleShape2D
+				shape.size = Vector2(CropConfig.COLLISION_SIZE_HARVESTABLE, CropConfig.COLLISION_SIZE_HARVESTABLE)
 			# Add a subtle "ready" indicator (pulsing glow)
 			var tween: Tween = create_tween()
 			var _ignored: Tween = tween.set_loops()  # set_loops() returns Tween for chaining
@@ -164,12 +220,13 @@ func _update_growth_visuals() -> void:
 	"""Gradually update sprite frame and scale as crop grows"""
 	var growth_progress: float = _growth_timer / _total_grow_time
 
-	# Update frame based on progress (interpolate between growth frames 1-8)
-	# Map progress (0.0-1.0) to frame range (1-8)
-	var frame_index: float = 1.0 + (growth_progress * 7.0)  # 1 + (progress * 7) = frames 1 through 8
-	_sprite.frame = int(clamp(frame_index, 1, 8))
+	if _is_multiframe:
+		# Multi-frame sprite: update frame based on growth progress
+		# Map progress (0.0-1.0) to frame range (1-8)
+		var frame_index: float = 1.0 + (growth_progress * 7.0)  # 1 + (progress * 7) = frames 1-8
+		_sprite.frame = int(clamp(frame_index, 1, 8))
 
-	# Gradually scale up sprite as crop grows
+	# Both single and multi-frame sprites use scale changes during growth
 	var target_scale: float = lerp(CropConfig.PLANTED_SCALE, CropConfig.HARVESTABLE_SCALE, growth_progress)
 	_sprite.scale = Vector2(target_scale, target_scale)
 

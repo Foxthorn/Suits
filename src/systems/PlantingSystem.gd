@@ -178,12 +178,17 @@ func _plant_crop_at(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	# Setup crop
 	crop_instance.setup(_selected_crop_type, hex_coords)
 	crop_instance.global_position = world_pos
+	crop_instance.z_index = 10  # Draw above tiles but below UI
 
 	# Connect harvest signal to cleanup
 	crop_instance.harvested.connect(_on_crop_harvested)
 
-	# Add to scene
-	get_tree().current_scene.add_child(crop_instance)
+	# Add to HexGrid so crops are part of the grid system
+	if self.hex_grid:
+		self.hex_grid.add_child(crop_instance)
+	else:
+		# Fallback to scene root if no hex_grid available
+		get_tree().current_scene.add_child(crop_instance)
 
 	# Track planted crop
 	_planted_crops[hex_coords] = crop_instance
