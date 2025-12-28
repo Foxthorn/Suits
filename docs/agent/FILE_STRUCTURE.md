@@ -118,3 +118,28 @@
 - UI scenes always under /src/ui/, never mixed with gameplay
 - Demos/tutorials live in /demos/ — never reference from production code
 - Demo scenes can be messy/experimental — exempt from strict standards
+- All enemy types have dedicated scene files in /scenes/entities/enemies/
+- All database registries (CropDatabase, EnemyDatabase) are in /src/systems/
+- Entity base classes (BaseEnemy, BaseCrop) are in /src/entities/ with implementations
+- Entity scene files match class names: RusherEnemy.gd + RusherEnemy.tscn
+
+## Entity Inheritance Pattern
+
+### Enemy Entity Architecture
+All enemy types follow this pattern:
+1. **BaseEnemy.gd**: Base class in `/src/entities/enemies/`
+   - Handles health, damage, death signals
+   - Manages sprite sheet animation (IDLE, WALK, ATTACK, HIT, DEATH states)
+   - Loads stats from EnemyDatabase
+2. **Subclasses** (RusherEnemy, ShooterEnemy, etc.):
+   - Extend BaseEnemy
+   - Set `enemy_type` before calling `super._ready()`
+   - Override `_physics_process()` for unique behaviors
+3. **Scene Files** (`scenes/entities/enemies/`):
+   - One .tscn per enemy type (RusherEnemy.tscn, ShooterEnemy.tscn)
+   - Loaded as PackedScenes by WaveManager
+   - No hardcoded stats — all from EnemyDatabase
+4. **Configuration** (`config/enemy_config.gd`):
+   - Central config with all enemy types and stats
+   - Sprite paths, animation frame counts, balance values
+   - EnemyDatabase reads from this file and builds registry
