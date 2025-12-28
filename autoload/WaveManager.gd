@@ -22,8 +22,8 @@ var is_wave_active: bool = false
 #endregion
 
 #region Variables - Configuration
-var enemy_rusher_scene: PackedScene = preload("res://scenes/entities/enemies/BaseEnemy.tscn")
-var enemy_shooter_scene: PackedScene = preload("res://scenes/entities/enemies/BaseEnemy.tscn")
+var enemy_rusher_scene: PackedScene = preload("res://scenes/entities/enemies/RusherEnemy.tscn")
+var enemy_shooter_scene: PackedScene = preload("res://scenes/entities/enemies/ShooterEnemy.tscn")
 
 #endregion
 
@@ -123,14 +123,8 @@ func _calculate_spawn_points() -> Array[Vector2]:
 ## Spawn a single rusher enemy
 func _spawn_rusher(position: Vector2) -> void:
 	"""Instantiate a rusher enemy at the specified position"""
-	var enemy = self.enemy_rusher_scene.instantiate() as BaseEnemy
+	var enemy = self.enemy_rusher_scene.instantiate() as RusherEnemy
 	enemy.global_position = position
-
-	# Configure as rusher
-	enemy.enemy_type = EnemyConfig.EnemyType.RUSHER
-	enemy.speed = EnemyConfig.RUSHER_SPEED
-	enemy.max_health = EnemyConfig.RUSHER_MAX_HP
-	enemy.damage = EnemyConfig.RUSHER_DAMAGE
 
 	_add_enemy_to_wave(enemy)
 
@@ -138,20 +132,8 @@ func _spawn_rusher(position: Vector2) -> void:
 ## Spawn a single shooter enemy
 func _spawn_shooter(position: Vector2) -> void:
 	"""Instantiate a shooter enemy at the specified position"""
-	var enemy = self.enemy_shooter_scene.instantiate() as BaseEnemy
+	var enemy = self.enemy_shooter_scene.instantiate() as ShooterEnemy
 	enemy.global_position = position
-
-	# Configure as shooter
-	var shooter = enemy as ShooterEnemy
-	if shooter:
-		enemy.enemy_type = EnemyConfig.EnemyType.SHOOTER
-		enemy.speed = EnemyConfig.SHOOTER_SPEED
-		enemy.max_health = EnemyConfig.SHOOTER_MAX_HP
-	else:
-		# Fallback if not a shooter
-		enemy.enemy_type = EnemyConfig.EnemyType.SHOOTER
-		enemy.speed = EnemyConfig.SHOOTER_SPEED
-		enemy.max_health = EnemyConfig.SHOOTER_MAX_HP
 
 	_add_enemy_to_wave(enemy)
 

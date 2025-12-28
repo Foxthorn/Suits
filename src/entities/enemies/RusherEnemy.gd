@@ -1,6 +1,7 @@
+class_name RusherEnemy
 extends BaseEnemy
 ## Rusher enemy type: Fast melee attacker that charges at mech
-## Rushes at mech at high speed, deals damage on collision
+## Rushes at mech at high speed using sprite sheet animation, deals damage on collision
 
 #region Variables
 var _last_collision_time: float = 0.0
@@ -9,25 +10,24 @@ var _last_collision_time: float = 0.0
 
 #region Initialization
 func _ready() -> void:
-	self.enemy_type = EnemyConfig.EnemyType.RUSHER
-	self.speed = EnemyConfig.RUSHER_SPEED
-	self.max_health = EnemyConfig.RUSHER_MAX_HP
-	self.damage = EnemyConfig.RUSHER_DAMAGE
-
+	# Set enemy type before calling parent _ready()
+	self.enemy_type = EnemyDatabase.EnemyType.RUSHER
 	super._ready()
-
 
 #endregion
 
 #region Physics & Collision
 func _physics_process(delta: float) -> void:
+	if not is_alive:
+		return
+
+	# Update movement and animation (includes move_and_slide)
 	super._physics_process(delta)
 
-	# Check collision with mech for damage
-	var colliding_bodies = self.get_colliding_bodies()
-	for body in colliding_bodies:
-		if body.is_in_group("player_mech"):
-			_damage_mech(body, delta)
+	# Check collision with mech for damage (after move_and_slide)
+	# for body in get_colliding_bodies():
+	# 	if body.is_in_group("player_mech"):
+	# 		_damage_mech(body, delta)
 
 
 func _damage_mech(mech: Node2D, delta: float) -> void:
@@ -40,9 +40,15 @@ func _damage_mech(mech: Node2D, delta: float) -> void:
 
 	_last_collision_time = current_time
 
+	# Play attack animation
+	_set_animation_state(AnimationState.ATTACK)
+
 	# Call take_damage if mech has that method
 	if mech.has_method("take_damage"):
-		mech.take_damage(self.damage)
-		print("RusherEnemy: Damaged mech for %.0f damage" % self.damage)
+		mech.take_damage(_damage)
+		mech.take_damage(self._damage)
+		if self.debug_draw:
+
+			print("RusherEnemy: Damaged mech for %.0f damage" % self._damage)
 
 #endregion

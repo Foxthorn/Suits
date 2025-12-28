@@ -36,7 +36,7 @@
 ├── config/
 │   ├── game_config.gd           # Global game constants & balance values
 │   ├── crop_config.gd           # Crop-specific constants (NO magic numbers)
-│   └── enemy_config.gd          # Enemy types, stats, and wave scaling
+│   └── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths (✅ EXPANDED)
 ├── src/                         # ALL gameplay code lives here
 │   ├── core/                    # Fundamental systems
 │   │   ├── DayNightCycle.gd
@@ -55,6 +55,7 @@
 │   │   ├── FarmSystem.gd
 │   │   ├── PlantingSystem.gd    # Crop placement logic & ghost preview
 │   │   ├── CropDatabase.gd      # Crop registry & lookup (uses CropConfig)
+│   │   ├── EnemyDatabase.gd     # Enemy registry with sprite sheet animation metadata (✅ NEW)
 │   │   ├── Pathfinding.gd       # Shared AStarGrid2D wrapper
 │   │   └── WaveSpawner.gd
 │   ├── ui/
@@ -71,6 +72,9 @@
 │   ├── entities/
 │   │   ├── mech/
 │   │   │   └── Mech.tscn        # Player mech entity
+│   │   ├── enemies/
+│   │   │   ├── RusherEnemy.tscn # Rusher enemy scene (✅ NEW)
+│   │   │   └── ShooterEnemy.tscn # Shooter enemy scene (✅ NEW)
 │   │   └── crops/
 │   │       └── BaseCrop.tscn    # Base crop scene (instantiated by PlantingSystem)
 │   └── levels/

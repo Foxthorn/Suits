@@ -63,6 +63,7 @@ Current Wave: NONE
 [color=ffff99]CONTROLS:[/color]
 • WASD: Move mech
 • Mouse: Look around
+• N: Skip to night time
 • ESC: Return to main menu
 """
 	self.instructions_label.text = instructions
@@ -142,6 +143,19 @@ func _on_wave_completed(wave_number: int) -> void:
 func _on_mech_health_changed(current_hp: float, max_hp: float) -> void:
 	"""Update mech health display"""
 	self.mech_health_label.text = "Health: %.0f / %.0f" % [current_hp, max_hp]
+
+#endregion
+
+#region Input & Controls
+func _input(event: InputEvent) -> void:
+	"""Handle keyboard input for demo shortcuts"""
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_N:
+				# Skip to night time
+				if TimeManager and not TimeManager.is_night():
+					TimeManager.time_remaining = 0.0  # Force phase transition
+					get_tree().root.set_input_as_handled()
 
 #endregion
 
