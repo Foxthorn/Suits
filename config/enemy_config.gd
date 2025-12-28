@@ -34,7 +34,7 @@ const RUSHER_NAME: String = "Bug Rusher"
 const RUSHER_DESCRIPTION: String = "Fast melee attacker. Rushes at mech, deals damage on collision."
 const RUSHER_SPEED: float = 150.0  # pixels per second
 const RUSHER_MAX_HP: float = 30.0
-const RUSHER_DAMAGE: float = 10.0  # Damage per collision with mech
+const RUSHER_DAMAGE: float = 0.0 #10.0  # Damage per collision with mech
 const RUSHER_COLLISION_COOLDOWN: float = 1.0  # Seconds between damage hits
 const RUSHER_COLOR: Color = Color.RED
 
@@ -53,6 +53,8 @@ const RUSHER_ATTACK_FRAMES: int = 7  # Number of frames in attack animation
 const RUSHER_HIT_FRAMES: int = 3  # Number of frames in hit animation
 const RUSHER_DEATH_FRAMES: int = 6  # Number of frames in death animation
 
+const RUSHER_ATTACK_RANGE: float = 150.0  # Distance at which rusher switches to attacking
+
 #endregion
 
 #region Shooter Configuration
@@ -60,7 +62,7 @@ const SHOOTER_NAME: String = "Bug Shooter"
 const SHOOTER_DESCRIPTION: String = "Ranged attacker. Maintains distance and shoots projectiles."
 const SHOOTER_SPEED: float = 80.0  # pixels per second
 const SHOOTER_MAX_HP: float = 50.0
-const SHOOTER_DAMAGE: float = 15.0  # Damage per projectile hit
+const SHOOTER_DAMAGE: float = 0.0 # 15.0  # Damage per projectile hit
 const SHOOTER_FIRE_RATE: float = 2.0  # Seconds between shots
 const SHOOTER_PROJECTILE_SPEED: float = 250.0
 const SHOOTER_PROJECTILE_DAMAGE: float = 15.0

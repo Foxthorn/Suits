@@ -1,5 +1,4 @@
-class_name BaseEnemy
-extends CharacterBody2D
+class_name BaseEnemy extends CharacterBody2D
 ## Base class for all enemy types with sprite sheet animation
 ## Handles health, damage, pathfinding, animation states, and death
 
@@ -352,11 +351,13 @@ func _move_toward_target(delta: float) -> void:
 	# Flip sprite based on direction
 	_update_sprite_direction(direction)
 
-	# Update animation state based on movement
-	if velocity.length() > EnemyConfig.MOVEMENT_THRESHOLD:  # Moving
-		_set_animation_state(AnimationState.WALK)
-	else:  # Idle
-		_set_animation_state(AnimationState.IDLE)
+	# Update animation state based on movement (but not if in attack/hit states)
+	# Allow subclasses to override animation (e.g., attack animations)
+	if _current_animation_state != AnimationState.ATTACK and _current_animation_state != AnimationState.HIT:
+		if velocity.length() > EnemyConfig.MOVEMENT_THRESHOLD:  # Moving
+			_set_animation_state(AnimationState.WALK)
+		else:  # Idle
+			_set_animation_state(AnimationState.IDLE)
 
 #endregion
 

@@ -5,6 +5,7 @@ extends BaseEnemy
 
 #region Variables
 var _last_collision_time: float = 0.0
+var _attack_timer: float = 0.0
 
 #endregion
 
@@ -21,13 +22,29 @@ func _physics_process(delta: float) -> void:
 	if not is_alive:
 		return
 
+	# Decrement attack timer
+	if _attack_timer > 0:
+		_attack_timer -= delta
+
 	# Update movement and animation (includes move_and_slide)
+	# This will handle animation state, but we'll override if in attack
 	super._physics_process(delta)
 
 	# Check collision with mech for damage (after move_and_slide)
-	# for body in get_colliding_bodies():
-	# 	if body.is_in_group("player_mech"):
-	# 		_damage_mech(body, delta)
+	for i in range(get_slide_collision_count()):
+		var collision: KinematicCollision2D = get_slide_collision(i)
+		if collision.get_collider().is_in_group("player_mech"):
+			_damage_mech(collision.get_collider(), delta)
+
+	# Keep attack animation active for its duration, then revert to movement state
+	if _attack_timer > 0:
+		_set_animation_state(AnimationState.ATTACK)
+	elif _current_animation_state == AnimationState.ATTACK:
+		# Attack animation finished, revert to idle/walk based on movement
+		if velocity.length() > EnemyConfig.MOVEMENT_THRESHOLD:
+			_set_animation_state(AnimationState.WALK)
+		else:
+			_set_animation_state(AnimationState.IDLE)
 
 
 func _damage_mech(mech: Node2D, delta: float) -> void:
@@ -40,15 +57,14 @@ func _damage_mech(mech: Node2D, delta: float) -> void:
 
 	_last_collision_time = current_time
 
-	# Play attack animation
+	# Play attack animation for its full duration
 	_set_animation_state(AnimationState.ATTACK)
+	_attack_timer = _attack_frame_count * EnemyConfig.ANIMATION_SPEED
 
 	# Call take_damage if mech has that method
 	if mech.has_method("take_damage"):
 		mech.take_damage(_damage)
-		mech.take_damage(self._damage)
 		if self.debug_draw:
-
-			print("RusherEnemy: Damaged mech for %.0f damage" % self._damage)
+			print("RusherEnemy: Damaged mech for %.0f damage" % _damage)
 
 #endregion

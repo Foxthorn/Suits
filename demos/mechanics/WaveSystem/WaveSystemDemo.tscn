@@ -1,6 +1,6 @@
-[gd_scene load_steps=8 format=3 uid="uid://d2xmj1gb9ixmyj"]
+[gd_scene load_steps=7 format=3 uid="uid://ce5tkkyxvaqyb"]
 
-[ext_resource type="Script" path="res://demos/mechanics/WaveSystem/WaveSystemDemo.gd" id="1"]
+[ext_resource type="Script" uid="uid://buu43uwsi07no" path="res://demos/mechanics/WaveSystem/WaveSystemDemo.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://dmv3pmancj3wr" path="res://scenes/entities/mech/Mech.tscn" id="3"]
 
@@ -40,7 +40,6 @@ position = Vector2(600, 400)
 position_smoothing_enabled = true
 
 [node name="DayNightTint" type="CanvasModulate" parent="."]
-color = Color(1, 1, 1, 1)
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
