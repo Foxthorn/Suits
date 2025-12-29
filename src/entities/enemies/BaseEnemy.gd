@@ -275,8 +275,10 @@ func die() -> void:
 		return
 
 	is_alive = false
-	died.emit(self)
 	_set_animation_state(AnimationState.DEATH)
+
+	# Emit death signal BEFORE waiting for animation (WaveManager will track this)
+	died.emit(self)
 
 	# Wait for death animation to finish before cleanup
 	var death_duration: float = _death_frame_count * EnemyConfig.ANIMATION_SPEED
@@ -297,8 +299,15 @@ func _spawn_death_particles() -> void:
 	for i in range(particle_count):
 		var angle: float = (TAU / particle_count) * i
 		var particle = _create_particle(_enemy_data.color, angle)
-		if get_parent():
-			get_parent().add_child(particle)
+		# Add null safety check: only add particles if parent exists
+		var parent_node = get_parent()
+		if parent_node:
+			parent_node.add_child(particle)
+		else:
+			# Fallback: add to scene root if parent is null
+			var scene_root = get_tree().current_scene
+			if scene_root:
+				scene_root.add_child(particle)
 		particles.append(particle)
 
 

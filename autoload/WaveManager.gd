@@ -18,6 +18,7 @@ signal all_waves_cleared()
 var current_wave: int = 0
 var enemies_in_wave: Array[BaseEnemy] = []
 var is_wave_active: bool = false
+var _initial_enemy_count: int = 0  # Track for wave progress calculation
 
 #endregion
 
@@ -61,6 +62,9 @@ func start_wave(wave_number: int) -> void:
 
 	# Spawn enemies
 	_spawn_wave_enemies(wave_number)
+
+	# Store initial enemy count for progress calculation
+	self._initial_enemy_count = self.enemies_in_wave.size()
 
 	self.wave_started.emit(wave_number)
 	print("WaveManager: Wave %d started with %d enemies" % [wave_number, self.enemies_in_wave.size()])
@@ -156,15 +160,43 @@ func _add_enemy_to_wave(enemy: BaseEnemy) -> void:
 	else:
 		push_error("WaveManager: Cannot find scene root to add enemy!")
 
+	# Ensure cleanup is called when scene tree exits (prevents memory leaks)
+	enemy.tree_exiting.connect(_on_enemy_tree_exiting.bind(enemy))
+
 
 ## Called when an enemy dies
 func _on_enemy_died(enemy: BaseEnemy) -> void:
-	"""Remove dead enemy from tracking and check if wave is complete"""
+	"""Disconnect signals and remove dead enemy from tracking"""
+	# Disconnect all signals from this enemy to prevent memory leaks
+	if enemy.died.is_connected(_on_enemy_died):
+		enemy.died.disconnect(_on_enemy_died)
+
+	if enemy.tree_exiting.is_connected(_on_enemy_tree_exiting):
+		enemy.tree_exiting.disconnect(_on_enemy_tree_exiting)
+
 	if enemy in self.enemies_in_wave:
 		self.enemies_in_wave.erase(enemy)
 
 	# Check if all enemies defeated
 	if self.enemies_in_wave.is_empty():
+		_on_wave_complete()
+
+
+## Called when enemy exits the scene tree (ensures cleanup if enemy is freed externally)
+func _on_enemy_tree_exiting(enemy: BaseEnemy) -> void:
+	"""Handle enemy cleanup if it exits scene tree"""
+	if enemy in self.enemies_in_wave:
+		self.enemies_in_wave.erase(enemy)
+
+	# Disconnect signals
+	if enemy.died.is_connected(_on_enemy_died):
+		enemy.died.disconnect(_on_enemy_died)
+
+	if enemy.tree_exiting.is_connected(_on_enemy_tree_exiting):
+		enemy.tree_exiting.disconnect(_on_enemy_tree_exiting)
+
+	# Check if wave is complete
+	if self.enemies_in_wave.is_empty() and self.is_wave_active:
 		_on_wave_complete()
 
 
@@ -187,11 +219,11 @@ func get_active_enemy_count() -> int:
 
 func get_wave_progress() -> float:
 	"""Return 0.0 to 1.0 progress through current wave (inverse of enemies remaining)"""
-	if self.enemies_in_wave.is_empty():
-		return 1.0
+	if not self.is_wave_active or self._initial_enemy_count <= 0:
+		return 0.0
 
-	# Would need to track initial count to calculate this properly
-	# For now, return 0.0 while wave active, 1.0 when complete
-	return 0.0 if self.is_wave_active else 1.0
+	var enemies_defeated: int = self._initial_enemy_count - self.enemies_in_wave.size()
+	var progress: float = float(enemies_defeated) / float(self._initial_enemy_count)
+	return clamp(progress, 0.0, 1.0)
 
 #endregion
