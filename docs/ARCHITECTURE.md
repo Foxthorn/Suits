@@ -68,7 +68,7 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 | `TimeManager` | Day/night cycle | Phase management, timer progression, wave blocking |
 | `EconomyManager` | Player economy | Credits tracking, spending validation, balance management |
 | `SaveManager` | Persistence | Save/load game state, player progression |
-| `WaveManager` | Wave spawning & scaling | Enemy wave generation, difficulty progression |
+| `WaveManager` | Wave spawning & scaling | Enemy spawn calculation, wave tracking, progression signals |
 | `AudioManager` | Audio playback | Music, SFX, volume control |
 
 ---
@@ -101,17 +101,21 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 ### Signal Flow Example: Enemy Death
 
 ```
-Enemy.died signal
+Enemy.took_damage() → Enemy.health <= 0
     │
-    ├──► WaveManager._on_enemy_died()
-    │       └──► Checks if wave complete
-    │               └──► EventBus.wave_completed.emit()
-    │
-    ├──► HUD._on_enemy_died()
-    │       └──► Updates enemy count display
-    │
-    └──► (Future) DropSystem._on_enemy_died()
-            └──► Spawns loot/resources
+    └──► Enemy.die()
+        └──► Enemy.died.emit(self)
+            │
+            ├──► WaveManager._on_enemy_died()
+            │       └──► Remove from enemies_in_wave array
+            │           └──► If array empty: wave_completed.emit()
+            │               └──► TimeManager.set_wave_active(false)
+            │
+            ├──► HUD._on_enemy_died()
+            │       └──► Updates enemy count display
+            │
+            └──► (Future) DropSystem._on_enemy_died()
+                    └──► Spawns loot/resources
 ```
 
 ---
@@ -230,9 +234,232 @@ func get_credits() -> int
 
 ---
 
+### Enemy System (Hierarchy)
+
+**Purpose**: Defines the enemy entity structure with extensible types for different behaviors, sprite sheet animation support, and centralized database.
+
+**Location**: `src/entities/enemies/`
+
+**Architecture**:
+
+#### EnemyDatabase System (`src/systems/EnemyDatabase.gd`)
+**Purpose**: Centralized registry for all enemy types with extensible registration pattern.
+
+**Key Features**:
+- Static-only class with registry pattern (no instantiation needed)
+- Automatic initialization on first access
+- Extensible via `register_enemy()` method
+- Loads all constants from `EnemyConfig` automatically
+- Provides lookup methods for type-safe enemy data access
+
+**Public API**:
+```gdscript
+static func get_enemy(type: EnemyType) -> EnemyData
+static func get_enemy_name(type: EnemyType) -> String
+static func get_all_enemy_types() -> Array[EnemyType]
+static func register_enemy(enemy_data: EnemyData) -> void
+```
+
+**EnemyData Class**:
+Immutable data structure containing all enemy configuration:
+- Core stats: `speed`, `max_health`, `damage`, `name`, `description`
+- Sprite assets: Main sprite + per-animation sprite sheets (idle, walk, attack, hit, death)
+- Animation frames: Per-animation frame counts for sprite sheet division
+- Visual: `color` (fallback if sprites fail to load)
+- Debug: `debug_draw` flag for logging
+- Methods: `get_idle_sprite()`, `get_walk_sprite()`, `get_attack_sprite()`, `get_hit_sprite()`, `get_death_sprite()`
+
+**To Add New Enemy Type**:
+1. Add to `EnemyType` enum in EnemyDatabase
+2. Add constants to `config/enemy_config.gd`:
+   - `ENEMY_NAME`, `ENEMY_DESCRIPTION`
+   - `ENEMY_SPEED`, `ENEMY_MAX_HP`, `ENEMY_DAMAGE`
+   - `ENEMY_SPRITE`, sprite sheet paths for each animation
+   - `ENEMY_*_FRAMES` for frame counts
+3. Call `EnemyDatabase.register_enemy()` in `_ensure_initialized()`
+
+---
+
+#### BaseEnemy (`src/entities/enemies/BaseEnemy.gd`)
+**Purpose**: Base class for all enemy types with sprite sheet animation support.
+
+**Location**: `src/entities/enemies/BaseEnemy.gd`
+
+**Key Responsibilities**:
+- Load enemy data from EnemyDatabase on spawn
+- Health and damage system with signals (`health_changed`, `died`, `animation_state_changed`)
+- Sprite sheet animation with state machine (IDLE, WALK, ATTACK, HIT, DEATH)
+- Direct movement toward mech via target tracking
+- Death handling with configurable animation duration before particle effects
+- Collision detection and physics-based movement
+- Animation frame progression based on state and frame count
+
+**Exported Properties**:
+```gdscript
+@export var enemy_type: EnemyDatabase.EnemyType = EnemyDatabase.EnemyType.RUSHER
+@export var debug_draw: bool = false  # Override per-instance
+```
+
+**Animation States** (enum):
+- `IDLE`: Stationary animation (4 frames default)
+- `WALK`: Movement animation (4 frames default)
+- `ATTACK`: Attacking animation (5 frames default)
+- `HIT`: Damage reaction animation (2 frames default)
+- `DEATH`: Death animation (4 frames default)
+
+**Signals**:
+- `died(enemy: BaseEnemy)` - Emitted when health reaches 0
+- `health_changed(current_hp: float, max_hp: float)` - Emitted on damage
+- `animation_state_changed(new_state: AnimationState)` - Emitted when animation state changes
+
+**Key Methods**:
+```gdscript
+func _set_animation_state(new_state: AnimationState) -> void  # Switch animation
+func _update_animation(delta: float) -> void                   # Advance frames
+func _update_sprite_direction(direction: Vector2) -> void      # Flip sprite
+func take_damage(amount: float) -> void                        # Health -= amount, play HIT animation
+func die() -> void                                              # Play DEATH, wait for animation, then cleanup
+func get_health_percent() -> float                             # Returns 0.0-1.0 for UI bars
+```
+
+**Sprite Sheet Animation System**:
+- Loads sprite sheets from EnemyData
+- Uses `hframes` property to divide sprites into frames
+- Frame advancement: Increments `_animation_frame` at `ANIMATION_SPEED` rate
+- Wraps frame count per animation state
+- Sprite flipping: Horizontal flip based on movement direction
+- Fallback: Procedurally generated placeholder if sprite fails to load
+
+---
+
+#### RusherEnemy (`src/entities/enemies/RusherEnemy.gd`)
+**Purpose**: Fast melee attacker that rushes the mech.
+
+**Location**: `scenes/entities/enemies/RusherEnemy.tscn` + `src/entities/enemies/RusherEnemy.gd`
+
+**Stats** (from EnemyConfig):
+- Speed: 150 px/s (RUSHER_SPEED)
+- Health: 30 HP (RUSHER_MAX_HP)
+- Damage: 10 per collision (RUSHER_DAMAGE)
+- Collision Cooldown: 1.0s (RUSHER_COLLISION_COOLDOWN)
+
+**Animation Assets** (all from Insect-Enemy-Pack-V.1):
+- Little-Enemy sprite sheets (5 animations: idle, walk, attack, hit, death)
+- Configurable frame counts per animation
+
+**Behavior**:
+- Direct movement toward mech at high speed
+- Plays WALK animation during movement
+- Plays IDLE animation when stationary
+- Plays ATTACK animation when dealing damage (TODO: implement collision detection)
+- Plays HIT animation when taking damage
+- Plays DEATH animation before being removed
+
+---
+
+#### ShooterEnemy (`src/entities/enemies/ShooterEnemy.gd`)
+**Purpose**: Ranged attacker that maintains distance and fires projectiles.
+
+**Location**: `scenes/entities/enemies/ShooterEnemy.tscn` + `src/entities/enemies/ShooterEnemy.gd`
+
+**Stats** (from EnemyConfig):
+- Speed: 80 px/s (SHOOTER_SPEED)
+- Health: 50 HP (SHOOTER_MAX_HP)
+- Damage: 15 per projectile hit (SHOOTER_DAMAGE)
+- Fire Rate: 2.0 seconds (SHOOTER_FIRE_RATE)
+- Projectile Range: 400px (SHOOTER_PROJECTILE_RANGE)
+
+**Animation Assets** (all from Insect-Enemy-Pack-V.1):
+- Fly-Enemy sprite sheets (5 animations: idle, walk, attack, hit, death)
+- Configurable frame counts per animation
+
+**Behavior**:
+- Maintains distance from mech (800px detection range)
+- Plays WALK animation during movement
+- Plays IDLE animation when at range
+- Plays ATTACK animation when firing projectile
+- Plays HIT animation when taking damage
+- Plays DEATH animation before being removed
+- (TODO: Implement actual projectile spawning in Step 7)
+
+---
+
+**Extensibility Pattern**:
+- New enemy types inherit from BaseEnemy
+- Set `enemy_type` in `_ready()` before calling `super._ready()`
+- Override `_physics_process()` for unique combat behaviors
+- All stats automatically loaded from EnemyDatabase
+- All configuration values in `config/enemy_config.gd` (NO hardcoding)
+
+---
+
+### WaveManager System (Autoload)
+
+**Purpose**: Manages enemy wave spawning, difficulty scaling, and wave progression with proper entity instantiation.
+
+**Location**: `autoload/WaveManager.gd` (✅ IMPLEMENTED)
+
+**Key Responsibilities**:
+- Calculate enemy counts per wave using exponential scaling formula
+- Spawn RusherEnemy and ShooterEnemy from dedicated scene files
+- Track active enemies via signal connections to `BaseEnemy.died`
+- Signal wave start/completion to control day/night progression
+- Manage wave state (active, completed, progression)
+
+**Signals**:
+- `wave_started(wave_number: int)` - Emitted when enemies spawn
+- `wave_completed(wave_number: int)` - Emitted when all enemies defeated
+- `all_waves_cleared()` - Emitted when full progression complete
+
+**Scene References**:
+```gdscript
+var enemy_rusher_scene: PackedScene = preload("res://scenes/entities/enemies/RusherEnemy.tscn")
+var enemy_shooter_scene: PackedScene = preload("res://scenes/entities/enemies/ShooterEnemy.tscn")
+```
+
+**Configuration** (via `config/enemy_config.gd`):
+```gdscript
+const WAVE_BASE_COUNT: int = 5              # Base enemies for wave 1
+const WAVE_COUNT_PER_LEVEL: int = 3         # +3 enemies per wave
+const WAVE_RUSHER_PERCENTAGE: float = 0.7   # 70% rushers, 30% shooters
+const SPAWN_DISTANCE_FROM_MECH: float = 500.0  # Spawn 500px from mech
+const SPAWN_POINTS_PER_WAVE: int = 4        # 4 spawn locations
+const SPAWN_SPREAD_ANGLE: float = PI * 0.25 # 45° variation around points
+```
+
+**Wave Scaling Formula**:
+```
+enemy_count = 5 + (wave_number * 3)
+Wave 1: 5 enemies
+Wave 2: 8 enemies
+Wave 3: 11 enemies
+```
+
+**Spawn Pattern**:
+- Enemies spawn in 4 cardinal directions around mech
+- Distance: 500px from mech center
+- Random spread ±45° around cardinal points
+- 70% spawn as RusherEnemy, 30% as ShooterEnemy
+- RusherEnemy and ShooterEnemy instantiated from dedicated .tscn files
+- Each enemy's stats are auto-loaded from EnemyDatabase on _ready()
+
+**Integration with TimeManager**:
+- WaveManager listens to `TimeManager.night_started` signal
+- On night start, calls `start_wave(night_number)`
+- Calls `TimeManager.set_wave_active(true)` to block day progression
+- On `wave_completed`, calls `TimeManager.set_wave_active(false)` to allow day
+
+**Enemy Tracking**:
+- Maintains `enemies_in_wave: Array[BaseEnemy]`
+- Connects to each enemy's `died` signal
+- Removes dead enemies from array
+- When array is empty, emits `wave_completed`
+
+---
+
 ### Farming System
 
-**Purpose**: Manages crop planting, growth, and harvest mechanics.
+**Purpose**: Manages crop planting, growth, and harvest mechanics (✅ COMPLETED Step 4)
 
 **Key Components**:
 
@@ -322,24 +549,7 @@ const WHEAT_SPRITE: String = "Wheat.png"
 
 ---
 
-### WaveManager System (Autoload)
 
-**Purpose**: Manages enemy wave spawning, difficulty scaling, and wave progression.
-
-**Location**: `autoload/WaveManager.gd` *(Planned)*
-
-**Key Responsibilities**:
-- Calculate enemy counts per wave (exponential scaling)
-- Spawn enemies at designated points
-- Track active enemies
-- Signal wave start/completion
-
-**Planned Signals**:
-- `wave_started(wave_number: int)`
-- `wave_completed(wave_number: int)`
-- `all_enemies_defeated()`
-
----
 
 ### EventBus System (Autoload)
 
@@ -572,11 +782,32 @@ func _on_screen_entered():
 **Current Structure**:
 - `config/game_config.gd`: Global game constants (day/night duration, economy multipliers, universal settings)
 - `config/crop_config.gd`: Crop-specific constants (stats, visuals, asset paths, harvest effects)
+- `config/enemy_config.gd`: Enemy types, stats, wave scaling, spawn rules, sprite sheet paths (✅ IMPLEMENTED)
+
+**Enemy Configuration Details** (new in `config/enemy_config.gd`):
+```gdscript
+# Asset paths
+const ASSET_BASE_PATH: String = "res://assets/Insect-Enemy-Pack-V.1/"
+
+# Visual settings for all enemies
+const ANIMATION_SPEED: float = 0.1  # Frame advance interval (seconds)
+const MOVEMENT_THRESHOLD: float = 1.0  # Velocity threshold for movement detection
+
+# Per-enemy animation frame counts
+const RUSHER_IDLE_FRAMES: int = 4
+const RUSHER_WALK_FRAMES: int = 4
+const RUSHER_ATTACK_FRAMES: int = 7
+# ... and sprite paths for each animation state
+
+const SHOOTER_IDLE_FRAMES: int = 5
+const SHOOTER_WALK_FRAMES: int = 5
+const SHOOTER_ATTACK_FRAMES: int = 6
+# ... and sprite paths for each animation state
+```
 
 **Future Expansion** (when implemented):
 - `config/tower_config.gd`: Tower types, damage, range, costs
-- `config/enemy_config.gd`: Enemy types, health, speed, wave scaling
-- `config/wave_config.gd`: Wave progression, spawn rules, difficulty curves
+- `config/wave_config.gd`: Advanced wave progression and difficulty curves
 
 **Benefits**:
 - **Separation of Concerns**: Each system's config is self-contained
@@ -603,13 +834,20 @@ const ENTITY_A_COLOR: Color = Color.RED
 
 ## Future Architecture Plans
 
-### Planned Systems (Not Yet Implemented)
+### Completed Systems
 
 1. ✅ **FarmingSystem**: Crop planting, growth, harvesting (COMPLETED - Step 4)
-2. **TowerSystem**: Automated turret placement and targeting
-3. **UpgradeSystem**: Mech and tower upgrade trees
-4. **SaveSystem**: Persistent progression between runs
-5. **AIDirector**: Dynamic difficulty adjustment
+2. ✅ **WaveManager**: Enemy spawning and wave progression (COMPLETED - Step 6)
+3. ✅ **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support (COMPLETED - Step 6)
+4. ✅ **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH) (COMPLETED - Step 6)
+
+### Planned Systems (Not Yet Implemented)
+
+5. **CombatSystem**: Mech weapon and projectile system (Step 7)
+6. **TowerSystem**: Automated turret placement and targeting (Step 8)
+7. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
+8. **SaveSystem**: Persistent progression between runs
+9. **AIDirector**: Dynamic difficulty adjustment
 
 ### Planned Optimizations
 

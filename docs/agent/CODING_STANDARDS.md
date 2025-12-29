@@ -26,6 +26,9 @@
 ### Naming Conventions
 
 ```gdscript
+# Class name: REQUIRED as first line of all new gameplay files (NOT autoloads)
+class_name MechController extends CharacterBody2D
+
 # Variables & Functions: snake_case
 var player_health: int = 100
 func calculate_damage(base: float) -> float:
@@ -33,9 +36,6 @@ func calculate_damage(base: float) -> float:
 # Constants: SCREAMING_SNAKE_CASE
 const MAX_ENEMIES = 1000
 const TILE_SIZE = 64
-
-# Classes & Nodes: PascalCase
-class_name MechController extends CharacterBody2D
 
 # Private/internal: prefix with underscore
 var _cached_path: PackedVector2Array
@@ -593,6 +593,7 @@ func attack_target(target: Node2D) -> void:
 
 ## 📂 File Organization Checklist
 
+- ✅ **Explicit `class_name` declaration** as first line of every new GDScript file in `/src/` (NOT required for autoloads)
 - ✅ One class per file
 - ✅ Filename matches class name: `MechController.gd`
 - ✅ Scene + Script together: `MechController.tscn` + `MechController.gd`
@@ -643,6 +644,7 @@ func test_wave_scaling():
 
 Before committing code, verify:
 
+- [ ] **Every new GDScript file in `/src/` has explicit `class_name` as first line** (autoloads do not require this)
 - [ ] All variables/functions have type hints
 - [ ] No magic numbers (all in GameConfig.gd or constants)
 - [ ] Signals used instead of direct references

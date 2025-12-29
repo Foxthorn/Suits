@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cw84oxkt1m8vb"]
+
+[ext_resource type="Script" path="res://src/entities/enemies/RusherEnemy.gd" id="1_abc12"]
+
+[node name="RusherEnemy" type="CharacterBody2D" groups=["enemies"]]
+script = ExtResource("1_abc12")
+enemy_type = 0
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]

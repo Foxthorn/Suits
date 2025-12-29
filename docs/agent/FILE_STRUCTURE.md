@@ -27,14 +27,16 @@
 │       ├── enemies/
 │       └── effects/
 ├── autoload/                    # Global singletons only
-│   ├── GameConfig.gd            # All tunable constants
-│   ├── SaveManager.gd
-│   ├── WaveManager.gd
-│   ├── AudioManager.gd
-│   └── EventBus.gd              # Central signal hub
+│   ├── TimeManager.gd           # Day/night cycle management
+│   ├── EconomyManager.gd        # Credits and economy system
+│   ├── WaveManager.gd           # Enemy wave spawning and tracking
+│   ├── SaveManager.gd           # Save/load persistence
+│   ├── AudioManager.gd          # Music and SFX control
+│   └── EventBus.gd              # Central signal hub (future)
 ├── config/
 │   ├── game_config.gd           # Global game constants & balance values
-│   └── crop_config.gd           # Crop-specific constants (NO magic numbers)
+│   ├── crop_config.gd           # Crop-specific constants (NO magic numbers)
+│   └── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths (✅ EXPANDED)
 ├── src/                         # ALL gameplay code lives here
 │   ├── core/                    # Fundamental systems
 │   │   ├── DayNightCycle.gd
@@ -53,6 +55,7 @@
 │   │   ├── FarmSystem.gd
 │   │   ├── PlantingSystem.gd    # Crop placement logic & ghost preview
 │   │   ├── CropDatabase.gd      # Crop registry & lookup (uses CropConfig)
+│   │   ├── EnemyDatabase.gd     # Enemy registry with sprite sheet animation metadata (✅ NEW)
 │   │   ├── Pathfinding.gd       # Shared AStarGrid2D wrapper
 │   │   └── WaveSpawner.gd
 │   ├── ui/
@@ -69,6 +72,9 @@
 │   ├── entities/
 │   │   ├── mech/
 │   │   │   └── Mech.tscn        # Player mech entity
+│   │   ├── enemies/
+│   │   │   ├── RusherEnemy.tscn # Rusher enemy scene (✅ NEW)
+│   │   │   └── ShooterEnemy.tscn # Shooter enemy scene (✅ NEW)
 │   │   └── crops/
 │   │       └── BaseCrop.tscn    # Base crop scene (instantiated by PlantingSystem)
 │   └── levels/
@@ -112,3 +118,28 @@
 - UI scenes always under /src/ui/, never mixed with gameplay
 - Demos/tutorials live in /demos/ — never reference from production code
 - Demo scenes can be messy/experimental — exempt from strict standards
+- All enemy types have dedicated scene files in /scenes/entities/enemies/
+- All database registries (CropDatabase, EnemyDatabase) are in /src/systems/
+- Entity base classes (BaseEnemy, BaseCrop) are in /src/entities/ with implementations
+- Entity scene files match class names: RusherEnemy.gd + RusherEnemy.tscn
+
+## Entity Inheritance Pattern
+
+### Enemy Entity Architecture
+All enemy types follow this pattern:
+1. **BaseEnemy.gd**: Base class in `/src/entities/enemies/`
+   - Handles health, damage, death signals
+   - Manages sprite sheet animation (IDLE, WALK, ATTACK, HIT, DEATH states)
+   - Loads stats from EnemyDatabase
+2. **Subclasses** (RusherEnemy, ShooterEnemy, etc.):
+   - Extend BaseEnemy
+   - Set `enemy_type` before calling `super._ready()`
+   - Override `_physics_process()` for unique behaviors
+3. **Scene Files** (`scenes/entities/enemies/`):
+   - One .tscn per enemy type (RusherEnemy.tscn, ShooterEnemy.tscn)
+   - Loaded as PackedScenes by WaveManager
+   - No hardcoded stats — all from EnemyDatabase
+4. **Configuration** (`config/enemy_config.gd`):
+   - Central config with all enemy types and stats
+   - Sprite paths, animation frame counts, balance values
+   - EnemyDatabase reads from this file and builds registry
