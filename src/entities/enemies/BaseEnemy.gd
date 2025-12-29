@@ -283,7 +283,8 @@ func die() -> void:
 	await get_tree().create_timer(death_duration).timeout
 
 	_spawn_death_particles()
-	# Note: queue_free() no longer called here - particles handle their own cleanup
+
+	queue_free()  # Clean up enemy after death animation
 
 
 func _spawn_death_particles() -> void:

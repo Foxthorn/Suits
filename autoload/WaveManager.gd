@@ -99,9 +99,27 @@ func _calculate_spawn_points() -> Array[Vector2]:
 	var mech = get_tree().get_first_node_in_group("player_mech")
 
 	if mech == null:
-		push_error("WaveManager: Cannot find mech to calculate spawn points!")
+		push_error("WaveManager: Cannot find mech to calculate spawn points! Using center of viewport.")
+		# Fallback: use center of viewport if mech not found
+		var viewport_center: Vector2 = get_viewport().get_visible_rect().get_center()
+		# Still create spawn points around the fallback position
+		var mech_pos: Vector2 = viewport_center
+		var spawn_distance: float = EnemyConfig.SPAWN_DISTANCE_FROM_MECH
+		var point_count: int = EnemyConfig.SPAWN_POINTS_PER_WAVE
+
+		for i in range(point_count):
+			var angle: float = (TAU / point_count) * i
+			var offset: Vector2 = Vector2(cos(angle), sin(angle)) * spawn_distance
+
+			var spread_angle: float = randf_range(-EnemyConfig.SPAWN_SPREAD_ANGLE, EnemyConfig.SPAWN_SPREAD_ANGLE)
+			var spread_distance: float = randf_range(-EnemyConfig.SPAWN_SPREAD_DISTANCE, EnemyConfig.SPAWN_SPREAD_DISTANCE)
+			var spread_offset: Vector2 = Vector2(cos(spread_angle), sin(spread_angle)) * spread_distance
+
+			spawn_points.append(mech_pos + offset + spread_offset)
+
 		return spawn_points
 
+	# Mech exists - use actual mech position
 	var mech_pos: Vector2 = mech.global_position
 	var spawn_distance: float = EnemyConfig.SPAWN_DISTANCE_FROM_MECH
 	var point_count: int = EnemyConfig.SPAWN_POINTS_PER_WAVE
@@ -144,10 +162,16 @@ func _add_enemy_to_wave(enemy: BaseEnemy) -> void:
 	self.enemies_in_wave.append(enemy)
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 
-	# Add to scene (find the root node or use get_tree().current_scene)
+	# Add to scene - prefer active scene but fallback to root if needed
 	var scene_root = get_tree().current_scene
+	if not scene_root:
+		# Fallback: use root of current scene tree
+		scene_root = get_tree().root
+
 	if scene_root:
 		scene_root.add_child(enemy)
+	else:
+		push_error("WaveManager: Cannot find scene root to add enemy!")
 
 
 ## Called when an enemy dies
