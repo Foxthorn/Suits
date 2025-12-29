@@ -36,45 +36,33 @@
 ├── config/
 │   ├── game_config.gd           # Global game constants & balance values
 │   ├── crop_config.gd           # Crop-specific constants (NO magic numbers)
-│   └── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths (✅ EXPANDED)
-├── src/                         # ALL gameplay code lives here
-│   ├── core/                    # Fundamental systems
+│   ├── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths
+│   └── weapon_config.gd         # Weapon types, projectile balance values (✅ NEW)
 │   │   ├── DayNightCycle.gd
 │   │   └── UpgradeSystem.gd
 │   ├── entities/                # Inherited scenes + scripts
 │   │   ├── player/
-│   │   │   └── MechController.tscn + .gd
+│   │   │   └── MechController.gd
 │   │   ├── enemies/
+│   │   │   ├── BaseEnemy.gd
+│   │   │   ├── RusherEnemy.gd
+│   │   │   └── ShooterEnemy.gd
+│   │   ├── projectiles/
+│   │   │   └── Bullet.gd            # Mech projectile with pooling (✅ NEW)
+│   │   └── crops/
 │   │   │   ├── BugBasic.tscn
 │   │   │   └── BugBoss.tscn
 │   │   ├── towers/
-│   │   └── crops/
+│   │   ├── HUD.tscn
 │   │       └── BaseCrop.gd      # Base crop entity with growth states & harvest
-│   ├── systems/
+│       ├── Pool.gd              # Generic object pool
 │   │   ├── HexGridManager.gd    # Placement, highlighting, snapping
 │   │   ├── FarmSystem.gd
-│   │   ├── PlantingSystem.gd    # Crop placement logic & ghost preview
-│   │   ├── CropDatabase.gd      # Crop registry & lookup (uses CropConfig)
+│   ├── world/
+│   │   └── HexGrid.tscn         # Hex grid system (TileMap + camera follow)
 │   │   ├── EnemyDatabase.gd     # Enemy registry with sprite sheet animation metadata (✅ NEW)
 │   │   ├── Pathfinding.gd       # Shared AStarGrid2D wrapper
 │   │   └── WaveSpawner.gd
-│   ├── ui/
-│   │   ├── HUD.tscn
-│   │   ├── UpgradeMenu.tscn
-│   │   └── BuildMenu.tscn
-│   └── utils/
-│       ├── Pool.gd              # Generic object pool
-│       └── Math.gd              # Hex → pixel conversions
-├── scenes/                      # Main game scenes
-│   ├── Main.tscn                # Root scene (loads everything)
-│   ├── world/
-│   │   └── HexGrid.tscn         # Hex grid system (TileMap + camera follow)
-│   ├── entities/
-│   │   ├── mech/
-│   │   │   └── Mech.tscn        # Player mech entity
-│   │   ├── enemies/
-│   │   │   ├── RusherEnemy.tscn # Rusher enemy scene (✅ NEW)
-│   │   │   └── ShooterEnemy.tscn # Shooter enemy scene (✅ NEW)
 │   │   └── crops/
 │   │       └── BaseCrop.tscn    # Base crop scene (instantiated by PlantingSystem)
 │   └── levels/
@@ -135,7 +123,8 @@ All enemy types follow this pattern:
    - Extend BaseEnemy
    - Set `enemy_type` before calling `super._ready()`
    - Override `_physics_process()` for unique behaviors
-3. **Scene Files** (`scenes/entities/enemies/`):
+3. **Scene Files** (`scenes/entities/enemi
+es/`):
    - One .tscn per enemy type (RusherEnemy.tscn, ShooterEnemy.tscn)
    - Loaded as PackedScenes by WaveManager
    - No hardcoded stats — all from EnemyDatabase

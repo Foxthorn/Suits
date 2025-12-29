@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://d3b6ssfgb8hnau"]
+
+[ext_resource type="Script" path="res://src/entities/projectiles/Bullet.gd" id="1_g7aq2"]
+
+[sub_resource type="CircleShape2D" id="1"]
+radius = 5.0
+
+[node name="Bullet" type="Area2D"]
+script = ExtResource("1_g7aq2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+self_modulate = Color.YELLOW

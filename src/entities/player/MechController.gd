@@ -35,6 +35,10 @@ signal position_changed(new_position: Vector2)
 ## Maximum health points
 @export var max_health: float = GameConfig.MECH_MAX_HEALTH
 
+@export_group("Weapon")
+## Weapon system for managing firing
+@export var weapon_system: WeaponSystem
+
 @export_group("Debug")
 ## Show debug visuals (health bar, direction indicator)
 @export var debug_draw: bool = false
@@ -44,6 +48,7 @@ signal position_changed(new_position: Vector2)
 #region Private Variables
 var _is_alive: bool = true
 var _last_position: Vector2 = Vector2.ZERO
+var _mouse_direction: Vector2 = Vector2.ZERO  # Cache mouse direction for weapon aiming
 
 #endregion
 
@@ -53,11 +58,17 @@ func _ready() -> void:
 	self.current_health = min(self.current_health, self.max_health)
 	_last_position = global_position
 
+	# Create weapon system if not assigned
+	if not weapon_system:
+		weapon_system = WeaponSystem.new()
+		add_child(weapon_system)
+
 	# Emit initial health state
 	self.health_changed.emit(self.current_health, self.max_health)
 
 	if self.debug_draw:
 		print("MechController: Initialized at position ", global_position)
+		print("MechController: Weapon system ready")
 
 func _process(_delta: float) -> void:
 	if self.debug_draw:
@@ -69,6 +80,7 @@ func _physics_process(delta: float) -> void:
 
 	_handle_movement(delta)
 	_handle_rotation(delta)
+	_handle_weapon()
 
 	# Emit position change if moved significantly
 	if global_position.distance_squared_to(_last_position) > 100.0:  # ~10 pixels
@@ -102,8 +114,8 @@ func _handle_movement(_delta: float) -> void:
 func _handle_rotation(delta: float) -> void:
 	# Get mouse position in world space
 	var mouse_pos: Vector2 = get_global_mouse_position()
-	var direction: Vector2 = global_position.direction_to(mouse_pos)
-	var target_rotation: float = direction.angle()
+	_mouse_direction = global_position.direction_to(mouse_pos)  # Cache for weapon aiming
+	var target_rotation: float = _mouse_direction.angle()
 
 	if self.smooth_rotation:
 		# Smooth lerp rotation
@@ -111,6 +123,15 @@ func _handle_rotation(delta: float) -> void:
 	else:
 		# Instant snap to mouse
 		rotation = target_rotation
+
+func _handle_weapon() -> void:
+	"""Handle weapon firing based on input"""
+	if not weapon_system:
+		return
+
+	if Input.is_action_pressed("fire"):
+		if weapon_system.can_fire():
+			weapon_system.fire(global_position, _mouse_direction)
 
 #endregion
 
@@ -200,6 +221,16 @@ func upgrade_max_health(amount: float) -> void:
 ## Get current max health
 func get_max_health() -> float:
 	return self.max_health
+
+## Upgrade weapon damage
+func upgrade_weapon_damage(amount: float) -> void:
+	if weapon_system:
+		weapon_system.upgrade_damage(amount)
+
+## Apply damage multiplier to weapon (percentage-based upgrades)
+func set_weapon_damage_multiplier(multiplier: float) -> void:
+	if weapon_system:
+		weapon_system.set_damage_multiplier(multiplier)
 
 #endregion
 

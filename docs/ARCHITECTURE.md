@@ -170,13 +170,80 @@ func set_camera_position(pos: Vector2) -> void
 
 **Key Responsibilities**:
 - WASD/gamepad movement
-- Mouse-aimed shooting
+- Mouse-aimed shooting (via WeaponSystem)
 - Health and damage management
-- Weapon/upgrade integration (future)
+- Weapon/upgrade integration
 
 **Signals**:
 - `health_changed(current_hp: float, max_hp: float)`
 - `died()`
+- `position_changed(new_position: Vector2)`
+
+**Input Actions**:
+- `move_up/down/left/right`: WASD movement
+- `fire`: Left-click to shoot
+
+**Public API**:
+```gdscript
+func take_damage(amount: float) -> void
+func heal(amount: float) -> void
+func set_health(value: float) -> void
+func get_health_percentage() -> float
+func upgrade_max_health(amount: float) -> void
+func upgrade_weapon_damage(amount: float) -> void
+func set_weapon_damage_multiplier(multiplier: float) -> void
+```
+
+---
+
+### WeaponSystem
+
+**Purpose**: Manages mech weapon firing, cooldowns, and projectile pooling.
+
+**Location**: `src/systems/WeaponSystem.gd`
+
+**Key Responsibilities**:
+- Fire rate management and cooldown tracking
+- Projectile pooling for performance (50-bullet default pool)
+- Spawning bullets in player-aimed direction
+- Damage multiplier application from upgrades
+
+**Signals**:
+- `bullet_fired(bullet: Bullet, position: Vector2, direction: Vector2)`
+
+**Public API**:
+```gdscript
+func fire(from_position: Vector2, direction: Vector2) -> void
+func can_fire() -> bool
+func upgrade_damage(bonus: float) -> void
+func set_damage_multiplier(multiplier: float) -> void
+```
+
+---
+
+### Bullet (Projectile Entity)
+
+**Purpose**: Individual projectile with collision detection and damage.
+
+**Location**: `src/entities/projectiles/Bullet.gd`
+
+**Key Responsibilities**:
+- Linear movement at constant velocity
+- Lifetime management (3 second default)
+- Enemy collision detection and damage
+- Particle effect on impact
+- Pooling support
+
+**Signals**:
+- `hit_enemy(enemy: BaseEnemy, damage: float)`
+- `expired()`
+
+**Public API**:
+```gdscript
+func set_velocity(direction: Vector2, spd: float = WeaponConfig.BULLET_SPEED) -> void
+func reset() -> void
+func prepare() -> void
+```
 
 ---
 
@@ -611,23 +678,35 @@ Player clicks harvestable crop → BaseCrop.harvested signal
 EconomyManager.add_credits(value)
 ```
 
-### Combat System Flow
+### Combat System Flow (Step 7: Mech Weapon)
 
 ```
-Player presses fire → MechController shoots
+Player clicks → Input.is_action_pressed("fire")
     ↓
-Bullet (pooled) spawned with velocity
+MechController._handle_weapon()
     ↓
-Bullet.area_entered detects Enemy
+WeaponSystem.can_fire() check
     ↓
-Enemy.take_damage(bullet_damage)
+WeaponSystem.fire(from_position, direction)
+    ↓
+Get Bullet from object pool
+    ↓
+Bullet.set_velocity(direction, speed)
+    ↓
+Bullet moves via _physics_process
+    ↓
+Bullet.area_entered(Enemy)
+    ↓
+Enemy.take_damage(damage)
+    ↓
+Bullet.expired signal → Return to pool
     ↓
 If enemy.health <= 0:
-    Enemy.died.emit(self)
+    Enemy.died.emit()
     ↓
     WaveManager._on_enemy_died()
     ↓
-    Check if wave complete → EventBus.wave_completed.emit()
+    Check if wave complete → wave_completed.emit()
 ```
 
 ---
@@ -840,10 +919,10 @@ const ENTITY_A_COLOR: Color = Color.RED
 2. ✅ **WaveManager**: Enemy spawning and wave progression (COMPLETED - Step 6)
 3. ✅ **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support (COMPLETED - Step 6)
 4. ✅ **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH) (COMPLETED - Step 6)
+5. ✅ **CombatSystem**: Mech weapon and projectile system (Step 7)
 
 ### Planned Systems (Not Yet Implemented)
 
-5. **CombatSystem**: Mech weapon and projectile system (Step 7)
 6. **TowerSystem**: Automated turret placement and targeting (Step 8)
 7. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
 8. **SaveSystem**: Persistent progression between runs
