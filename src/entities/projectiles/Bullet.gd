@@ -63,30 +63,38 @@ func _process(_delta: float) -> void:
 #endregion
 
 #region Collision & Damage
-func _on_area_entered(area: Area2D) -> void:
+func _on_area_entered(area: Node2D) -> void:
 	"""Handle collision with enemies or obstacles"""
 
 	# Skip if we've already hit this target
 	if area in _hit_targets:
 		return
 
-	# Check if this is an enemy
+	# Get the actual enemy (collision shapes are children of the enemy)
+	var enemy: BaseEnemy = null
 	if area is BaseEnemy:
-		var enemy: BaseEnemy = area as BaseEnemy
-		_hit_targets.append(area)
+		enemy = area as BaseEnemy
+	elif area.get_parent() is BaseEnemy:
+		enemy = area.get_parent() as BaseEnemy
 
-		# Deal damage
-		enemy.take_damage(self.damage)
-		self.hit_enemy.emit(enemy, self.damage)
+	# Only process if we found a valid enemy
+	if enemy == null:
+		return
 
-		if self.debug_draw:
-			print("[Bullet] Hit enemy: ", enemy.name, " for ", self.damage, " damage")
+	_hit_targets.append(enemy)
 
-		# Create hit effect
-		_create_hit_effect(area.global_position)
+	# Deal damage
+	enemy.take_damage(self.damage)
+	self.hit_enemy.emit(enemy, self.damage)
 
-		# Destroy bullet after hit
-		_expire()
+	if self.debug_draw:
+		print("[Bullet] Hit enemy: ", enemy.name, " for ", self.damage, " damage")
+
+	# Create hit effect
+	_create_hit_effect(enemy.global_position)
+
+	# Destroy bullet after hit
+	_expire()
 
 #endregion
 
