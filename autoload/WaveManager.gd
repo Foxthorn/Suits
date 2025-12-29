@@ -92,35 +92,20 @@ func _spawn_wave_enemies(wave_number: int) -> void:
 		_spawn_shooter(spawn_point)
 
 
-## Calculate spawn points around the mech
 func _calculate_spawn_points() -> Array[Vector2]:
-	"""Generate spawn points in 4 directions around the mech"""
-	var spawn_points: Array[Vector2] = []
 	var mech = get_tree().get_first_node_in_group("player_mech")
+	var mech_pos: Vector2
 
 	if mech == null:
 		push_error("WaveManager: Cannot find mech to calculate spawn points! Using center of viewport.")
-		# Fallback: use center of viewport if mech not found
-		var viewport_center: Vector2 = get_viewport().get_visible_rect().get_center()
-		# Still create spawn points around the fallback position
-		var mech_pos: Vector2 = viewport_center
-		var spawn_distance: float = EnemyConfig.SPAWN_DISTANCE_FROM_MECH
-		var point_count: int = EnemyConfig.SPAWN_POINTS_PER_WAVE
+		mech_pos = get_viewport().get_visible_rect().get_center()
+	else:
+		mech_pos = mech.global_position
 
-		for i in range(point_count):
-			var angle: float = (TAU / point_count) * i
-			var offset: Vector2 = Vector2(cos(angle), sin(angle)) * spawn_distance
+	return _generate_spawn_points_around_position(mech_pos)
 
-			var spread_angle: float = randf_range(-EnemyConfig.SPAWN_SPREAD_ANGLE, EnemyConfig.SPAWN_SPREAD_ANGLE)
-			var spread_distance: float = randf_range(-EnemyConfig.SPAWN_SPREAD_DISTANCE, EnemyConfig.SPAWN_SPREAD_DISTANCE)
-			var spread_offset: Vector2 = Vector2(cos(spread_angle), sin(spread_angle)) * spread_distance
-
-			spawn_points.append(mech_pos + offset + spread_offset)
-
-		return spawn_points
-
-	# Mech exists - use actual mech position
-	var mech_pos: Vector2 = mech.global_position
+func _generate_spawn_points_around_position(center: Vector2) -> Array[Vector2]:
+	var spawn_points: Array[Vector2] = []
 	var spawn_distance: float = EnemyConfig.SPAWN_DISTANCE_FROM_MECH
 	var point_count: int = EnemyConfig.SPAWN_POINTS_PER_WAVE
 
@@ -128,15 +113,13 @@ func _calculate_spawn_points() -> Array[Vector2]:
 		var angle: float = (TAU / point_count) * i
 		var offset: Vector2 = Vector2(cos(angle), sin(angle)) * spawn_distance
 
-		# Add some randomness to spawn position
 		var spread_angle: float = randf_range(-EnemyConfig.SPAWN_SPREAD_ANGLE, EnemyConfig.SPAWN_SPREAD_ANGLE)
 		var spread_distance: float = randf_range(-EnemyConfig.SPAWN_SPREAD_DISTANCE, EnemyConfig.SPAWN_SPREAD_DISTANCE)
 		var spread_offset: Vector2 = Vector2(cos(spread_angle), sin(spread_angle)) * spread_distance
 
-		spawn_points.append(mech_pos + offset + spread_offset)
+		spawn_points.append(center + offset + spread_offset)
 
 	return spawn_points
-
 
 ## Spawn a single rusher enemy
 func _spawn_rusher(position: Vector2) -> void:
