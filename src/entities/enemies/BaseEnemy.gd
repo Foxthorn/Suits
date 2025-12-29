@@ -283,18 +283,22 @@ func die() -> void:
 	await get_tree().create_timer(death_duration).timeout
 
 	_spawn_death_particles()
-	queue_free()
+	# Note: queue_free() no longer called here - particles handle their own cleanup
 
 
 func _spawn_death_particles() -> void:
 	"""Spawn particle effect on death"""
 	# Simple particle effect: small circles spreading outward
 	var particle_count: int = EnemyConfig.DEATH_PARTICLE_COUNT
+	var particles: Array[Node2D] = []
 
+	# Create all particles in parallel (not sequential)
 	for i in range(particle_count):
 		var angle: float = (TAU / particle_count) * i
-		var particle = await _create_particle(_enemy_data.color, angle)
-		get_parent().add_child(particle)
+		var particle = _create_particle(_enemy_data.color, angle)
+		if get_parent():
+			get_parent().add_child(particle)
+		particles.append(particle)
 
 
 func _create_particle(color: Color, direction_angle: float) -> Node2D:
@@ -306,18 +310,18 @@ func _create_particle(color: Color, direction_angle: float) -> Node2D:
 	particle_sprite.texture = _create_placeholder_texture(8, 8, color)
 	particle.add_child(particle_sprite)
 
-	# Tween particle movement and fade
+	# Tween particle movement and fade (non-blocking)
 	var tween = create_tween()
-	var particle_speed: float = randf_range(100.0, 200.0)
-	var lifetime: float = 0.5
+	var particle_speed: float = randf_range(EnemyConfig.DEATH_PARTICLE_MIN_SPEED, EnemyConfig.DEATH_PARTICLE_MAX_SPEED)
+	var lifetime: float = EnemyConfig.DEATH_PARTICLE_LIFETIME
 	var target_pos: Vector2 = particle.global_position + Vector2(cos(direction_angle), sin(direction_angle)) * particle_speed * lifetime
 
 	tween.parallel()
 	tween.tween_property(particle, "global_position", target_pos, lifetime)
 	tween.tween_property(particle_sprite, "modulate:a", 0.0, lifetime)
 
-	await tween.finished
-	particle.queue_free()
+	# Non-blocking: particle cleans itself up after tween finishes
+	tween.tween_callback(particle.queue_free)
 
 	return particle
 

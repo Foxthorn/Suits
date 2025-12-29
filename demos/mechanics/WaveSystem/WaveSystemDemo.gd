@@ -121,7 +121,7 @@ func _on_wave_started(wave_number: int) -> void:
 
 	# Count enemy types
 	for enemy in WaveManager.enemies_in_wave:
-		if enemy.enemy_type == EnemyConfig.EnemyType.RUSHER:
+		if enemy.enemy_type == EnemyDatabase.EnemyType.RUSHER:
 			self.last_wave_info["rushers"] += 1
 		else:
 			self.last_wave_info["shooters"] += 1
@@ -194,7 +194,7 @@ func _update_wave_info() -> void:
 		var shooter_count: int = 0
 
 		for enemy in WaveManager.enemies_in_wave:
-			if enemy.enemy_type == EnemyConfig.EnemyType.RUSHER:
+			if enemy.enemy_type == EnemyDatabase.EnemyType.RUSHER:
 				rusher_count += 1
 			else:
 				shooter_count += 1

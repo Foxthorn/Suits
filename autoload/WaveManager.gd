@@ -112,7 +112,7 @@ func _calculate_spawn_points() -> Array[Vector2]:
 
 		# Add some randomness to spawn position
 		var spread_angle: float = randf_range(-EnemyConfig.SPAWN_SPREAD_ANGLE, EnemyConfig.SPAWN_SPREAD_ANGLE)
-		var spread_distance: float = randf_range(-50.0, 50.0)
+		var spread_distance: float = randf_range(-EnemyConfig.SPAWN_SPREAD_DISTANCE, EnemyConfig.SPAWN_SPREAD_DISTANCE)
 		var spread_offset: Vector2 = Vector2(cos(spread_angle), sin(spread_angle)) * spread_distance
 
 		spawn_points.append(mech_pos + offset + spread_offset)
@@ -142,7 +142,7 @@ func _spawn_shooter(position: Vector2) -> void:
 func _add_enemy_to_wave(enemy: BaseEnemy) -> void:
 	"""Add enemy to tracking array and connect death signal"""
 	self.enemies_in_wave.append(enemy)
-	enemy.died.connect(_on_enemy_died.bindv([enemy]))
+	enemy.died.connect(_on_enemy_died.bind(enemy))
 
 	# Add to scene (find the root node or use get_tree().current_scene)
 	var scene_root = get_tree().current_scene
