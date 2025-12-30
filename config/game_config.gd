@@ -91,23 +91,24 @@ const TOWER_BASIC_FIRE_RATE: float = 1.0
 ## Usage: collision_layer = GameConfig.COLLISION_LAYER_PLAYER  # Sets entity to layer 2
 ##        collision_mask = GameConfig.COLLISION_MASK_ENEMIES    # Detects entities on layer 3
 
-# Layer definitions (1-8 in Godot)
-const COLLISION_LAYER_WORLD: int = 1              # Layer 1: Static world geometry
-const COLLISION_LAYER_PLAYER: int = 2             # Layer 2: Player mech + player projectiles
-const COLLISION_LAYER_ENEMIES: int = 4            # Layer 3: Enemy entities (bit value = 2^2)
-const COLLISION_LAYER_ENEMY_PROJECTILES: int = 8  # Layer 4: Enemy-fired projectiles (bit value = 2^3)
-const COLLISION_LAYER_TOWERS: int = 16            # Layer 5: Automated turrets (bit value = 2^4)
-const COLLISION_LAYER_CROPS: int = 32             # Layer 6: Planted crops (bit value = 2^5)
-const COLLISION_LAYER_GROUND_ITEMS: int = 64      # Layer 7: Dropped loot/items (bit value = 2^6)
-const COLLISION_LAYER_UI_INTERACTIVE: int = 128   # Layer 8: Interactive UI elements (bit value = 2^7)
+# Layer definitions (1-9 in Godot)
+const COLLISION_LAYER_WORLD: int = 1                # Layer 1: Static world geometry
+const COLLISION_LAYER_PLAYER: int = 2               # Layer 2: Player mech
+const COLLISION_LAYER_ENEMIES: int = 4              # Layer 3: Enemy entities (bit value = 2^2)
+const COLLISION_LAYER_ENEMY_PROJECTILES: int = 8    # Layer 4: Enemy-fired projectiles (bit value = 2^3)
+const COLLISION_LAYER_PLAYER_PROJECTILES: int = 16  # Layer 5: Player-fired projectiles (bit value = 2^4)
+const COLLISION_LAYER_TOWERS: int = 32              # Layer 6: Automated turrets (bit value = 2^5)
+const COLLISION_LAYER_CROPS: int = 64               # Layer 7: Planted crops (bit value = 2^6)
+const COLLISION_LAYER_GROUND_ITEMS: int = 128       # Layer 8: Dropped loot/items (bit value = 2^7)
+const COLLISION_LAYER_UI_INTERACTIVE: int = 256     # Layer 9: Interactive UI elements (bit value = 2^8)
 
 # Collision masks for common entity types
 # These define which layers each entity type should detect
-const COLLISION_MASK_MECH: int = 0b0001_0111      # Detect: world(1), enemies(3), enemy_projectiles(4)
+const COLLISION_MASK_MECH: int = 0b0000_1101              # Detect: world(1), enemies(3), enemy_projectiles(4)
 const COLLISION_MASK_PLAYER_PROJECTILES: int = 0b0000_0100  # Detect: enemies(3) only
-const COLLISION_MASK_ENEMY: int = 0b0001_0111    # Detect: world(1), player(2), towers(5)
+const COLLISION_MASK_ENEMY: int = 0b0010_0011             # Detect: world(1), player(2), towers(6)
 const COLLISION_MASK_ENEMY_PROJECTILES: int = 0b0000_0010   # Detect: player(2) only
-const COLLISION_MASK_TOWER: int = 0b0000_0001    # Detect: world(1) only
-const COLLISION_MASK_CROP: int = 0                # Detect: nothing (area-only)
+const COLLISION_MASK_TOWER: int = 0b0000_0101             # Detect: world(1), enemies(3) - towers need to detect enemies to target them
+const COLLISION_MASK_CROP: int = 0                        # Detect: nothing (area-only)
 
 #endregion

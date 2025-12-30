@@ -64,6 +64,18 @@ fire={
 ]
 }
 
+[layer_names]
+
+2d_physics/layer_1="WORLD"
+2d_physics/layer_2="PLAYER"
+2d_physics/layer_3="ENEMIES"
+2d_physics/layer_4="ENEMY_PROJECTILES"
+2d_physics/layer_5="PLAYER_PROJECTILES"
+2d_physics/layer_6="TOWERS"
+2d_physics/layer_7="CROPS"
+2d_physics/layer_8="GROUND_ITEMS"
+2d_physics/layer_9="UI_INTERACTIVE"
+
 [physics]
 
 2d/physics_layers/0="world"
