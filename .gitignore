@@ -15,3 +15,5 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+docs\agent\@AI_CODE_REVIEW_SUMMARY.md

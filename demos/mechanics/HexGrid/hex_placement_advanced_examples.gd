@@ -303,7 +303,7 @@ class FloodFillSelection:
 		var connected: Array[Vector2i] = []
 
 		while not queue.is_empty():
-			var current := queue.pop_front()
+			var current: Vector2i = queue.pop_front()
 
 			if visited.has(current):
 				continue

@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://src/entities/crops/BaseCrop.gd" id="1"]
 
 [node name="BaseCrop" type="Area2D"]
+collision_layer = 32
+collision_mask = 0
 script = ExtResource("1")
 crop_type = 0
 debug_draw = true

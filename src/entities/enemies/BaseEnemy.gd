@@ -58,6 +58,7 @@ var _mech_target: Node2D = null
 #region Nodes
 var sprite: Sprite2D = null
 var collision_shape: CollisionShape2D = null
+var projectile_detector: Area2D = null
 
 #endregion
 
@@ -86,11 +87,16 @@ func _ready() -> void:
 		queue_free()
 		return
 
+		# Configure collision layers (Layer 3: enemies)
+	collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
+	# Collision mask: detect world (1), player (2), towers (5)
+	collision_mask = GameConfig.COLLISION_MASK_ENEMY
+
 	# Apply stats from database
 	_speed = _enemy_data.speed
 	_max_health = _enemy_data.max_health
 	_damage = _enemy_data.damage
-	health = _max_health
+	self.health = _max_health
 
 	# Allow debug_draw override from inspector
 	if not self.debug_draw and _enemy_data.debug_draw:
@@ -101,7 +107,9 @@ func _ready() -> void:
 	_load_animation_sprites()
 	_acquire_target()
 
+		# Debug collision configuration
 	if self.debug_draw:
+		print("[BaseEnemy] %s - Collision Layer 4 (enemies), Mask: 0b0001_0111 (world, player, towers) - HP: %.0f" % [_enemy_data.name, self.health])
 		print("BaseEnemy: Spawned %s (HP: %.0f, Speed: %.0f)" % [_enemy_data.name, _max_health, _speed])
 
 
@@ -123,12 +131,30 @@ func _setup_visuals() -> void:
 
 
 func _setup_collision() -> void:
-	"""Initialize collision shape"""
+	"""Initialize collision shapes for movement and projectile detection"""
 	collision_shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
 	circle.radius = EnemyConfig.COLLISION_RADIUS
 	collision_shape.shape = circle
 	add_child(collision_shape)
+
+			# Setup projectile detector (Area2D for bullet collision)
+	projectile_detector = Area2D.new()
+	projectile_detector.name = "ProjectileDetector"
+	projectile_detector.collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
+	projectile_detector.collision_mask = GameConfig.COLLISION_LAYER_PLAYER
+	add_child(projectile_detector)
+
+	# Add collision shape to detector
+	var detector_shape = CollisionShape2D.new()
+	var detector_circle = CircleShape2D.new()
+	detector_circle.radius = EnemyConfig.COLLISION_RADIUS
+	detector_shape.shape = detector_circle
+	projectile_detector.add_child(detector_shape)
+
+	# Connect projectile detector signals
+	if not projectile_detector.area_entered.is_connected(_on_projectile_detector_hit):
+		projectile_detector.area_entered.connect(_on_projectile_detector_hit)
 
 
 func _load_animation_sprites() -> void:
@@ -256,29 +282,37 @@ func _update_animation(delta: float) -> void:
 #region Health & Damage
 ## Take damage and check if dead
 func take_damage(amount: float) -> void:
-	if not is_alive:
+	if not self.is_alive:
+		if self.debug_draw:
+			print("[BaseEnemy] %s already dead, ignoring damage" % _enemy_data.name)
 		return
 
-	health -= amount
-	health_changed.emit(health, _max_health)
+	var old_health: float = self.health
+	self.health -= amount
+	self.health_changed.emit(self.health, _max_health)
 
-	# Play hit animation
+		# Play hit animation
 	_set_animation_state(AnimationState.HIT)
 
-	if health <= 0:
+	if self.debug_draw:
+		print("[BaseEnemy] %s took %.0f damage! HP: %.0f → %.0f (alive: %s)" % [_enemy_data.name, amount, old_health, self.health, self.is_alive])
+
+	if self.health <= 0:
+		if self.debug_draw:
+			print("[BaseEnemy] %s is now DEAD (HP: %.0f)" % [_enemy_data.name, self.health])
 		die()
 
 
 ## Kill the enemy and emit signals
 func die() -> void:
-	if not is_alive:
+	if not self.is_alive:
+		if self.debug_draw:
+			print("[BaseEnemy] %s already dead, ignoring die() call" % _enemy_data.name)
 		return
 
 	is_alive = false
-	_set_animation_state(AnimationState.DEATH)
-
-	# Emit death signal BEFORE waiting for animation (WaveManager will track this)
 	died.emit(self)
+	_set_animation_state(AnimationState.DEATH)
 
 	# Wait for death animation to finish before cleanup
 	var death_duration: float = _death_frame_count * EnemyConfig.ANIMATION_SPEED
@@ -339,7 +373,7 @@ func _create_particle(color: Color, direction_angle: float) -> Node2D:
 
 #region Movement & Pathfinding
 func _physics_process(delta: float) -> void:
-	if not is_alive:
+	if not self.is_alive:
 		return
 
 	_update_animation(delta)
@@ -372,6 +406,16 @@ func _move_toward_target(delta: float) -> void:
 			_set_animation_state(AnimationState.WALK)
 		else:  # Idle
 			_set_animation_state(AnimationState.IDLE)
+
+#endregion
+
+#region Projectile Detection
+func _on_projectile_detector_hit(area: Node2D) -> void:
+	"""Handle collision with projectiles (triggered from projectile_detector Area2D)"""
+	# The area hitting us should be a Bullet
+	if area is Bullet:
+		if self.debug_draw:
+			print("[BaseEnemy] %s detected projectile hit from Bullet" % _enemy_data.name)
 
 #endregion
 

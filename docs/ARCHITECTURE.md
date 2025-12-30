@@ -13,8 +13,9 @@
 5. [Data Flow](#data-flow)
 6. [Camera System](#camera-system)
 7. [Scene Hierarchy](#scene-hierarchy)
-8. [Performance Considerations](#performance-considerations)
-9. [Future Architecture Plans](#future-architecture-plans)
+8. [Physics & Collision Layers](#physics--collision-layers)
+9. [Performance Considerations](#performance-considerations)
+10. [Future Architecture Plans](#future-architecture-plans)
 
 ---
 
@@ -170,13 +171,80 @@ func set_camera_position(pos: Vector2) -> void
 
 **Key Responsibilities**:
 - WASD/gamepad movement
-- Mouse-aimed shooting
+- Mouse-aimed shooting (via WeaponSystem)
 - Health and damage management
-- Weapon/upgrade integration (future)
+- Weapon/upgrade integration
 
 **Signals**:
 - `health_changed(current_hp: float, max_hp: float)`
 - `died()`
+- `position_changed(new_position: Vector2)`
+
+**Input Actions**:
+- `move_up/down/left/right`: WASD movement
+- `fire`: Left-click to shoot
+
+**Public API**:
+```gdscript
+func take_damage(amount: float) -> void
+func heal(amount: float) -> void
+func set_health(value: float) -> void
+func get_health_percentage() -> float
+func upgrade_max_health(amount: float) -> void
+func upgrade_weapon_damage(amount: float) -> void
+func set_weapon_damage_multiplier(multiplier: float) -> void
+```
+
+---
+
+### WeaponSystem
+
+**Purpose**: Manages mech weapon firing, cooldowns, and projectile pooling.
+
+**Location**: `src/systems/WeaponSystem.gd`
+
+**Key Responsibilities**:
+- Fire rate management and cooldown tracking
+- Projectile pooling for performance (50-bullet default pool)
+- Spawning bullets in player-aimed direction
+- Damage multiplier application from upgrades
+
+**Signals**:
+- `bullet_fired(bullet: Bullet, position: Vector2, direction: Vector2)`
+
+**Public API**:
+```gdscript
+func fire(from_position: Vector2, direction: Vector2) -> void
+func can_fire() -> bool
+func upgrade_damage(bonus: float) -> void
+func set_damage_multiplier(multiplier: float) -> void
+```
+
+---
+
+### Bullet (Projectile Entity)
+
+**Purpose**: Individual projectile with collision detection and damage.
+
+**Location**: `src/entities/projectiles/Bullet.gd`
+
+**Key Responsibilities**:
+- Linear movement at constant velocity
+- Lifetime management (3 second default)
+- Enemy collision detection and damage
+- Particle effect on impact
+- Pooling support
+
+**Signals**:
+- `hit_enemy(enemy: BaseEnemy, damage: float)`
+- `expired()`
+
+**Public API**:
+```gdscript
+func set_velocity(direction: Vector2, spd: float = WeaponConfig.BULLET_SPEED) -> void
+func reset() -> void
+func prepare() -> void
+```
 
 ---
 
@@ -611,23 +679,35 @@ Player clicks harvestable crop → BaseCrop.harvested signal
 EconomyManager.add_credits(value)
 ```
 
-### Combat System Flow
+### Combat System Flow (Step 7: Mech Weapon)
 
 ```
-Player presses fire → MechController shoots
+Player clicks → Input.is_action_pressed("fire")
     ↓
-Bullet (pooled) spawned with velocity
+MechController._handle_weapon()
     ↓
-Bullet.area_entered detects Enemy
+WeaponSystem.can_fire() check
     ↓
-Enemy.take_damage(bullet_damage)
+WeaponSystem.fire(from_position, direction)
+    ↓
+Get Bullet from object pool
+    ↓
+Bullet.set_velocity(direction, speed)
+    ↓
+Bullet moves via _physics_process
+    ↓
+Bullet.area_entered(Enemy)
+    ↓
+Enemy.take_damage(damage)
+    ↓
+Bullet.expired signal → Return to pool
     ↓
 If enemy.health <= 0:
-    Enemy.died.emit(self)
+    Enemy.died.emit()
     ↓
     WaveManager._on_enemy_died()
     ↓
-    Check if wave complete → EventBus.wave_completed.emit()
+    Check if wave complete → wave_completed.emit()
 ```
 
 ---
@@ -710,6 +790,202 @@ EntityName (Area2D or CharacterBody2D)
 ├── Timers (AttackTimer, etc.)
 └── Effects (Particles, AudioStreamPlayer2D)
 ```
+
+---
+
+## Physics & Collision Layers
+
+### Layer Assignment
+
+Godot physics layers are used to control which entities can collide and interact. Each layer has a specific purpose in the game world:
+
+| Layer | Name | Purpose | Entities |
+|-------|------|---------|----------|
+| 1 | `world` | Static world geometry and obstacles | TileMap, static obstacles, walls |
+| 2 | `player` | Player mech and player-owned projectiles | Mech, Player Bullets |
+| 3 | `enemies` | Enemy entities | RusherEnemy, ShooterEnemy, BossEnemy |
+| 4 | `enemy_projectiles` | Enemy-fired projectiles | ShooterEnemy bullets, boss attacks |
+| 5 | `towers` | Player-placed automated turrets | BasicTurret, AdvancedTurret |
+| 6 | `crops` | Planted crops (non-physical, visual only) | BaseCrop (detection only, no physics) |
+| 7 | `ground_items` | Dropped items and loot | Harvestable drops, resource pickups |
+| 8 | `ui_interactive` | Interactive UI elements requiring physics | (reserved for future UI physics) |
+
+### Collision Mask Rules by Entity Type
+
+**Design Philosophy**: Minimize collision checks by having entities only detect what they need to interact with. For example, enemies don't collide with crops because crops occupy the same space but don't block movement.
+
+#### Mech (Player Character) — Layer 2
+
+**Collision Layer**: `2 (player)`
+**Collision Mask** (what it collides with): `1, 3, 4`
+
+| Collides With | Reason |
+|---|---|
+| ✅ Layer 1 (world) | Must not pass through walls or obstacles |
+| ✅ Layer 3 (enemies) | Takes damage from contact with enemies |
+| ✅ Layer 4 (enemy_projectiles) | Takes damage from enemy bullets |
+| ❌ Layer 2 (player) | Only one mech exists, no self-collision |
+| ❌ Layer 5 (towers) | Towers are optional obstacles; mech can push through |
+| ❌ Layer 6 (crops) | Crops are thin visual overlays, mech walks through them |
+| ❌ Layer 7 (ground_items) | Items are collected via area detection, not physics |
+
+#### Player Bullet — Layer 2
+
+**Collision Layer**: `2 (player)`
+**Collision Mask**: `3`
+
+| Collides With | Reason |
+|---|---|
+| ✅ Layer 3 (enemies) | Must damage enemies on impact |
+| ❌ All others | Bullets ignore world geometry (can fire over obstacles), towers, crops, other bullets |
+
+**Design Note**: Bullets are Area2D nodes that only care about hitting enemies. World geometry doesn't stop bullets (they have 3-second lifetime instead). This simplifies targeting and feels more arcade-like.
+
+**Projectile Detection Implementation**:
+BaseEnemy uses a dedicated internal `ProjectileDetector` Area2D node for efficient bullet collision detection:
+- **ProjectileDetector Collision Layer**: `4 (enemies)`
+- **ProjectileDetector Collision Mask**: `2 (player projectiles)`
+- This allows BaseEnemy to detect incoming bullets via `area_entered` signals
+- The ProjectileDetector is sized identically to the enemy's main collision shape for consistent hit detection
+- Signal handler: `_on_projectile_detector_hit(area: Node2D)` receives the Bullet's Area2D node
+
+This two-layer detection approach ensures both directions work correctly:
+1. **Bullet → Enemy**: Bullet's collision_mask=3 detects BaseEnemy (Layer 3)
+2. **Enemy → Bullet**: BaseEnemy's ProjectileDetector collision_mask=2 detects Bullet (Layer 2)
+
+#### Enemies (Rusher, Shooter) — Layer 3
+
+**Collision Layer**: `3 (enemies)`
+**Collision Mask**: `1, 2, 5`
+
+| Collides With | Reason |
+|---|---|
+| ✅ Layer 1 (world) | Must not pass through walls |
+| ✅ Layer 2 (player) | Damages mech on contact |
+| ✅ Layer 5 (towers) | Damaged by towers; can path around them |
+| ❌ Layer 3 (enemies) | Enemies pass through each other (no stacking/blocking) |
+| ❌ Layer 4 (enemy_projectiles) | Enemies ignore friendly projectiles |
+| ❌ Layer 6 (crops) | Enemies walk through crops freely |
+| ❌ Layer 7 (ground_items) | Don't collide with drops |
+
+**Design Note**: Enemies don't collide with each other to prevent stalling waves. They can overlap, creating dense swarms that feel chaotic and challenging.
+
+**Projectile Detection via Internal Area2D**:
+Each enemy has an internal `projectile_detector: Area2D` node that handles bullet collision detection:
+- **Layer**: `4 (enemies)` - Same as main enemy body
+- **Mask**: `2 (player projectiles)` - Only detects bullets
+- **Size**: Matches the enemy's main collision shape (CircleShape2D with radius = EnemyConfig.COLLISION_RADIUS)
+- **Signal**: Connects to `area_entered` signal, routed to `_on_projectile_detector_hit(area: Node2D)`
+- **Purpose**: Clean separation between movement physics (main body) and projectile detection (dedicated Area2D)
+
+This design allows enemies to efficiently detect bullets without interfering with movement physics or other collision checks.
+
+#### Enemy Projectile (ShooterEnemy bullets) — Layer 4
+
+**Collision Layer**: `4 (enemy_projectiles)`
+**Collision Mask**: `2`
+
+| Collides With | Reason |
+|---|---|
+| ✅ Layer 2 (player) | Must hit mech to deal damage |
+| ❌ All others | Enemy bullets ignore world geometry, towers, other projectiles |
+
+**Design Note**: Like player bullets, enemy projectiles are Area2D and only detect the mech. This keeps attack patterns visible and fair.
+
+#### Tower (BasicTurret, etc.) — Layer 5
+
+**Collision Layer**: `5 (towers)`
+**Collision Mask**: `1`
+
+| Collides With | Reason |
+|---|---|
+| ✅ Layer 1 (world) | Towers sit on ground and collide with terrain |
+| ❌ Layer 3 (enemies) | Enemies collide with towers (not vice-versa) |
+| ❌ All others | Towers don't need collision detection for other entities |
+
+**Design Note**: Towers are stationary, so they only need one-way collision (enemies detect them). Towers use Area2D for enemy detection via `area_entered` signals, not physics-based collision.
+
+#### Crop (BaseCrop) — Layer 6
+
+**Collision Layer**: `6 (crops)`
+**Collision Mask**: `(none)`
+
+| Collides With | Reason |
+|---|---|
+| ❌ Everything | Crops are visual-only; detection via `area_entered` signals |
+
+**Design Note**: Crops don't block movement. They use Area2D for hover detection and click handling, but don't engage physics collision. This allows dense crop layouts without performance issues.
+
+### Collision Mask Quick Reference
+
+```gdscript
+# Quick reference for setting collision layers in code:
+
+# Mech setup
+mech.collision_layer = 2       # "I am a player"
+mech.collision_mask = 0b0001_0111  # Detect: world, enemies, enemy_projectiles
+
+# Player Bullet setup
+bullet.collision_layer = 2     # "I am a player projectile"
+bullet.collision_mask = 0b0000_0100  # Detect: enemies only
+
+# Enemy setup
+enemy.collision_layer = 4      # "I am an enemy"
+enemy.collision_mask = 0b0001_0111  # Detect: world, player, towers
+
+# Enemy Projectile setup
+enemyprojectile.collision_layer = 8   # "I am an enemy projectile"
+enemyprojectile.collision_mask = 0b0000_0100   # Detect: player only
+
+# Tower setup
+tower.collision_layer = 16     # "I am a tower"
+tower.collision_mask = 0b0000_0001   # Detect: world only (enemies detect towers)
+
+# Crop setup
+crop.collision_layer = 32      # "I am a crop"
+crop.collision_mask = 0         # Detect nothing (area-only detection)
+```
+
+### Layer Configuration in Project Settings
+
+Physics layers must be configured in Godot project settings:
+
+**Path**: `Project → Project Settings → Physics → 2D → Physics Layers`
+
+**Required Configuration**:
+```
+Physics Layer 1:  world
+Physics Layer 2:  player
+Physics Layer 3:  enemies
+Physics Layer 4:  enemy_projectiles
+Physics Layer 5:  towers
+Physics Layer 6:  crops
+Physics Layer 7:  ground_items
+Physics Layer 8:  ui_interactive
+```
+
+### Why This Collision Setup?
+
+**1. Performance**: Minimized collision checks reduce physics frame time
+   - Bullets only check enemies, not world geometry
+   - Enemies don't collide with each other (no pathfinding around allies)
+   - Crops don't use collision (area-only detection)
+
+**2. Game Feel**: Arcade-style action feels better than realistic physics
+   - Dense enemy swarms without stacking/blocking
+   - Clear line of sight for ranged attacks
+   - Mech can navigate tight spaces without tower obstruction
+
+**3. Clarity**: Each layer has one clear purpose
+   - Easy to understand what entities interact
+   - New developers can quickly add entities to correct layers
+   - Debugging collisions is straightforward (check layer vs mask)
+
+**4. Extensibility**: Easy to add new entity types
+   - Boss enemies: Layer 3, same mask as regular enemies
+   - Advanced towers: Layer 5, same setup as basic towers
+   - Obstacles/props: Layer 1, add to world layer
+   - Explosions/AoE: Layer 7, add collision detection as needed
 
 ---
 
@@ -840,14 +1116,14 @@ const ENTITY_A_COLOR: Color = Color.RED
 2. ✅ **WaveManager**: Enemy spawning and wave progression (COMPLETED - Step 6)
 3. ✅ **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support (COMPLETED - Step 6)
 4. ✅ **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH) (COMPLETED - Step 6)
+5. ✅ **CombatSystem**: Mech weapon and projectile system (COMPLETED - Step 7)
 
-### Planned Systems (Not Yet Implemented)
+### Next Systems to Implement
 
-5. **CombatSystem**: Mech weapon and projectile system (Step 7)
-6. **TowerSystem**: Automated turret placement and targeting (Step 8)
-7. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
-8. **SaveSystem**: Persistent progression between runs
-9. **AIDirector**: Dynamic difficulty adjustment
+6. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
+7. **TowerSystem**: Automated turret placement and targeting (Step 8)
+8. **SaveSystem**: Persistent progression between runs (Post-vertical slice)
+9. **AIDirector**: Dynamic difficulty adjustment (Post-vertical slice)
 
 ### Planned Optimizations
 

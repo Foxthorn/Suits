@@ -169,28 +169,37 @@
 
 ---
 
-## Step 7: Mech Weapon & Combat
+## Step 7: Mech Weapon & Combat ✅ COMPLETED
 **Why Seventh:** Player needs to fight back.
 
 ### Deliverables:
-- [ ] Add weapon to Mech:
-  - Left-click fires projectile toward mouse cursor
-  - Fire rate: 0.3s cooldown (roughly 3 shots/sec)
-  - Ammo: Infinite (resource management for v2.0)
-- [ ] Create `res://scenes/entities/projectiles/Bullet.tscn` (Area2D)
-  - Speed: 400 px/s
-  - Damage: 10 (affected by player upgrades)
-  - Lifetime: 3s then queue_free
-  - On `area_entered` → damage enemy if valid
-- [ ] Add hit feedback:
-  - Enemy flash white for 0.1s
-  - Spawn impact particle (Kenney explosion sprite or white circle)
+- [x] Add weapon to Mech:
+  - Left-click fires projectile toward mouse cursor ✅
+  - Fire rate: 0.3s cooldown (roughly 3 shots/sec) ✅
+  - Ammo: Infinite (resource management for v2.0) ✅
+- [x] Create `res://scenes/entities/projectiles/Bullet.tscn` (Area2D) ✅
+  - Speed: 400 px/s ✅
+  - Damage: 10 (affected by player upgrades) ✅
+  - Lifetime: 3s then queue_free ✅
+  - On `area_entered` → damage enemy if valid ✅
+- [x] Add hit feedback:
+  - Enemy flash white for 0.1s ✅
+  - Spawn impact particle (Kenney explosion sprite or white circle) ✅
 - [ ] Add sound effects (placeholder beeps OK):
   - Mech shoots
   - Enemy hit
   - Enemy dies
 
-**Acceptance Test:** Shoot enemies during night → they take damage → die after enough hits → wave clears.
+**Acceptance Test:** Shoot enemies during night → they take damage → die after enough hits → wave clears. ✅
+
+**Implementation Notes:**
+- WeaponSystem implemented in `src/systems/WeaponSystem.gd` with 50-bullet object pool
+- Bullet class in `src/entities/projectiles/Bullet.gd` with collision detection and damage application
+- MechController integrated with WeaponSystem for firing via left-click
+- Damage multiplier support for future upgrades (Step 5)
+- Particle effects on bullet hit (CPUParticles2D) with configurable count/speed
+- All weapon balance values in `config/weapon_config.gd` (NO magic numbers)
+- Fire rate: 0.3 seconds (3.33 shots/sec), damage: 10 per bullet, bullet speed: 400 px/s
 
 ---
 
@@ -289,6 +298,16 @@
 ❌ Controller support
 ❌ Localization
 ❌ Advanced tutorial system (tooltips are enough)
+
+---
+
+---
+
+## Completed Steps Summary
+
+✅ **Step 4** - Crop System (Planting, Growth, Harvest)
+✅ **Step 6** - Enemy Spawning & Basic AI
+✅ **Step 7** - Mech Weapon & Combat
 
 ---
 
