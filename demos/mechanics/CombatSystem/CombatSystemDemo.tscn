@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://dj8wf2lfvcmj0a"]
+[gd_scene load_steps=8 format=3 uid="uid://d1h2j0otix1ru"]
 
-[ext_resource type="Script" path="res://demos/mechanics/CombatSystem/CombatSystemDemo.gd" id="1"]
+[ext_resource type="Script" uid="uid://c4yg2ud242n4i" path="res://demos/mechanics/CombatSystem/CombatSystemDemo.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://dmv3pmancj3wr" path="res://scenes/entities/mech/Mech.tscn" id="3"]
+[ext_resource type="Script" uid="uid://bkrqtwu5q51md" path="res://src/systems/WeaponSystem.gd" id="4_silxn"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0, 0, 0, 0.7)
@@ -32,8 +33,12 @@ script = ExtResource("1")
 camera = NodePath("../Camera2D")
 mech_node = NodePath("../Mech")
 
-[node name="Mech" parent="." instance=ExtResource("3")]
+[node name="Mech" parent="." node_paths=PackedStringArray("weapon_system") instance=ExtResource("3")]
 position = Vector2(600, 400)
+weapon_system = NodePath("WeaponSystem")
+
+[node name="WeaponSystem" type="Node" parent="Mech"]
+script = ExtResource("4_silxn")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(600, 400)

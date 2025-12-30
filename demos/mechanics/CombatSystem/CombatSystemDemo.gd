@@ -36,6 +36,9 @@ func _ready() -> void:
 	mech = get_tree().get_first_node_in_group("player_mech")
 	hex_grid = $HexGrid
 
+	# Wait for all nodes to initialize their _ready() methods
+	await get_tree().process_frame
+
 	if mech and mech.has_node("WeaponSystem"):
 		weapon_system = mech.get_node("WeaponSystem")
 
@@ -46,6 +49,8 @@ func _ready() -> void:
 	print("CombatSystemDemo: Initialized")
 	if weapon_system:
 		print("CombatSystemDemo: WeaponSystem found with %d bullet pool size" % weapon_system.pool_size)
+	else:
+		print("CombatSystemDemo: WARNING - WeaponSystem not found!")
 
 
 func _setup_instructions() -> void:
@@ -96,7 +101,13 @@ func _connect_signals() -> void:
 		WaveManager.wave_completed.connect(_on_wave_completed)
 
 	if weapon_system:
-		weapon_system.bullet_fired.connect(_on_bullet_fired)
+		if weapon_system.bullet_fired.is_connected(_on_bullet_fired):
+			print("CombatSystemDemo: Bullet fired signal already connected")
+		else:
+			weapon_system.bullet_fired.connect(_on_bullet_fired)
+			print("CombatSystemDemo: Connected to bullet_fired signal")
+	else:
+		print("CombatSystemDemo: WARNING - Cannot connect to bullet_fired, weapon_system is null")
 
 	# Monitor mech health if available
 	if mech and mech.has_signal("health_changed"):
@@ -229,6 +240,7 @@ func _update_ui() -> void:
 	_update_wave_info()
 	_update_mech_info()
 	_update_weapon_info()
+	_update_debug_info()
 
 
 func _update_phase_info() -> void:
@@ -290,5 +302,41 @@ func _update_weapon_info() -> void:
 	self.fire_rate_label.text = "Fire Rate: %.1f shots/sec" % fire_rate
 	self.damage_label.text = "Damage: %.0f per bullet" % damage
 	self.cooldown_label.text = "Cooldown: %.2fs" % cooldown
+
+
+func _update_debug_info() -> void:
+	"""Update debug statistics in instructions panel"""
+	var instructions = """[b]COMBAT SYSTEM DEMO[/b]
+
+[color=ffff99]OBJECTIVE:[/color]
+Test weapon firing, projectile pooling, and damage system
+
+[color=ffff99]HOW TO USE:[/color]
+• WASD: Move mech
+• Mouse: Aim (mech rotates toward cursor)
+• Left-Click: Fire weapon (0.3s cooldown)
+• Watch bullets damage enemies
+
+[color=ffff99]WHAT TO TEST:[/color]
+1. Fire rate cooldown (0.3s between shots)
+2. Projectile pooling (bullets reuse from pool)
+3. Enemy collision detection
+4. Damage application (10 per bullet)
+5. Wave progression (enemies get stronger)
+6. Particle effects on hit
+7. Bullet lifetime (3 seconds)
+
+[color=ffff99]DEBUG INFO:[/color]
+Bullets Fired: %d
+Enemies Killed: %d
+Total Damage: %.0f
+
+[color=ffff99]CONTROLS:[/color]
+• N: Skip to night time
+• E: Spawn extra enemy
+• D: Increase weapon damage 50%%
+• ESC: Return to main menu
+""" % [self.bullets_fired_count, self.enemies_killed_count, self.total_damage_dealt]
+	self.instructions_label.text = instructions
 
 #endregion

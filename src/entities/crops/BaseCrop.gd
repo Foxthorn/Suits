@@ -43,6 +43,11 @@ var _hover_indicator: Sprite2D = null  # Shows when mouse hovers
 
 #region Initialization
 func _ready() -> void:
+	# Configure collision layers (Layer 6: crops - area-only, no physics)
+	collision_layer = 32  # Layer 6 = 2^5 = 32 in binary
+	# Collision mask: detect nothing (crops don't collide with anything)
+	collision_mask = 0  # No collision detection
+
 	# Get crop data from database
 	_crop_data = CropDatabase.get_crop(self.crop_type)
 	if not _crop_data:
@@ -67,6 +72,7 @@ func _ready() -> void:
 	_set_state(GrowthState.PLANTED)
 
 	if self.debug_draw:
+		print("BaseCrop: %s - Collision Layer 32 (crops), Mask: 0 (area-only, no physics) at hex %v" % [_crop_data.name, _hex_coords])
 		print("BaseCrop: Planted %s at hex %v (grow time: %.1fs)" % [_crop_data.name, _hex_coords, _total_grow_time])
 
 func _setup_visuals() -> void:

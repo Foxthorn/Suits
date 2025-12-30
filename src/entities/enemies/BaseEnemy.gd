@@ -86,6 +86,11 @@ func _ready() -> void:
 		queue_free()
 		return
 
+	# Configure collision layers (Layer 3: enemies)
+	collision_layer = 4  # Layer 3 = 2^2 = 4 in binary
+	# Collision mask: detect world (1), player (2), towers (5)
+	collision_mask = 0b0001_0111  # Binary: 0001_0111 = layers 1, 2, 5
+
 	# Apply stats from database
 	_speed = _enemy_data.speed
 	_max_health = _enemy_data.max_health
@@ -100,6 +105,9 @@ func _ready() -> void:
 	_setup_collision()
 	_load_animation_sprites()
 	_acquire_target()
+
+	# Debug collision configuration
+	print("[BaseEnemy] %s - Collision Layer 4 (enemies), Mask: 0b0001_0111 (world, player, towers) - HP: %.0f" % [_enemy_data.name, health])
 
 	if self.debug_draw:
 		print("BaseEnemy: Spawned %s (HP: %.0f, Speed: %.0f)" % [_enemy_data.name, _max_health, _speed])
@@ -257,23 +265,30 @@ func _update_animation(delta: float) -> void:
 ## Take damage and check if dead
 func take_damage(amount: float) -> void:
 	if not is_alive:
+		print("[BaseEnemy] %s already dead, ignoring damage" % _enemy_data.name)
 		return
 
+	var old_health: float = health
 	health -= amount
 	health_changed.emit(health, _max_health)
 
 	# Play hit animation
 	_set_animation_state(AnimationState.HIT)
 
+	print("[BaseEnemy] %s took %.0f damage! HP: %.0f → %.0f (alive: %s)" % [_enemy_data.name, amount, old_health, health, is_alive])
+
 	if health <= 0:
+		print("[BaseEnemy] %s is now DEAD (HP: %.0f)" % [_enemy_data.name, health])
 		die()
 
 
 ## Kill the enemy and emit signals
 func die() -> void:
 	if not is_alive:
+		print("[BaseEnemy] %s already dead, ignoring die() call" % _enemy_data.name)
 		return
 
+	print("[BaseEnemy] %s is DYING - starting death animation" % _enemy_data.name)
 	is_alive = false
 	died.emit(self)
 	_set_animation_state(AnimationState.DEATH)
