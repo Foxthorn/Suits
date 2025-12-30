@@ -140,6 +140,7 @@ func reset() -> void:
 	_hit_targets.clear()
 	visible = false
 	set_physics_process(false)
+	monitoring = false  # Disable collision detection while in pool
 
 ## Prepare bullet for firing (called when retrieving from pool)
 func prepare() -> void:
@@ -147,6 +148,7 @@ func prepare() -> void:
 	_hit_targets.clear()
 	visible = true
 	set_physics_process(true)
+	monitoring = true  # Enable collision detection when active
 
 #endregion
 

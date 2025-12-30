@@ -67,7 +67,6 @@ func _ready() -> void:
 	if not weapon_system:
 		weapon_system = WeaponSystem.new()
 		add_child(weapon_system)
-		await weapon_system.tree_entered  # Wait for weapon system to fully initialize
 
 	# Emit initial health state
 	self.health_changed.emit(self.current_health, self.max_health)

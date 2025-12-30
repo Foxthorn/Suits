@@ -29,6 +29,7 @@ var _bullet_pool: Array[Bullet] = []
 var _fire_cooldown: float = 0.0
 var _damage_base: float = WeaponConfig.WEAPON_DAMAGE
 var _bullets_container: Node  # Container for active bullets
+var _signal_connections: Dictionary = {}  # Track signal connections to avoid duplicates
 var debug_draw: bool = false
 
 #endregion
@@ -57,6 +58,7 @@ func _physics_process(delta: float) -> void:
 func _initialize_pool() -> void:
 	"""Pre-allocate bullets for pooling"""
 	_bullet_pool.clear()
+	_signal_connections.clear()
 
 	for i in range(pool_size):
 		var bullet = bullet_scene.instantiate() as Bullet
@@ -64,12 +66,23 @@ func _initialize_pool() -> void:
 		_bullets_container.add_child(bullet)
 		_bullet_pool.append(bullet)
 
+		# Pre-connect signal once during pool initialization
+		if not _signal_connections.has(bullet):
+			bullet.expired.connect(_on_bullet_expired.bind(bullet))
+			_signal_connections[bullet] = true
+
 func _get_bullet_from_pool() -> Bullet:
 	"""Get an available bullet from the pool or create new one"""
 	if _bullet_pool.is_empty():
 		# Create new bullet if pool is exhausted
 		var bullet = bullet_scene.instantiate() as Bullet
 		_bullets_container.add_child(bullet)
+
+		# Connect signal for newly created bullets
+		if not _signal_connections.has(bullet):
+			bullet.expired.connect(_on_bullet_expired.bind(bullet))
+			_signal_connections[bullet] = true
+
 		return bullet
 
 	var bullet = _bullet_pool.pop_back()
@@ -98,9 +111,8 @@ func fire(from_position: Vector2, direction: Vector2) -> void:
 	bullet.damage = _damage_base * self.damage_multiplier
 	bullet.set_velocity(direction, WeaponConfig.BULLET_SPEED)
 
-	# Connect expiry signal to return to pool
-	if not bullet.expired.is_connected(_on_bullet_expired.bind(bullet)):
-		bullet.expired.connect(_on_bullet_expired.bind(bullet))
+	# Signal connection is established during pool initialization
+	# No need to reconnect each time
 
 	# Start cooldown
 	_fire_cooldown = WeaponConfig.WEAPON_FIRE_RATE

@@ -282,7 +282,7 @@ func _update_animation(delta: float) -> void:
 #region Health & Damage
 ## Take damage and check if dead
 func take_damage(amount: float) -> void:
-		if not self.is_alive:
+	if not self.is_alive:
 		if self.debug_draw:
 			print("[BaseEnemy] %s already dead, ignoring damage" % _enemy_data.name)
 		return
@@ -305,7 +305,7 @@ func take_damage(amount: float) -> void:
 
 ## Kill the enemy and emit signals
 func die() -> void:
-		if not self.is_alive:
+	if not self.is_alive:
 		if self.debug_draw:
 			print("[BaseEnemy] %s already dead, ignoring die() call" % _enemy_data.name)
 		return
