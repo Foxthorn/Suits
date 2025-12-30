@@ -55,9 +55,9 @@ var _mouse_direction: Vector2 = Vector2.ZERO  # Cache mouse direction for weapon
 #region Initialization
 func _ready() -> void:
 	# Configure collision layers (Layer 2: player)
-	collision_layer = 2
+	collision_layer = GameConfig.COLLISION_LAYER_PLAYER
 	# Collision mask: detect world (1), enemies (3), enemy_projectiles (4)
-	collision_mask = 0b0001_0111  # Binary: 0001_0111 = layers 1, 3, 4
+	collision_mask = GameConfig.COLLISION_MASK_MECH
 
 	# Initialize health
 	self.current_health = min(self.current_health, self.max_health)
@@ -72,7 +72,7 @@ func _ready() -> void:
 	self.health_changed.emit(self.current_health, self.max_health)
 
 	if self.debug_draw:
-		print("MechController: Collision Layer 2, Mask: 0b0001_0111 (world, enemies, enemy_projectiles)")
+		print("MechController: Collision Layer %d (Layer 2 - player), Mask: %d (detects world, enemies, enemy_projectiles)" % [collision_layer, collision_mask])
 		print("MechController: Initialized at position ", global_position)
 		print("MechController: Weapon system ready")
 

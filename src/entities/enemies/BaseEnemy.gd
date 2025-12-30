@@ -87,10 +87,10 @@ func _ready() -> void:
 		queue_free()
 		return
 
-	# Configure collision layers (Layer 3: enemies)
-	collision_layer = 4  # Layer 3 = 2^2 = 4 in binary
+		# Configure collision layers (Layer 3: enemies)
+	collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
 	# Collision mask: detect world (1), player (2), towers (5)
-	collision_mask = 0b0001_0111  # Binary: 0001_0111 = layers 1, 2, 5
+	collision_mask = GameConfig.COLLISION_MASK_ENEMY
 
 	# Apply stats from database
 	_speed = _enemy_data.speed
@@ -138,11 +138,11 @@ func _setup_collision() -> void:
 	collision_shape.shape = circle
 	add_child(collision_shape)
 
-	# Setup projectile detector (Area2D for bullet collision)
+			# Setup projectile detector (Area2D for bullet collision)
 	projectile_detector = Area2D.new()
 	projectile_detector.name = "ProjectileDetector"
-	projectile_detector.collision_layer = 4  # On layer 3 (bit 2)
-	projectile_detector.collision_mask = 2   # Detect layer 2 (bullets)
+	projectile_detector.collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
+	projectile_detector.collision_mask = GameConfig.COLLISION_LAYER_PLAYER
 	add_child(projectile_detector)
 
 	# Add collision shape to detector

@@ -32,10 +32,10 @@ var _particle_cleanup_timer: Timer = null  # Timer for particle cleanup instead 
 
 #region Lifecycle
 func _ready() -> void:
-	# Configure collision layers (Layer 2: player projectile)
-	collision_layer = 2
-	# Collision mask: detect enemies (layer 3 = bit 2 = value 4)
-	collision_mask = 4  # Layer 3 only
+	# Configure collision layers (Layer 2: player projectiles)
+	collision_layer = GameConfig.COLLISION_LAYER_PLAYER
+	# Collision mask: detect enemies (Layer 3)
+	collision_mask = GameConfig.COLLISION_MASK_PLAYER_PROJECTILES
 
 	# Ensure collision detection is set up
 	if not area_entered.is_connected(_on_area_entered):
@@ -43,7 +43,7 @@ func _ready() -> void:
 
 	# Debug collision configuration
 	if self.debug_draw:
-		print("[Bullet] Collision Layer: %d, Mask: %d (layer 3 enemies)" % [collision_layer, collision_mask])
+		print("[Bullet] Collision Layer: %d (Layer 2 - player_projectiles), Mask: %d (detects Layer 3 - enemies)" % [collision_layer, collision_mask])
 		print("[Bullet] Spawned at position: ", global_position, " with velocity: ", _velocity)
 		if area_entered.is_connected(_on_area_entered):
 			print("[Bullet] area_entered signal connected ✓")
