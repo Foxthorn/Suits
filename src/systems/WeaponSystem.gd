@@ -29,6 +29,7 @@ var _bullet_pool: Array[Bullet] = []
 var _fire_cooldown: float = 0.0
 var _damage_base: float = WeaponConfig.WEAPON_DAMAGE
 var _bullets_container: Node  # Container for active bullets
+var debug_draw: bool = false
 
 #endregion
 
@@ -42,7 +43,8 @@ func _ready() -> void:
 	# Pre-allocate bullet pool
 	_initialize_pool()
 
-	print("[WeaponSystem] Initialized with %d bullets in pool" % self.pool_size)
+	if self.debug_draw:
+		print("[WeaponSystem] Initialized with %d bullets in pool" % self.pool_size)
 
 func _physics_process(delta: float) -> void:
 	# Update fire cooldown
@@ -97,14 +99,15 @@ func fire(from_position: Vector2, direction: Vector2) -> void:
 	bullet.set_velocity(direction, WeaponConfig.BULLET_SPEED)
 
 	# Connect expiry signal to return to pool
-	if not bullet.expired.is_connected(_on_bullet_expired.bindv([bullet])):
-		bullet.expired.connect(_on_bullet_expired.bindv([bullet]))
+	if not bullet.expired.is_connected(_on_bullet_expired.bind(bullet)):
+		bullet.expired.connect(_on_bullet_expired.bind(bullet))
 
 	# Start cooldown
 	_fire_cooldown = WeaponConfig.WEAPON_FIRE_RATE
 	self.bullet_fired.emit(bullet, from_position, direction)
 
-	print("[WeaponSystem] Fired bullet from %s in direction %s" % [from_position, direction])
+	if self.debug_draw:
+		print("[WeaponSystem] Fired bullet from %s in direction %s" % [from_position, direction])
 
 ## Check if weapon is ready to fire
 func can_fire() -> bool:
@@ -124,12 +127,14 @@ func get_fire_rate() -> float:
 ## Apply damage upgrade
 func upgrade_damage(bonus: float) -> void:
 	_damage_base += bonus
-	print("[WeaponSystem] Damage upgraded to %.1f (bonus: %.1f)" % [_damage_base, bonus])
+	if self.debug_draw:
+		print("[WeaponSystem] Damage upgraded to %.1f (bonus: %.1f)" % [_damage_base, bonus])
 
 ## Set damage multiplier (for percentage upgrades)
 func set_damage_multiplier(multiplier: float) -> void:
 	self.damage_multiplier = multiplier
-	print("[WeaponSystem] Damage multiplier set to %.2f" % multiplier)
+	if self.debug_draw:
+		print("[WeaponSystem] Damage multiplier set to %.2f" % multiplier)
 
 ## Get current effective damage
 func get_current_damage() -> float:

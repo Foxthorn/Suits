@@ -107,10 +107,9 @@ func _ready() -> void:
 	_load_animation_sprites()
 	_acquire_target()
 
-	# Debug collision configuration
-	print("[BaseEnemy] %s - Collision Layer 4 (enemies), Mask: 0b0001_0111 (world, player, towers) - HP: %.0f" % [_enemy_data.name, self.health])
-
+		# Debug collision configuration
 	if self.debug_draw:
+		print("[BaseEnemy] %s - Collision Layer 4 (enemies), Mask: 0b0001_0111 (world, player, towers) - HP: %.0f" % [_enemy_data.name, self.health])
 		print("BaseEnemy: Spawned %s (HP: %.0f, Speed: %.0f)" % [_enemy_data.name, _max_health, _speed])
 
 
@@ -283,36 +282,37 @@ func _update_animation(delta: float) -> void:
 #region Health & Damage
 ## Take damage and check if dead
 func take_damage(amount: float) -> void:
-	if not self.is_alive:
-		print("[BaseEnemy] %s already dead, ignoring damage" % _enemy_data.name)
+		if not self.is_alive:
+		if self.debug_draw:
+			print("[BaseEnemy] %s already dead, ignoring damage" % _enemy_data.name)
 		return
 
 	var old_health: float = self.health
 	self.health -= amount
 	self.health_changed.emit(self.health, _max_health)
 
-	# Play hit animation
+		# Play hit animation
 	_set_animation_state(AnimationState.HIT)
 
-	print("[BaseEnemy] %s took %.0f damage! HP: %.0f → %.0f (alive: %s)" % [_enemy_data.name, amount, old_health, self.health, self.is_alive])
+	if self.debug_draw:
+		print("[BaseEnemy] %s took %.0f damage! HP: %.0f → %.0f (alive: %s)" % [_enemy_data.name, amount, old_health, self.health, self.is_alive])
 
 	if self.health <= 0:
-		print("[BaseEnemy] %s is now DEAD (HP: %.0f)" % [_enemy_data.name, self.health])
+		if self.debug_draw:
+			print("[BaseEnemy] %s is now DEAD (HP: %.0f)" % [_enemy_data.name, self.health])
 		die()
 
 
 ## Kill the enemy and emit signals
 func die() -> void:
-	if not self.is_alive:
-		print("[BaseEnemy] %s already dead, ignoring die() call" % _enemy_data.name)
+		if not self.is_alive:
+		if self.debug_draw:
+			print("[BaseEnemy] %s already dead, ignoring die() call" % _enemy_data.name)
 		return
 
 	is_alive = false
 	died.emit(self)
 	_set_animation_state(AnimationState.DEATH)
-
-	# Emit death signal BEFORE waiting for animation (WaveManager will track this)
-	died.emit(self)
 
 	# Wait for death animation to finish before cleanup
 	var death_duration: float = _death_frame_count * EnemyConfig.ANIMATION_SPEED

@@ -13,7 +13,6 @@ const BULLET_COLOR: Color = Color.YELLOW
 #region Weapon Stats (Mech Primary Weapon)
 const WEAPON_FIRE_RATE: float = 0.3  # seconds between shots
 const WEAPON_DAMAGE: float = 10.0  # damage per bullet
-const WEAPON_DAMAGE_FALLOFF_DISTANCE: float = 500.0  # Range where damage starts degrading (optional for future)
 
 #endregion
 

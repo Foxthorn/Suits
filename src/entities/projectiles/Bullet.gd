@@ -26,6 +26,7 @@ signal expired()
 var _velocity: Vector2 = Vector2.ZERO
 var _age: float = 0.0
 var _hit_targets: Array[Node] = []  # Track what we've already hit to avoid double-hits
+var _particle_cleanup_timer: Timer = null  # Timer for particle cleanup instead of await
 
 #endregion
 
@@ -41,12 +42,12 @@ func _ready() -> void:
 		area_entered.connect(_on_area_entered)
 
 	# Debug collision configuration
-	print("[Bullet] Collision Layer: %d, Mask: %d (layer 3 enemies)" % [collision_layer, collision_mask])
-	if area_entered.is_connected(_on_area_entered):
-		print("[Bullet] area_entered signal connected ✓")
-
 	if self.debug_draw:
+		print("[Bullet] Collision Layer: %d, Mask: %d (layer 3 enemies)" % [collision_layer, collision_mask])
 		print("[Bullet] Spawned at position: ", global_position, " with velocity: ", _velocity)
+		if area_entered.is_connected(_on_area_entered):
+			print("[Bullet] area_entered signal connected ✓")
+
 
 func _physics_process(delta: float) -> void:
 	if not visible:
@@ -75,11 +76,13 @@ func _process(_delta: float) -> void:
 #region Collision & Damage
 func _on_area_entered(area: Node2D) -> void:
 	"""Handle collision with enemies or obstacles"""
-	print("[Bullet] area_entered fired! Area: %s (type: %s, parent: %s)" % [area.name, area.get_class(), area.get_parent().name if area.get_parent() else "none"])
+	if self.debug_draw:
+		print("[Bullet] area_entered fired! Area: %s (type: %s, parent: %s)" % [area.name, area.get_class(), area.get_parent().name if area.get_parent() else "none"])
 
 	# Skip if we've already hit this target
 	if area in _hit_targets:
-		print("[Bullet] Already hit this target, skipping")
+		if self.debug_draw:
+			print("[Bullet] Already hit this target, skipping")
 		return
 
 	# Get the actual enemy - check if area is BaseEnemy or child of BaseEnemy
@@ -88,21 +91,25 @@ func _on_area_entered(area: Node2D) -> void:
 	# Direct hit on the enemy node itself
 	if area is BaseEnemy:
 		enemy = area as BaseEnemy
-		print("[Bullet] Direct hit on BaseEnemy: %s" % enemy.name)
+		if self.debug_draw:
+			print("[Bullet] Direct hit on BaseEnemy: %s" % enemy.name)
 	# Hit on collision shape (child of enemy)
 	elif area.get_parent() is BaseEnemy:
 		enemy = area.get_parent() as BaseEnemy
-		print("[Bullet] Hit on child of BaseEnemy: %s (child: %s)" % [enemy.name, area.name])
+		if self.debug_draw:
+			print("[Bullet] Hit on child of BaseEnemy: %s (child: %s)" % [enemy.name, area.name])
 
 	# Only process if we found a valid enemy
 	if enemy == null:
-		print("[Bullet] No BaseEnemy found in collision! Area type: %s, Parent: %s" % [area.get_class(), area.get_parent().get_class() if area.get_parent() else "null"])
+		if self.debug_draw:
+			print("[Bullet] No BaseEnemy found in collision! Area type: %s, Parent: %s" % [area.get_class(), area.get_parent().get_class() if area.get_parent() else "null"])
 		return
 
 	_hit_targets.append(enemy)
 
 	# Deal damage
-	print("[Bullet] Dealing %.0f damage to %s (HP: %.0f → %.0f)" % [self.damage, enemy.name, enemy.health, enemy.health - self.damage])
+	if self.debug_draw:
+		print("[Bullet] Dealing %.0f damage to %s (HP: %.0f → %.0f)" % [self.damage, enemy.name, enemy.health, enemy.health - self.damage])
 	enemy.take_damage(self.damage)
 	self.hit_enemy.emit(enemy, self.damage)
 
@@ -162,18 +169,27 @@ func _create_hit_effect(position: Vector2) -> void:
 	particles.modulate = WeaponConfig.BULLET_COLOR
 	particles.scale = Vector2(0.5, 0.5)
 
-	# Add to scene and auto-cleanup
+	# Add to scene with timer-based cleanup (avoid await continuation after pool return)
 	get_parent().add_child(particles)
-	await get_tree().create_timer(WeaponConfig.HIT_PARTICLE_LIFETIME).timeout
-	if is_instance_valid(particles):
-		particles.queue_free()
+
+	# Use Timer instead of await to prevent execution after bullet returns to pool
+	var cleanup_timer = Timer.new()
+	cleanup_timer.one_shot = true
+	cleanup_timer.wait_time = WeaponConfig.HIT_PARTICLE_LIFETIME
+	particles.add_child(cleanup_timer)
+	cleanup_timer.timeout.connect(func() -> void:
+		if is_instance_valid(particles):
+			particles.queue_free()
+	)
+	cleanup_timer.start()
 
 func _expire() -> void:
 	"""Bullet lifetime ended - clean up"""
-	if _age >= self.lifetime:
-		print("[Bullet] EXPIRED after %.2f seconds (lifetime: %.2f)" % [_age, self.lifetime])
-	else:
-		print("[Bullet] Destroyed after hit")
+	if self.debug_draw:
+		if _age >= self.lifetime:
+			print("[Bullet] EXPIRED after %.2f seconds (lifetime: %.2f)" % [_age, self.lifetime])
+		else:
+			print("[Bullet] Destroyed after hit")
 
 	self.expired.emit()
 	reset()

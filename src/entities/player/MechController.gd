@@ -137,9 +137,8 @@ func _handle_weapon() -> void:
 	if not weapon_system:
 		return
 
-	if Input.is_action_pressed("fire"):
-		if weapon_system.can_fire():
-			weapon_system.fire(global_position, _mouse_direction)
+	if Input.is_action_just_pressed("fire"):
+		weapon_system.fire(global_position, _mouse_direction)
 
 #endregion
 
