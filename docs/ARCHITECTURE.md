@@ -841,6 +841,18 @@ Godot physics layers are used to control which entities can collide and interact
 
 **Design Note**: Bullets are Area2D nodes that only care about hitting enemies. World geometry doesn't stop bullets (they have 3-second lifetime instead). This simplifies targeting and feels more arcade-like.
 
+**Projectile Detection Implementation**:
+BaseEnemy uses a dedicated internal `ProjectileDetector` Area2D node for efficient bullet collision detection:
+- **ProjectileDetector Collision Layer**: `4 (enemies)`
+- **ProjectileDetector Collision Mask**: `2 (player projectiles)`
+- This allows BaseEnemy to detect incoming bullets via `area_entered` signals
+- The ProjectileDetector is sized identically to the enemy's main collision shape for consistent hit detection
+- Signal handler: `_on_projectile_detector_hit(area: Node2D)` receives the Bullet's Area2D node
+
+This two-layer detection approach ensures both directions work correctly:
+1. **Bullet → Enemy**: Bullet's collision_mask=3 detects BaseEnemy (Layer 3)
+2. **Enemy → Bullet**: BaseEnemy's ProjectileDetector collision_mask=2 detects Bullet (Layer 2)
+
 #### Enemies (Rusher, Shooter) — Layer 3
 
 **Collision Layer**: `3 (enemies)`
@@ -857,6 +869,16 @@ Godot physics layers are used to control which entities can collide and interact
 | ❌ Layer 7 (ground_items) | Don't collide with drops |
 
 **Design Note**: Enemies don't collide with each other to prevent stalling waves. They can overlap, creating dense swarms that feel chaotic and challenging.
+
+**Projectile Detection via Internal Area2D**:
+Each enemy has an internal `projectile_detector: Area2D` node that handles bullet collision detection:
+- **Layer**: `4 (enemies)` - Same as main enemy body
+- **Mask**: `2 (player projectiles)` - Only detects bullets
+- **Size**: Matches the enemy's main collision shape (CircleShape2D with radius = EnemyConfig.COLLISION_RADIUS)
+- **Signal**: Connects to `area_entered` signal, routed to `_on_projectile_detector_hit(area: Node2D)`
+- **Purpose**: Clean separation between movement physics (main body) and projectile detection (dedicated Area2D)
+
+This design allows enemies to efficiently detect bullets without interfering with movement physics or other collision checks.
 
 #### Enemy Projectile (ShooterEnemy bullets) — Layer 4
 

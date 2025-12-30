@@ -21,17 +21,6 @@ TimeManager="*res://autoload/TimeManager.gd"
 EconomyManager="*res://autoload/EconomyManager.gd"
 WaveManager="*res://autoload/WaveManager.gd"
 
-[physics]
-
-2d/physics_layers/0="world"
-2d/physics_layers/1="player"
-2d/physics_layers/2="enemies"
-2d/physics_layers/3="enemy_projectiles"
-2d/physics_layers/4="towers"
-2d/physics_layers/5="crops"
-2d/physics_layers/6="ground_items"
-2d/physics_layers/7="ui_interactive"
-
 [input]
 
 move_up={
@@ -74,3 +63,14 @@ fire={
 "events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":1,"canceled":false,"pressed":false,"double_click":false,"script":null)
 ]
 }
+
+[physics]
+
+2d/physics_layers/0="world"
+2d/physics_layers/1="player"
+2d/physics_layers/2="enemies"
+2d/physics_layers/3="enemy_projectiles"
+2d/physics_layers/4="towers"
+2d/physics_layers/5="crops"
+2d/physics_layers/6="ground_items"
+2d/physics_layers/7="ui_interactive"

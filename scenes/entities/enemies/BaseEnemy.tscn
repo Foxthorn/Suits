@@ -14,3 +14,10 @@ script = ExtResource("1_u1c83")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_xfubt")
+
+[node name="ProjectileDetector" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 2
+
+[node name="ProjectileCollisionShape" type="CollisionShape2D" parent="ProjectileDetector"]
+shape = SubResource("CircleShape2D_xfubt")

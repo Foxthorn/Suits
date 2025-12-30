@@ -159,10 +159,20 @@ func _on_bullet_hit_enemy(enemy: BaseEnemy, damage: float) -> void:
 	self.total_damage_dealt += damage
 	print("CombatSystemDemo: Hit! Dealt %.0f damage to enemy" % damage)
 
+	# Connect to enemy death to track kills
+	if not enemy.died.is_connected(_on_enemy_died):
+		enemy.died.connect(_on_enemy_died)
+
 
 func _on_wave_started(wave_number: int) -> void:
 	"""Called when a wave starts"""
 	print("CombatSystemDemo: Wave %d started - get ready to fight!" % wave_number)
+
+
+func _on_enemy_died(enemy: BaseEnemy) -> void:
+	"""Called when an enemy dies"""
+	self.enemies_killed_count += 1
+	print("CombatSystemDemo: Enemy killed! Total kills: %d" % self.enemies_killed_count)
 
 
 func _on_wave_completed(wave_number: int) -> void:
@@ -264,7 +274,12 @@ func _update_wave_info() -> void:
 		var rusher_count: int = 0
 		var shooter_count: int = 0
 
+		# Check each enemy is valid before accessing properties
 		for enemy in WaveManager.enemies_in_wave:
+			# Skip freed enemies (check if node is valid)
+			if not is_instance_valid(enemy):
+				continue
+
 			if enemy.enemy_type == EnemyDatabase.EnemyType.RUSHER:
 				rusher_count += 1
 			else:

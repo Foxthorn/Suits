@@ -33,15 +33,15 @@ var _hit_targets: Array[Node] = []  # Track what we've already hit to avoid doub
 func _ready() -> void:
 	# Configure collision layers (Layer 2: player projectile)
 	collision_layer = 2
-	# Collision mask: detect enemies only (3)
-	collision_mask = 0b0000_0100  # Binary: 0000_0100 = layer 3 only
+	# Collision mask: detect enemies (layer 3 = bit 2 = value 4)
+	collision_mask = 4  # Layer 3 only
 
 	# Ensure collision detection is set up
 	if not area_entered.is_connected(_on_area_entered):
 		area_entered.connect(_on_area_entered)
 
 	# Debug collision configuration
-	print("[Bullet] Collision Layer 2, Mask: 0b0000_0100 (enemies only) - Area2D ready")
+	print("[Bullet] Collision Layer: %d, Mask: %d (layer 3 enemies)" % [collision_layer, collision_mask])
 	if area_entered.is_connected(_on_area_entered):
 		print("[Bullet] area_entered signal connected ✓")
 
@@ -75,25 +75,28 @@ func _process(_delta: float) -> void:
 #region Collision & Damage
 func _on_area_entered(area: Node2D) -> void:
 	"""Handle collision with enemies or obstacles"""
-	print("[Bullet] area_entered fired! Area: %s (type: %s)" % [area.name, area.get_class()])
+	print("[Bullet] area_entered fired! Area: %s (type: %s, parent: %s)" % [area.name, area.get_class(), area.get_parent().name if area.get_parent() else "none"])
 
 	# Skip if we've already hit this target
 	if area in _hit_targets:
 		print("[Bullet] Already hit this target, skipping")
 		return
 
-	# Get the actual enemy (collision shapes are children of the enemy)
+	# Get the actual enemy - check if area is BaseEnemy or child of BaseEnemy
 	var enemy: BaseEnemy = null
+
+	# Direct hit on the enemy node itself
 	if area is BaseEnemy:
 		enemy = area as BaseEnemy
-		print("[Bullet] Direct hit on BaseEnemy")
+		print("[Bullet] Direct hit on BaseEnemy: %s" % enemy.name)
+	# Hit on collision shape (child of enemy)
 	elif area.get_parent() is BaseEnemy:
 		enemy = area.get_parent() as BaseEnemy
-		print("[Bullet] Hit on child of BaseEnemy, parent: %s" % enemy.name)
+		print("[Bullet] Hit on child of BaseEnemy: %s (child: %s)" % [enemy.name, area.name])
 
 	# Only process if we found a valid enemy
 	if enemy == null:
-		print("[Bullet] No BaseEnemy found in collision, ignoring")
+		print("[Bullet] No BaseEnemy found in collision! Area type: %s, Parent: %s" % [area.get_class(), area.get_parent().get_class() if area.get_parent() else "null"])
 		return
 
 	_hit_targets.append(enemy)
