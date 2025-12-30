@@ -33,8 +33,9 @@ func _physics_process(delta: float) -> void:
 	# Check collision with mech for damage (after move_and_slide)
 	for i in range(get_slide_collision_count()):
 		var collision: KinematicCollision2D = get_slide_collision(i)
-		if collision.get_collider().is_in_group("player_mech"):
-			_damage_mech(collision.get_collider(), delta)
+		var collider = collision.get_collider()
+		if collider and collider.is_in_group("player_mech"):
+			_damage_mech(collider, delta)
 
 	# Keep attack animation active for its duration, then revert to movement state
 	if _attack_timer > 0:

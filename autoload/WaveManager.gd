@@ -18,6 +18,7 @@ signal all_waves_cleared()
 var current_wave: int = 0
 var enemies_in_wave: Array[BaseEnemy] = []
 var is_wave_active: bool = false
+var _initial_enemy_count: int = 0  # Track for wave progress calculation
 
 #endregion
 
@@ -62,6 +63,9 @@ func start_wave(wave_number: int) -> void:
 	# Spawn enemies
 	_spawn_wave_enemies(wave_number)
 
+	# Store initial enemy count for progress calculation
+	self._initial_enemy_count = self.enemies_in_wave.size()
+
 	self.wave_started.emit(wave_number)
 	print("WaveManager: Wave %d started with %d enemies" % [wave_number, self.enemies_in_wave.size()])
 
@@ -92,17 +96,20 @@ func _spawn_wave_enemies(wave_number: int) -> void:
 		_spawn_shooter(spawn_point)
 
 
-## Calculate spawn points around the mech
 func _calculate_spawn_points() -> Array[Vector2]:
-	"""Generate spawn points in 4 directions around the mech"""
-	var spawn_points: Array[Vector2] = []
 	var mech = get_tree().get_first_node_in_group("player_mech")
+	var mech_pos: Vector2
 
 	if mech == null:
-		push_error("WaveManager: Cannot find mech to calculate spawn points!")
-		return spawn_points
+		push_error("WaveManager: Cannot find mech to calculate spawn points! Using center of viewport.")
+		mech_pos = get_viewport().get_visible_rect().get_center()
+	else:
+		mech_pos = mech.global_position
 
-	var mech_pos: Vector2 = mech.global_position
+	return _generate_spawn_points_around_position(mech_pos)
+
+func _generate_spawn_points_around_position(center: Vector2) -> Array[Vector2]:
+	var spawn_points: Array[Vector2] = []
 	var spawn_distance: float = EnemyConfig.SPAWN_DISTANCE_FROM_MECH
 	var point_count: int = EnemyConfig.SPAWN_POINTS_PER_WAVE
 
@@ -110,15 +117,13 @@ func _calculate_spawn_points() -> Array[Vector2]:
 		var angle: float = (TAU / point_count) * i
 		var offset: Vector2 = Vector2(cos(angle), sin(angle)) * spawn_distance
 
-		# Add some randomness to spawn position
 		var spread_angle: float = randf_range(-EnemyConfig.SPAWN_SPREAD_ANGLE, EnemyConfig.SPAWN_SPREAD_ANGLE)
-		var spread_distance: float = randf_range(-50.0, 50.0)
+		var spread_distance: float = randf_range(-EnemyConfig.SPAWN_SPREAD_DISTANCE, EnemyConfig.SPAWN_SPREAD_DISTANCE)
 		var spread_offset: Vector2 = Vector2(cos(spread_angle), sin(spread_angle)) * spread_distance
 
-		spawn_points.append(mech_pos + offset + spread_offset)
+		spawn_points.append(center + offset + spread_offset)
 
 	return spawn_points
-
 
 ## Spawn a single rusher enemy
 func _spawn_rusher(position: Vector2) -> void:
@@ -142,22 +147,56 @@ func _spawn_shooter(position: Vector2) -> void:
 func _add_enemy_to_wave(enemy: BaseEnemy) -> void:
 	"""Add enemy to tracking array and connect death signal"""
 	self.enemies_in_wave.append(enemy)
-	enemy.died.connect(_on_enemy_died.bindv([enemy]))
+	enemy.died.connect(_on_enemy_died.bind(enemy))
 
-	# Add to scene (find the root node or use get_tree().current_scene)
+	# Add to scene - prefer active scene but fallback to root if needed
 	var scene_root = get_tree().current_scene
+	if not scene_root:
+		# Fallback: use root of current scene tree
+		scene_root = get_tree().root
+
 	if scene_root:
 		scene_root.add_child(enemy)
+	else:
+		push_error("WaveManager: Cannot find scene root to add enemy!")
+
+	# Ensure cleanup is called when scene tree exits (prevents memory leaks)
+	enemy.tree_exiting.connect(_on_enemy_tree_exiting.bind(enemy))
 
 
 ## Called when an enemy dies
 func _on_enemy_died(enemy: BaseEnemy) -> void:
-	"""Remove dead enemy from tracking and check if wave is complete"""
+	"""Disconnect signals and remove dead enemy from tracking"""
+	# Disconnect all signals from this enemy to prevent memory leaks
+	if enemy.died.is_connected(_on_enemy_died):
+		enemy.died.disconnect(_on_enemy_died)
+
+	if enemy.tree_exiting.is_connected(_on_enemy_tree_exiting):
+		enemy.tree_exiting.disconnect(_on_enemy_tree_exiting)
+
 	if enemy in self.enemies_in_wave:
 		self.enemies_in_wave.erase(enemy)
 
 	# Check if all enemies defeated
 	if self.enemies_in_wave.is_empty():
+		_on_wave_complete()
+
+
+## Called when enemy exits the scene tree (ensures cleanup if enemy is freed externally)
+func _on_enemy_tree_exiting(enemy: BaseEnemy) -> void:
+	"""Handle enemy cleanup if it exits scene tree"""
+	if enemy in self.enemies_in_wave:
+		self.enemies_in_wave.erase(enemy)
+
+	# Disconnect signals
+	if enemy.died.is_connected(_on_enemy_died):
+		enemy.died.disconnect(_on_enemy_died)
+
+	if enemy.tree_exiting.is_connected(_on_enemy_tree_exiting):
+		enemy.tree_exiting.disconnect(_on_enemy_tree_exiting)
+
+	# Check if wave is complete
+	if self.enemies_in_wave.is_empty() and self.is_wave_active:
 		_on_wave_complete()
 
 
@@ -180,11 +219,11 @@ func get_active_enemy_count() -> int:
 
 func get_wave_progress() -> float:
 	"""Return 0.0 to 1.0 progress through current wave (inverse of enemies remaining)"""
-	if self.enemies_in_wave.is_empty():
-		return 1.0
+	if not self.is_wave_active or self._initial_enemy_count <= 0:
+		return 0.0
 
-	# Would need to track initial count to calculate this properly
-	# For now, return 0.0 while wave active, 1.0 when complete
-	return 0.0 if self.is_wave_active else 1.0
+	var enemies_defeated: int = self._initial_enemy_count - self.enemies_in_wave.size()
+	var progress: float = float(enemies_defeated) / float(self._initial_enemy_count)
+	return clamp(progress, 0.0, 1.0)
 
 #endregion
