@@ -1,7 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://d3b6ssfgb8hnau"]
+[gd_scene load_steps=3 format=3 uid="uid://crp3cj30lsram"]
 
-[ext_resource type="Script" path="res://src/entities/projectiles/Bullet.gd" id="1_g7aq2"]
-[ext_resource type="Texture2D" uid="uid://uwdfn12i4ap2" path="res://icon.svg" id="2"]
+[ext_resource type="Script" uid="uid://c8gv632vmhimb" path="res://src/entities/projectiles/Bullet.gd" id="1_g7aq2"]
 
 [sub_resource type="CircleShape2D" id="1"]
 radius = 5.0
@@ -17,4 +16,3 @@ shape = SubResource("1")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("2")

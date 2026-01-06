@@ -93,6 +93,8 @@ func _return_bullet_to_pool(bullet: Bullet) -> void:
 	"""Return bullet to pool after use"""
 	bullet.reset()
 	_bullet_pool.append(bullet)
+	# NOTE: Do NOT erase signal connections - signals remain connected for bullet lifetime
+	# Signals were connected during pool initialization and should persist across reuses
 
 #endregion
 
@@ -157,6 +159,8 @@ func get_current_damage() -> float:
 #region Callbacks
 func _on_bullet_expired(bullet: Bullet) -> void:
 	"""Called when a bullet expires, return it to pool"""
-	_return_bullet_to_pool(bullet)
+	# Only return to pool if bullet is still valid
+	if is_instance_valid(bullet):
+		_return_bullet_to_pool(bullet)
 
 #endregion
