@@ -34,6 +34,13 @@ var _current_region: Rect2 = Rect2()  # Store current region for debug visualiza
 
 #endregion
 
+#region Static Preloaded Textures (Cached)
+## Cached sprite textures to avoid synchronous loads during gameplay
+static var _sprite_sheet_cache: Dictionary = {}  # Cache for loaded sprite sheets
+static var _cached_placeholder_texture: Texture2D = null
+
+#endregion
+
 #region Lifecycle
 func _ready() -> void:
 	# Configure collision layers (Layer 2: player projectiles)
@@ -225,7 +232,7 @@ func _setup_sprite() -> void:
 
 	# Build sprite sheet path using the sheet index
 	var sprite_path = WeaponConfig.BULLET_SPRITE_SHEET_PATH % sheet_index
-	var sprite_texture = load(sprite_path) as Texture2D
+	var sprite_texture = _get_cached_sprite_sheet(sprite_path)
 
 	if sprite_texture:
 		# Create AtlasTexture to extract specific region from sprite sheet
@@ -243,12 +250,28 @@ func _setup_sprite() -> void:
 			print("[Bullet] Loaded bullet type '%s' from sheet %d, region: %s" % [bullet_name, sheet_index, region])
 	else:
 		# Fallback: Create visual placeholder if sprite fails to load
-		_sprite.texture = _create_placeholder_texture()
+		_sprite.texture = _get_placeholder_texture()
 		_sprite.scale = Vector2(1.0, 1.0)
 		_sprite.centered = true
 		if self.debug_draw:
 			var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
 			print("[Bullet] WARNING: Failed to load sprite sheet %s for bullet type '%s', using placeholder" % [sprite_path, bullet_name])
+
+func _get_cached_sprite_sheet(sprite_path: String) -> Texture2D:
+	"""Get sprite sheet from cache or load it once"""
+	if _sprite_sheet_cache.has(sprite_path):
+		return _sprite_sheet_cache[sprite_path] as Texture2D
+
+	var texture = load(sprite_path) as Texture2D
+	if texture:
+		_sprite_sheet_cache[sprite_path] = texture
+	return texture
+
+func _get_placeholder_texture() -> Texture2D:
+	"""Get or create a cached placeholder texture"""
+	if _cached_placeholder_texture == null:
+		_cached_placeholder_texture = _create_placeholder_texture()
+	return _cached_placeholder_texture
 
 func _create_placeholder_texture() -> Texture2D:
 	"""Create a simple yellow circle as fallback if sprite fails to load"""

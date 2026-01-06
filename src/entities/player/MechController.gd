@@ -138,9 +138,8 @@ func _handle_weapon() -> void:
 
 	# Check if fire button is held down
 	if Input.is_action_pressed("fire"):
-		# Fire if cooldown is ready (weapon handles its own fire rate)
-		if weapon_system.can_fire():
-			weapon_system.fire(global_position, _mouse_direction)
+		# Attempt to fire - weapon handles cooldown check internally
+		weapon_system.fire(global_position, _mouse_direction)
 
 #endregion
 

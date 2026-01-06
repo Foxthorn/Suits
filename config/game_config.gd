@@ -41,8 +41,7 @@ const CROP_ALIEN_FRUIT_VALUE: int = 200
 #endregion
 
 #region Combat Settings (Step 6-7)
-const MECH_WEAPON_DAMAGE: float = 10.0
-const MECH_FIRE_RATE: float = 0.3  # seconds between shots
+## Note: Weapon fire rate defined in WeaponConfig.WEAPON_FIRE_RATE (single source of truth)
 const BULLET_SPEED: float = 400.0
 const BULLET_LIFETIME: float = 3.0
 
