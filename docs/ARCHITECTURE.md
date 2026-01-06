@@ -415,23 +415,66 @@ func prepare() -> void
 
 ---
 
-### Tower Placement System (TowerSystem - To Be Implemented)
-
+#### TowerSystem (`src/systems/TowerSystem.gd`)
 **Purpose**: Tower placement mode, validation, and UI feedback (similar to PlantingSystem).
 
-**Location**: `src/systems/TowerSystem.gd` (PLANNED)
+**Location**: `src/systems/TowerSystem.gd` (✅ IMPLEMENTED - Step 8)
 
-**Planned Features**:
-- Press T → enter placement mode
-- Ghost preview follows mouse (green=valid, red=invalid)
-- Validates placement against crops, other towers, tile type
-- Deducts credits on successful placement
-- Tracks all placed towers for wave management
-- Visual range indicator (dashed circle when placing)
+**Key Responsibilities**:
+- Manage tower placement mode (enter/exit)
+- Validate tile placement against crops, other towers, and tile types
+- Display ghost preview with valid/invalid coloring (green=valid, red=invalid)
+- Deduct credits on successful placement via EconomyManager integration
+- Track all placed towers by hex coordinates
+- Emit signals for placement mode changes and tower placement events
+- Handle input for placement mode activation and cancellation
 
-**Planned Input Action**:
-- `tower_place`: Select tower (Key: T)
-- `ui_cancel`: Exit placement mode (ESC)
+**Signals**:
+- `tower_placed(hex_coords: Vector2i, tower_type: TowerDatabase.TowerType)` - Emitted when tower successfully placed
+- `placement_mode_changed(active: bool, tower_type: TowerDatabase.TowerType)` - Emitted on mode entry/exit
+
+**Exported Properties**:
+```gdscript
+@export var hex_grid: HexGrid              # Reference to hex grid for tile validation
+@export var show_preview: bool = true      # Show ghost preview on hover
+@export var show_range_indicator: bool = true  # Show detection range circle
+```
+
+**Key Methods**:
+```gdscript
+func enter_placement_mode(tower_type: TowerDatabase.TowerType) -> void
+func exit_placement_mode() -> void
+func can_place_tower_at(hex_coords: Vector2i) -> bool
+func get_tower_at(hex_coords: Vector2i) -> BaseTower
+func get_all_towers() -> Array[BaseTower]
+func get_tower_count() -> int
+func is_in_placement_mode() -> bool
+func get_selected_tower_type() -> TowerDatabase.TowerType
+```
+
+**Features**:
+- Ghost preview follows mouse cursor with semi-transparent sprite
+- Preview color changes based on tile validity (green for valid, red for invalid)
+- Range indicator visualization shows detection radius of towers during placement
+- Credit checking: Validates player has sufficient credits before placement
+- Tile validation: Checks for existing towers, crops, and valid tile types
+- Automatic tower instantiation: Creates tower instances and adds to scene
+- Seamless integration with EconomyManager for cost deduction
+- Seamless integration with HexGrid for tile interaction events
+- Seamless integration with PlantingSystem to prevent tower-on-crop conflicts
+
+**Input Actions**:
+- `ui_focus_next`: T key to enter/exit placement mode
+- `ui_cancel`: ESC key to cancel placement
+- Mouse click to place tower on valid tile
+- Right-click to cancel placement
+
+**Validation Rules**:
+- Tile must exist in hex grid
+- Tile must not already have a tower
+- Tile must not have a crop (from PlantingSystem)
+- Player must have sufficient credits
+- Tile must be valid tower placement location
 
 ---
 
@@ -1323,12 +1366,12 @@ const ENTITY_A_COLOR: Color = Color.RED
 3. ✅ **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support (COMPLETED - Step 6)
 4. ✅ **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH) (COMPLETED - Step 6)
 5. ✅ **CombatSystem**: Mech weapon and projectile system (COMPLETED - Step 7)
-6. 🔄 **TowerSystem**: Tower database, base class, GatlingGun turret (IN PROGRESS - Step 8)
+6. ✅ **TowerSystem**: Tower database, base class, GatlingGun turret, placement mode (COMPLETED - Step 8)
    - ✅ TowerDatabase with extensible registry
    - ✅ BaseTower with detection and firing mechanics
    - ✅ GatlingGun tower implementation
    - ✅ TowerWeaponSystem and TowerBullet projectiles
-   - 🔜 TowerSystem placement mode (similar to PlantingSystem)
+   - ✅ TowerSystem placement mode with validation and preview
 
 ### Next Systems to Implement
 

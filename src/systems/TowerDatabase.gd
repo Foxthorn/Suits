@@ -25,7 +25,7 @@ class TowerData:
 	var fire_rate: float
 	var bullet_speed: float
 	var bullet_lifetime: float
-	var sprite_path: String
+	var sprite_type: TowerConfig.TowerSpriteType  # Atlas sprite type instead of path
 	var bullet_color: Color
 	var size: float
 	var collision_radius: float
@@ -40,7 +40,7 @@ class TowerData:
 		p_fire_rate: float,
 		p_bullet_speed: float,
 		p_bullet_lifetime: float,
-		p_sprite_path: String,
+		p_sprite_type: TowerConfig.TowerSpriteType,
 		p_bullet_color: Color,
 		p_size: float,
 		p_collision_radius: float
@@ -54,18 +54,35 @@ class TowerData:
 		fire_rate = p_fire_rate
 		bullet_speed = p_bullet_speed
 		bullet_lifetime = p_bullet_lifetime
-		sprite_path = p_sprite_path
+		sprite_type = p_sprite_type
 		bullet_color = p_bullet_color
 		size = p_size
 		collision_radius = p_collision_radius
 
 	func get_sprite() -> Texture2D:
-		"""Load sprite from configured path, with fallback"""
-		if sprite_path and sprite_path != "":
-			var texture = load(sprite_path)
-			if texture:
-				return texture
-		return null  # Will use placeholder in tower script
+		"""Load sprite as AtlasTexture from sprite type configuration"""
+		# Get sheet index and region from config
+		if not TowerConfig.TOWER_TYPE_SHEETS.has(sprite_type):
+			push_error("TowerDatabase: Sprite type not configured: %s" % sprite_type)
+			return null
+
+		var sheet_index: int = TowerConfig.TOWER_TYPE_SHEETS[sprite_type]
+		var region: Rect2 = TowerConfig.TOWER_TYPE_REGIONS[sprite_type]
+
+		# Load the sprite sheet texture
+		var sheet_path: String = TowerConfig.TOWER_SPRITE_SHEET_BASE % sheet_index
+		var base_texture: Texture2D = load(sheet_path)
+
+		if not base_texture:
+			push_error("TowerDatabase: Failed to load sprite sheet: %s" % sheet_path)
+			return null
+
+		# Create AtlasTexture to extract the specific region
+		var atlas: AtlasTexture = AtlasTexture.new()
+		atlas.atlas = base_texture
+		atlas.region = region
+
+		return atlas
 #endregion
 
 #region Static Registry
@@ -88,7 +105,7 @@ static func _ensure_initialized() -> void:
 		TowerConfig.TOWER_GATLING_GUN_FIRE_RATE,
 		TowerConfig.TOWER_GATLING_GUN_BULLET_SPEED,
 		TowerConfig.TOWER_GATLING_GUN_BULLET_LIFETIME,
-		TowerConfig.TOWER_GATLING_GUN_SPRITE,
+		TowerConfig.TOWER_GATLING_GUN_SPRITE_TYPE,
 		TowerConfig.TOWER_GATLING_GUN_BULLET_COLOR,
 		TowerConfig.TOWER_GATLING_GUN_SIZE,
 		TowerConfig.TOWER_GATLING_GUN_COLLISION_RADIUS

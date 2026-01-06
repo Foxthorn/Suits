@@ -1,5 +1,4 @@
-class_name BaseTower
-extends Node2D
+class_name BaseTower extends CharacterBody2D
 ## Base class for all tower types
 ## Handles common tower logic: detection, firing, cooldown management
 ## Subclasses override behavior while reusing core functionality
@@ -47,20 +46,20 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	# Update fire cooldown
-	if fire_cooldown > 0:
-		fire_cooldown -= delta
+	if self.fire_cooldown > 0:
+		self.fire_cooldown -= delta
 	else:
 		var target = find_nearest_enemy()
 
 		# Target changed
-		if target != current_target:
-			current_target = target
-			target_changed.emit(current_target)
+		if target != self.current_target:
+			self.current_target = target
+			self.target_changed.emit(self.current_target)
 
 		# Fire at target
-		if current_target:
+		if self.current_target:
 			fire()
-			fire_cooldown = tower_data.fire_rate
+			self.fire_cooldown = tower_data.fire_rate
 
 func _draw() -> void:
 	"""Debug visualization: draw detection range"""
@@ -75,12 +74,16 @@ func _setup_sprite() -> void:
 	_sprite = Sprite2D.new()
 	add_child(_sprite)
 
-	# Try to load configured sprite
+	# Load sprite as AtlasTexture from configured type
 	var sprite_texture = tower_data.get_sprite()
 	if sprite_texture:
 		_sprite.texture = sprite_texture
+		# Set hframes if using AtlasTexture to define frame boundaries
+		if sprite_texture is AtlasTexture:
+			_sprite.hframes = 1  # Single frame (not animating, just showing one sprite)
 	else:
-		# Fallback to placeholder
+		# Fallback to placeholder if sprite loading fails
+		push_warning("BaseTower: Failed to load sprite, using placeholder")
 		_sprite.texture = _create_placeholder_texture(48, 48, Color(0.2, 0.5, 0.8))
 
 	_sprite.scale = Vector2.ONE * tower_data.size
@@ -130,14 +133,14 @@ func _on_enemy_exited(area: Node2D) -> void:
 	"""Enemy left detection range"""
 	if area is BaseEnemy:
 		enemies_in_range.erase(area)
-		if current_target == area:
-			current_target = null
+		if self.current_target == area:
+			self.current_target = null
 
 func _on_enemy_died(dead_enemy: BaseEnemy) -> void:
 	"""Clean up when enemy dies"""
 	enemies_in_range.erase(dead_enemy)
-	if current_target == dead_enemy:
-		current_target = null
+	if self.current_target == dead_enemy:
+		self.current_target = null
 
 func find_nearest_enemy() -> BaseEnemy:
 	"""Find closest valid enemy in detection range"""

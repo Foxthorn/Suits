@@ -203,7 +203,7 @@
 
 ---
 
-## Step 8: Tower Placement & Auto-Targeting 🔄 IN PROGRESS
+## Step 8: Tower Placement & Auto-Targeting ✅ COMPLETED
 **Why Eighth:** Core tower-defense mechanic unlocked.
 
 ### Deliverables:
@@ -237,12 +237,15 @@
   - All tower balance values (costs, ranges, damage, fire rates)
   - Placement visual feedback colors
   - Future tower type placeholders (Sniper, Flame, Ice)
-- [ ] Tower placement system (TowerSystem.gd):
+- [x] Tower placement system (TowerSystem.gd) ✅
   - Press T → enter placement mode
   - Ghost preview follows mouse on valid tiles (not on crops, not on path)
   - Click to place if player has credits
   - ESC to cancel
-- [ ] Visual tower range indicator (dashed circle when placing)
+  - Validation against existing towers and crops
+  - Credit deduction integration with EconomyManager
+  - Signal emission for placement mode and tower placement events
+- [ ] Visual tower range indicator (dashed circle when placing) - Next iteration
 
 **Acceptance Test:** Place 2 towers during day → at night they auto-shoot enemies in range.
 
@@ -341,14 +344,14 @@
 ✅ **Step 4** - Crop System (Planting, Growth, Harvest)
 ✅ **Step 6** - Enemy Spawning & Basic AI
 ✅ **Step 7** - Mech Weapon & Combat
-🔄 **Step 8** - Tower Placement & Auto-Targeting (IN PROGRESS)
+✅ **Step 8** - Tower Placement & Auto-Targeting (COMPLETED)
    - ✅ Tower database registry system (TowerDatabase.gd)
    - ✅ Base tower class (BaseTower.gd) with detection and targeting
    - ✅ GatlingGun rapid-fire tower implementation
    - ✅ Tower weapon system and projectiles (TowerWeaponSystem.gd, TowerBullet.gd)
    - ✅ Tower configuration (config/tower_config.gd)
-   - 🔜 Tower placement system (TowerSystem.gd) - NEXT TASK
-   - 🔜 Visual range indicator - NEXT TASK
+   - ✅ Tower placement system (TowerSystem.gd) - COMPLETED
+   - 🔜 Visual range indicator - Future enhancement
 
 ---
 

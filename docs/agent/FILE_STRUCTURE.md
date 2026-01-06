@@ -44,6 +44,7 @@
 │   │   ├── HexGrid.gd           # Hex grid system with camera control
 │   │   ├── EnemyDatabase.gd     # Enemy registry with extensible types
 │   │   ├── TowerDatabase.gd     # Tower registry with extensible types (✅ NEW - Step 8)
+│   │   ├── TowerSystem.gd       # Tower placement mode and validation (✅ NEW - Step 8)
 │   │   ├── TowerWeaponSystem.gd # Tower projectile pooling and firing (✅ NEW - Step 8)
 │   │   ├── CropDatabase.gd      # Crop registry with extensible types
 │   │   ├── PlantingSystem.gd    # Crop placement mode
@@ -95,9 +96,13 @@
 │   │   ├── HexGridDemo.tscn     # Hex placement & highlighting test
 │   │   ├── PathfindingDemo.tscn # A* visualization
 │   │   ├── WaveSpawnerDemo.tscn # Enemy wave testing
-│   │   └── CropSystem/          # Complete crop planting system demo
-│   │       ├── CropSystemDemo.tscn
-│   │       └── CropSystemDemo.gd
+│   │   ├── CropSystem/          # Complete crop planting system demo
+│   │   │   ├── CropSystemDemo.tscn
+│   │   │   └── CropSystemDemo.gd
+│   │   └── TowerSystem/         # Complete tower placement and firing demo (✅ NEW - Step 8)
+│   │       ├── TowerSystemDemo.tscn
+│   │       ├── TowerSystemDemo.gd
+│   │       └── README.md
 │   ├── tutorials/               # Step-by-step tutorial scenes
 │   │   ├── Tutorial01_Movement.tscn
 │   │   └── Tutorial02_Farming.tscn
