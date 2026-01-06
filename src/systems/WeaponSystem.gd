@@ -93,9 +93,8 @@ func _return_bullet_to_pool(bullet: Bullet) -> void:
 	"""Return bullet to pool after use"""
 	bullet.reset()
 	_bullet_pool.append(bullet)
-	# Clean up the signal connection tracking
-	if _signal_connections.has(bullet):
-		_signal_connections.erase(bullet)
+	# NOTE: Do NOT erase signal connections - signals remain connected for bullet lifetime
+	# Signals were connected during pool initialization and should persist across reuses
 
 #endregion
 

@@ -39,10 +39,18 @@ var _current_region: Rect2 = Rect2()  # Store current region for debug visualiza
 static var _sprite_sheet_cache: Dictionary = {}  # Cache for loaded sprite sheets
 static var _cached_placeholder_texture: Texture2D = null
 
+## Preloaded sprite sheets - loaded at class initialization to avoid runtime frame drops
+static var _preloaded_sheets: Dictionary = {}
+static var _sheets_preloading_done: bool = false
+
 #endregion
 
 #region Lifecycle
 func _ready() -> void:
+	# Preload all sprite sheets on first bullet initialization
+	if not _sheets_preloading_done:
+		_preload_all_sprite_sheets()
+		_sheets_preloading_done = true
 	# Configure collision layers (Layer 2: player projectiles)
 	collision_layer = GameConfig.COLLISION_LAYER_PLAYER
 	# Collision mask: detect enemies (Layer 3)
@@ -257,15 +265,27 @@ func _setup_sprite() -> void:
 			var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
 			print("[Bullet] WARNING: Failed to load sprite sheet %s for bullet type '%s', using placeholder" % [sprite_path, bullet_name])
 
+func _preload_all_sprite_sheets() -> void:
+	"""Preload all sprite sheets at class initialization to avoid runtime frame drops"""
+	# Load all sprite sheets referenced in WeaponConfig
+	for bullet_type in WeaponConfig.BULLET_TYPE_SHEETS.values():
+		var sprite_path = WeaponConfig.BULLET_SPRITE_SHEET_PATH % bullet_type
+		if not _sprite_sheet_cache.has(sprite_path):
+			var texture = load(sprite_path) as Texture2D
+			if texture:
+				_sprite_sheet_cache[sprite_path] = texture
+
 func _get_cached_sprite_sheet(sprite_path: String) -> Texture2D:
-	"""Get sprite sheet from cache or load it once"""
+	"""Get sprite sheet from cache (preloaded at class initialization)
+
+	DO NOT load textures here - this is called during gameplay (5 shots/sec).
+		Synchronous load() causes frame drops. All textures are preloaded in _preload_all_sprite_sheets().
+	"""
 	if _sprite_sheet_cache.has(sprite_path):
 		return _sprite_sheet_cache[sprite_path] as Texture2D
 
-	var texture = load(sprite_path) as Texture2D
-	if texture:
-		_sprite_sheet_cache[sprite_path] = texture
-	return texture
+	# Return null if not preloaded - should not happen in normal gameplay
+	return null
 
 func _get_placeholder_texture() -> Texture2D:
 	"""Get or create a cached placeholder texture"""
