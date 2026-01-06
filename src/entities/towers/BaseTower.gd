@@ -42,6 +42,14 @@ func _ready() -> void:
 		queue_free()
 		return
 
+	# Initialize weapon system if not set via export
+	if not tower_weapon_system:
+		tower_weapon_system = TowerWeaponSystem.new()
+		add_child(tower_weapon_system)
+
+	# Initialize weapon system with tower data
+	tower_weapon_system.initialize(tower_data)
+
 	_setup_sprite()
 	_setup_detection_zone()
 	_setup_collision_layer()
@@ -222,8 +230,14 @@ func _flash_white() -> void:
 	var original_color = _sprite.modulate
 	_sprite.modulate = Color.WHITE
 
-	# Use tween for proper cleanup
+	# Reuse tween instead of creating new one each shot
+	if _sprite.get_meta("flash_tween", null):
+		var old_tween = _sprite.get_meta("flash_tween")
+		if old_tween:
+			old_tween.kill()
+
 	var tween = create_tween()
+	_sprite.set_meta("flash_tween", tween)
 	tween.tween_callback(func(): _sprite.modulate = Color.WHITE)
 	tween.tween_property(_sprite, "modulate", original_color, TowerConfig.TOWER_HIT_FLASH_DURATION)
 	tween.finished.connect(func(): if is_instance_valid(_sprite): _sprite.modulate = original_color)

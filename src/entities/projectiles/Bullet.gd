@@ -261,8 +261,9 @@ func _setup_sprite() -> void:
 		_sprite.texture = _get_placeholder_texture()
 		_sprite.scale = Vector2(1.0, 1.0)
 		_sprite.centered = true
+		var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
+		push_warning("Bullet[%s] Failed to load sprite sheet: %s - using placeholder" % [bullet_name, sprite_path])
 		if self.debug_draw:
-			var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
 			print("[Bullet] WARNING: Failed to load sprite sheet %s for bullet type '%s', using placeholder" % [sprite_path, bullet_name])
 
 func _preload_all_sprite_sheets() -> void:

@@ -11,16 +11,16 @@ signal expired()
 #endregion
 
 #region Exported Properties
-@export var lifetime: float = 3.0
+@export var lifetime: float = ProjectileConfig.TOWER_BULLET_LIFETIME
 
 #endregion
 
 #region Private Variables
 var _velocity: Vector2 = Vector2.ZERO
-var _speed: float = 350.0
-var _damage: float = 15.0
+var _speed: float = ProjectileConfig.TOWER_BULLET_SPEED
+var _damage: float = ProjectileConfig.TOWER_BULLET_DAMAGE
 var _lifetime_remaining: float = 0.0
-var _color: Color = Color.YELLOW
+var _color: Color = ProjectileConfig.TOWER_BULLET_COLOR
 var _sprite: Sprite2D
 var _has_hit: bool = false
 
@@ -83,21 +83,28 @@ func _create_impact_particles() -> void:
 	var particles = CPUParticles2D.new()
 	particles.global_position = global_position
 	particles.emitting = true
-	particles.amount = 8
-	particles.lifetime = 0.5
-	particles.initial_velocity_min = 100.0
-	particles.initial_velocity_max = 200.0
-	particles.scale_amount_min = 0.5
-	particles.scale_amount_max = 1.0
+	particles.amount = ProjectileConfig.TOWER_BULLET_HIT_PARTICLES
+	particles.lifetime = ProjectileConfig.TOWER_BULLET_HIT_PARTICLE_LIFETIME
+	particles.initial_velocity_min = ProjectileConfig.TOWER_BULLET_HIT_PARTICLE_SPEED_MIN
+	particles.initial_velocity_max = ProjectileConfig.TOWER_BULLET_HIT_PARTICLE_SPEED_MAX
+	particles.scale_amount_min = ProjectileConfig.TOWER_BULLET_HIT_PARTICLE_SCALE_MIN
+	particles.scale_amount_max = ProjectileConfig.TOWER_BULLET_HIT_PARTICLE_SCALE_MAX
 	particles.angle_min = 0
 	particles.angle_max = 360
 	particles.modulate = _color
 
 	get_tree().current_scene.add_child(particles)
 
-	# Clean up after particles finish
-	await get_tree().create_timer(particles.lifetime + 0.1).timeout
-	particles.queue_free()
+	# Use Timer instead of await to prevent execution after bullet returns to pool
+	var cleanup_timer = Timer.new()
+	cleanup_timer.one_shot = true
+	cleanup_timer.wait_time = ProjectileConfig.TOWER_BULLET_HIT_PARTICLE_LIFETIME + 0.1
+	particles.add_child(cleanup_timer)
+	cleanup_timer.timeout.connect(func() -> void:
+		if is_instance_valid(particles):
+			particles.queue_free()
+	)
+	cleanup_timer.start()
 
 #endregion
 
@@ -114,7 +121,7 @@ func prepare() -> void:
 	_has_hit = false
 	_lifetime_remaining = lifetime
 
-func set_velocity(direction: Vector2, speed: float = 350.0) -> void:
+func set_velocity(direction: Vector2, speed: float = ProjectileConfig.TOWER_BULLET_SPEED) -> void:
 	"""Set bullet velocity"""
 	_speed = speed
 	_velocity = direction * _speed
