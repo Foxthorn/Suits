@@ -69,7 +69,7 @@ func _setup_bullet_pool() -> void:
 		bullet.hide()
 		_bullet_pool.append(bullet)
 
-	print("TowerWeaponSystem: Initialized pool with %d bullets" % TowerConfig.TOWER_BULLET_POOL_SIZE)
+	# Initialization logged at debug level (remove for production if excessive)
 
 func _create_bullet_node() -> Node2D:
 	"""Create a tower bullet node with sprite and collision"""
@@ -124,7 +124,7 @@ func fire(from_position: Vector2, direction: Vector2, color: Color) -> void:
 
 	# Connect collision signal if not already connected
 	if not bullet.area_entered.is_connected(_on_bullet_hit_enemy):
-		bullet.area_entered.connect(_on_bullet_hit_enemy.bindv([bullet]))
+		bullet.area_entered.connect(_on_bullet_hit_enemy, CONNECT_ONE_SHOT)
 
 	# Enable collision detection
 	bullet.monitoring = true
@@ -274,9 +274,10 @@ func get_pooled_bullet_count() -> int:
 
 func retire_bullet(bullet: Node2D) -> void:
 	"""Retire an active bullet back to the pool (used when hit or expired)"""
-	if _active_bullets.has(bullet):
-		_return_bullet_to_pool(bullet)
-		if bullet.get_parent():
-			bullet.get_parent().remove_child(bullet)
+	if not _active_bullets.has(bullet):
+		return
+	_return_bullet_to_pool(bullet)
+	if bullet.get_parent():
+		bullet.get_parent().remove_child(bullet)
 
 #endregion

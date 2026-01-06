@@ -74,14 +74,18 @@ func _connect_signals() -> void:
 #region Input Handling
 func _unhandled_input(event: InputEvent) -> void:
 	if not _is_placement_mode:
-		# Check for tower selection key (T)
-		if event.is_action_pressed("ui_focus_next"):  # Tab key - alternative: use custom input
-			if event is InputEventKey and event.keycode == KEY_T:
-				enter_placement_mode(TowerDatabase.TowerType.GATLING_GUN)
+		# Check for tower selection key (T for Tower)
+		if event is InputEventKey and event.keycode == KEY_T and event.pressed:
+			enter_placement_mode(TowerDatabase.TowerType.GATLING_GUN)
+			get_tree().root.set_input_as_handled()
 	else:
 		# Exit placement mode with ESC or right-click
-		if event.is_action_pressed("ui_cancel") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
+		if event.is_action_pressed("ui_cancel"):
 			exit_placement_mode()
+			get_tree().root.set_input_as_handled()
+		elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+			exit_placement_mode()
+			get_tree().root.set_input_as_handled()
 
 func _on_tile_clicked(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	"""Handle tile click for tower placement"""

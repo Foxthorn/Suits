@@ -46,7 +46,8 @@ func _ready() -> void:
 	_setup_detection_zone()
 	_setup_collision_layer()
 
-	print("BaseTower: Initialized %s at %v" % [tower_data.name, global_position])
+	if debug_draw:
+		print("BaseTower: Initialized %s at %v" % [tower_data.name, global_position])
 
 func _physics_process(delta: float) -> void:
 	# Update fire cooldown
@@ -62,11 +63,12 @@ func _physics_process(delta: float) -> void:
 
 		# Fire at target
 		if self.current_target:
-			print("[Tower %s] FIRING at target" % self.name)
+			if debug_draw:
+				print("[Tower %s] FIRING at target" % self.name)
 			fire()
 			self.fire_cooldown = tower_data.fire_rate
 		else:
-			if enemies_in_range.size() > 0:
+			if debug_draw and enemies_in_range.size() > 0:
 				print("[Tower %s] WARNING: Enemies in range but no target selected" % self.name)
 
 func _draw() -> void:
@@ -143,12 +145,11 @@ func _on_enemy_entered(area: Node2D) -> void:
 	if enemy:
 		if not enemies_in_range.has(enemy):
 			enemies_in_range.append(enemy)
-			print("[Tower %s] Enemy entered range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
+			if debug_draw:
+				print("[Tower %s] Enemy entered range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
 			# Connect to enemy death signal to clean up
 			if not enemy.died.is_connected(_on_enemy_died):
-				enemy.died.connect(_on_enemy_died.bindv([enemy]))
-		else:
-			print("[Tower %s] Enemy already in range list: %s" % [self.name, enemy.name])
+				enemy.died.connect(_on_enemy_died, CONNECT_ONE_SHOT)
 
 func _on_enemy_exited(area: Node2D) -> void:
 	"""Enemy left detection range"""
@@ -164,9 +165,11 @@ func _on_enemy_exited(area: Node2D) -> void:
 
 	if enemy:
 		enemies_in_range.erase(enemy)
-		print("[Tower %s] Enemy left range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
+		if debug_draw:
+			print("[Tower %s] Enemy left range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
 		if self.current_target == enemy:
-			print("[Tower %s] Current target left range!" % self.name)
+			if debug_draw:
+				print("[Tower %s] Current target left range!" % self.name)
 			self.current_target = null
 
 func _on_enemy_died(dead_enemy: BaseEnemy) -> void:
@@ -181,22 +184,17 @@ func find_nearest_enemy() -> BaseEnemy:
 	var nearest_dist: float = tower_data.range
 
 	if enemies_in_range.size() == 0:
-		print("[Tower %s] No enemies in range list" % self.name)
 		return null
 
 	for enemy in enemies_in_range:
 		if not is_instance_valid(enemy):
-			print("[Tower %s] Skipping invalid enemy instance" % self.name)
 			continue
 
 		var dist = global_position.distance_to(enemy.global_position)
 		if dist < nearest_dist:
 			nearest = enemy
 			nearest_dist = dist
-			print("[Tower %s] Found closer enemy: %s at distance %.1f" % [self.name, enemy.name, dist])
 
-	if not nearest:
-		print("[Tower %s] No valid enemy found (all out of range or invalid)" % self.name)
 	return nearest
 
 #endregion
@@ -218,12 +216,17 @@ func fire() -> void:
 
 func _flash_white() -> void:
 	"""Brief white flash when firing (visual feedback)"""
-	if _sprite:
-		var original_color = _sprite.modulate
-		_sprite.modulate = Color.WHITE
+	if not _sprite:
+		return
 
-		await get_tree().create_timer(TowerConfig.TOWER_HIT_FLASH_DURATION).timeout
-		_sprite.modulate = original_color
+	var original_color = _sprite.modulate
+	_sprite.modulate = Color.WHITE
+
+	# Use tween for proper cleanup
+	var tween = create_tween()
+	tween.tween_callback(func(): _sprite.modulate = Color.WHITE)
+	tween.tween_property(_sprite, "modulate", original_color, TowerConfig.TOWER_HIT_FLASH_DURATION)
+	tween.finished.connect(func(): if is_instance_valid(_sprite): _sprite.modulate = original_color)
 
 #endregion
 
