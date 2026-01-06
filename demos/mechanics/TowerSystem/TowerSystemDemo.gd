@@ -10,9 +10,6 @@ extends Node2D
 
 #region Private Variables
 var tower_system: TowerSystem
-var wave_manager: WaveManager
-var time_manager: TimeManager
-var economy_manager: EconomyManager
 
 var total_towers_placed: int = 0
 var total_enemies_killed: int = 0
@@ -23,18 +20,19 @@ var total_enemies_killed: int = 0
 func _ready() -> void:
 	# Get references to key systems
 	tower_system = $TowerSystem
-	wave_manager = WaveManager
-	time_manager = TimeManager
-	economy_manager = EconomyManager
 
 	if not tower_system:
 		push_error("TowerSystemDemo: TowerSystem not found!")
 		return
 
+	if not TimeManager or not EconomyManager:
+		push_error("TowerSystemDemo: Required autoloads not found (TimeManager, EconomyManager)")
+		return
+
 	_connect_signals()
 	_setup_ui()
 
-	print("TowerSystemDemo: Ready - Press 'T' to enter tower placement mode")
+	print("TowerSystemDemo: Ready - Press 'T' to enter tower placement mode, 'N' to toggle night/day")
 
 func _connect_signals() -> void:
 	"""Connect to system signals"""
@@ -42,11 +40,11 @@ func _connect_signals() -> void:
 		tower_system.tower_placed.connect(_on_tower_placed)
 		tower_system.placement_mode_changed.connect(_on_placement_mode_changed)
 
-	if time_manager:
-		time_manager.phase_changed.connect(_on_phase_changed)
+	if TimeManager:
+		TimeManager.phase_changed.connect(_on_phase_changed)
 
-	if economy_manager:
-		economy_manager.credits_changed.connect(_on_credits_changed)
+	if EconomyManager:
+		EconomyManager.credits_changed.connect(_on_credits_changed)
 
 func _setup_ui() -> void:
 	"""Setup UI labels"""
@@ -59,6 +57,7 @@ func _setup_ui() -> void:
 • [b]T[/b] - Enter tower placement mode
 • [b]Left Click[/b] - Place tower
 • [b]Right Click / ESC[/b] - Cancel placement
+• [b]N[/b] - Toggle Night/Day phase
 
 [color=ffff99]Features:[/color]
 • Ghost preview (Green=Valid, Red=Invalid)
@@ -78,6 +77,10 @@ func _setup_ui() -> void:
 
 func _update_status_ui() -> void:
 	"""Update status display"""
+	# Guard against null references
+	if not TimeManager or not EconomyManager or not tower_system:
+		return
+
 	var status_label = $HUD/StatusPanel/VBoxContainer/StatusLabel
 	var phase_label = $HUD/StatusPanel/VBoxContainer/PhaseLabel
 	var credits_label = $HUD/StatusPanel/VBoxContainer/CreditsLabel
@@ -85,14 +88,14 @@ func _update_status_ui() -> void:
 	var enemies_label = $HUD/StatusPanel/VBoxContainer/EnemiesLabel
 
 	if status_label:
-		var phase_text = "DAY" if time_manager.is_day() else "NIGHT"
+		var phase_text = "DAY" if TimeManager.is_day() else "NIGHT"
 		status_label.text = "[b]%s[/b]" % phase_text
 
 	if phase_label:
-		phase_label.text = "Phase: %s" % ("DAY" if time_manager.is_day() else "NIGHT")
+		phase_label.text = "Phase: %s" % ("DAY" if TimeManager.is_day() else "NIGHT")
 
 	if credits_label:
-		credits_label.text = "[color=ffff99]Credits: %d[/color]" % economy_manager.credits
+		credits_label.text = "[color=ffff99]Credits: %d[/color]" % EconomyManager.credits
 
 	if towers_label:
 		towers_label.text = "Towers: %d" % tower_system.get_tower_count()
@@ -123,14 +126,46 @@ func _on_phase_changed() -> void:
 	"""Handle day/night phase change"""
 	_update_status_ui()
 
-	if not time_manager.is_day():
+	if not TimeManager.is_day():
 		# Night started - show wave info
-		var wave_num = wave_manager.current_wave
+		var wave_num = WaveManager.current_wave
 		print("Demo: NIGHT %d - Wave started!" % wave_num)
 
 func _on_credits_changed(new_amount: int) -> void:
 	"""Handle economy changes"""
 	_update_status_ui()
+
+#endregion
+
+#region Input Handling
+func _input(event: InputEvent) -> void:
+	"""Handle keyboard input for tower placement"""
+	if not tower_system:
+		return
+
+	# Press 'T' to enter tower placement mode
+	if event is InputEventKey and event.pressed and event.keycode == KEY_T:
+		get_tree().root.set_input_as_handled()
+		tower_system.enter_placement_mode(TowerDatabase.TowerType.GATLING_GUN)
+		print("Demo: Entering tower placement mode")
+
+	# Press ESC or Right Click to cancel placement
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if tower_system.is_in_placement_mode():
+			get_tree().root.set_input_as_handled()
+			tower_system.exit_placement_mode()
+			print("Demo: Exiting tower placement mode")
+
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		if tower_system.is_in_placement_mode():
+			get_tree().root.set_input_as_handled()
+			tower_system.exit_placement_mode()
+			print("Demo: Exiting tower placement mode (right-click)")
+
+	# Press 'N' to toggle night/day phase
+	if event is InputEventKey and event.pressed and event.keycode == KEY_N:
+		if TimeManager:
+			TimeManager.advance_phase()
 
 #endregion
 

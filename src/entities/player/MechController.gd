@@ -64,9 +64,9 @@ func _ready() -> void:
 	_last_position = global_position
 
 	# Create weapon system if not assigned
-	if not weapon_system:
-		weapon_system = WeaponSystem.new()
-		add_child(weapon_system)
+	if not self.weapon_system:
+		self.weapon_system = WeaponSystem.new()
+		add_child(self.weapon_system)
 
 	# Emit initial health state
 	self.health_changed.emit(self.current_health, self.max_health)
@@ -133,13 +133,13 @@ func _handle_rotation(delta: float) -> void:
 
 func _handle_weapon() -> void:
 	"""Handle weapon firing - supports continuous fire while holding fire button"""
-	if not weapon_system:
+	if not self.weapon_system:
 		return
 
 	# Check if fire button is held down
 	if Input.is_action_pressed("fire"):
 		# Attempt to fire - weapon handles cooldown check internally
-		weapon_system.fire(global_position, _mouse_direction)
+		self.weapon_system.fire(global_position, _mouse_direction)
 
 #endregion
 
@@ -232,13 +232,13 @@ func get_max_health() -> float:
 
 ## Upgrade weapon damage
 func upgrade_weapon_damage(amount: float) -> void:
-	if weapon_system:
-		weapon_system.upgrade_damage(amount)
+	if self.weapon_system:
+		self.weapon_system.upgrade_damage(amount)
 
 ## Apply damage multiplier to weapon (percentage-based upgrades)
 func set_weapon_damage_multiplier(multiplier: float) -> void:
-	if weapon_system:
-		weapon_system.set_damage_multiplier(multiplier)
+	if self.weapon_system:
+		self.weapon_system.set_damage_multiplier(multiplier)
 
 #endregion
 

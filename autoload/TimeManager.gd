@@ -51,7 +51,7 @@ func _process(delta: float) -> void:
 
 	# Check if phase should end
 	if self.time_remaining <= 0.0:
-		_advance_phase()
+		advance_phase()
 
 
 func start_day() -> void:
@@ -76,7 +76,7 @@ func start_night() -> void:
 	print("[TimeManager] Night %d started (%d seconds)" % [self.current_night, GameConfig.NIGHT_DURATION])
 
 
-func _advance_phase() -> void:
+func advance_phase() -> void:
 	"""Automatically advance to next phase"""
 	match self.current_phase:
 		Phase.DAY:

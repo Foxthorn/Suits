@@ -1,11 +1,13 @@
-class_name TowerWeaponSystem
+class_name TowerWeaponSystem extends Node
 ## Handles tower projectile spawning and pooling
 ## Similar to WeaponSystem but for tower-specific bullets
 ## Manages a separate pool of tower projectiles
 ## Uses AtlasTexture for sprite rendering with configurable colors
+## Updates bullet positions and lifetimes each frame
 
 #region Signals
 signal tower_bullet_fired(bullet: Node2D, from_position: Vector2, direction: Vector2)
+signal tower_bullet_expired(bullet: Node2D)
 
 #endregion
 
@@ -20,6 +22,35 @@ var _tower_data: TowerDatabase.TowerData
 ## Cached sprite textures to avoid repeated loads
 static var _sprite_sheet_cache: Dictionary = {}  # Path -> Texture2D
 static var _cached_placeholder_texture: Texture2D = null
+
+#endregion
+
+#region Lifecycle
+func _physics_process(delta: float) -> void:
+	"""Update active bullets each frame"""
+	# Process in reverse to safely remove expired bullets
+	for i in range(_active_bullets.size() - 1, -1, -1):
+		var bullet = _active_bullets[i]
+		if not is_instance_valid(bullet):
+			_active_bullets.remove_at(i)
+			continue
+
+		# Update position
+		if bullet.has_meta("velocity"):
+			var velocity = bullet.get_meta("velocity") as Vector2
+			bullet.global_position += velocity * delta
+
+		# Update lifetime
+		if bullet.has_meta("age") and bullet.has_meta("lifetime"):
+			var age = bullet.get_meta("age") as float
+			var lifetime = bullet.get_meta("lifetime") as float
+			age += delta
+			bullet.set_meta("age", age)
+
+			if age >= lifetime:
+				# Bullet expired
+				tower_bullet_expired.emit(bullet)
+				_return_bullet_to_pool(bullet)
 
 #endregion
 
@@ -58,9 +89,11 @@ func _create_bullet_node() -> Node2D:
 	collision.shape = circle
 	bullet.add_child(collision)
 
-	# Setup collision layers (tower projectiles)
-	bullet.collision_layer = 0  # Not on any layer for pooled bullets
-	bullet.collision_mask = 0   # Disabled while pooled
+	# Setup collision layers (tower projectiles are player-aligned)
+	bullet.collision_layer = GameConfig.COLLISION_LAYER_PLAYER_PROJECTILES
+	bullet.collision_mask = GameConfig.COLLISION_MASK_PLAYER_PROJECTILES
+	# Disable collision while pooled
+	bullet.monitoring = false
 
 	return bullet
 
@@ -83,20 +116,20 @@ func fire(from_position: Vector2, direction: Vector2, color: Color) -> void:
 	_set_bullet_velocity(bullet, direction, _tower_data.bullet_speed)
 	_set_bullet_sprite(bullet, color)
 	_set_bullet_lifetime(bullet, _tower_data.bullet_lifetime)
+	_set_bullet_damage(bullet, _tower_data.damage)
 
 	# Add to scene if not already added
 	if bullet.get_parent() == null:
 		get_tree().current_scene.add_child(bullet)
 
-	# Enable processing
-	bullet.set_physics_process(true)
+	# Connect collision signal if not already connected
+	if not bullet.area_entered.is_connected(_on_bullet_hit_enemy):
+		bullet.area_entered.connect(_on_bullet_hit_enemy.bindv([bullet]))
+
+	# Enable collision detection
 	bullet.monitoring = true
 
-	# Connect expiry signal if not already connected
-	if not bullet.tree_entered.is_connected(_on_bullet_entered):
-		bullet.tree_entered.connect(_on_bullet_entered.bindv([bullet]))
-
-	# Track active bullet
+	# Track active bullet (lifetime/position updates in _physics_process)
 	_active_bullets.append(bullet)
 
 	# Emit signal
@@ -129,7 +162,7 @@ func _set_bullet_sprite(bullet: Area2D, color: Color) -> void:
 		atlas_texture.region = region
 
 		sprite.texture = atlas_texture
-		sprite.scale = Vector2(1.0, 1.0)
+		sprite.scale = Vector2(2.0, 2.0)  # Scale up for visibility
 		sprite.modulate = color
 	else:
 		# Fallback to placeholder
@@ -144,6 +177,29 @@ func _set_bullet_lifetime(bullet: Node2D, lifetime: float) -> void:
 		bullet.set_meta("lifetime", lifetime)
 	bullet.set_meta("age", 0.0)
 
+func _set_bullet_damage(bullet: Node2D, damage: float) -> void:
+	"""Store damage as metadata on bullet"""
+	bullet.set_meta("damage", damage)
+
+func _on_bullet_hit_enemy(enemy_area: Node2D, bullet: Node2D) -> void:
+	"""Handle tower bullet collision with enemy"""
+	# Handle both direct BaseEnemy and child nodes of BaseEnemy
+	var enemy: BaseEnemy = null
+
+	if enemy_area is BaseEnemy:
+		enemy = enemy_area
+	elif enemy_area.owner is BaseEnemy:
+		enemy = enemy_area.owner
+	elif enemy_area.get_parent() is BaseEnemy:
+		enemy = enemy_area.get_parent()
+
+	if enemy:
+		# Get damage from bullet metadata
+		var damage = bullet.get_meta("damage", _tower_data.damage) as float
+		enemy.take_damage(damage)
+		# Return bullet to pool after hit
+		retire_bullet(bullet)
+
 #endregion
 
 #region Pooling
@@ -153,11 +209,7 @@ func _get_pooled_bullet() -> Node2D:
 		return null
 	return _bullet_pool.pop_back()
 
-func _on_bullet_entered(bullet: Node2D) -> void:
-	"""Handle bullet entering scene tree"""
-	# Reset age timer for lifetime tracking
-	if bullet.has_meta("age"):
-		bullet.set_meta("age", 0.0)
+
 
 func _return_bullet_to_pool(bullet: Node2D) -> void:
 	"""Return bullet to pool for reuse"""
@@ -165,6 +217,13 @@ func _return_bullet_to_pool(bullet: Node2D) -> void:
 	bullet.set_physics_process(false)
 	bullet.monitoring = false
 	bullet.hide()
+	# Reset bullet metadata for reuse
+	if bullet.has_meta("velocity"):
+		bullet.set_meta("velocity", Vector2.ZERO)
+	if bullet.has_meta("age"):
+		bullet.set_meta("age", 0.0)
+	if bullet.has_meta("damage"):
+		bullet.set_meta("damage", 0.0)
 	_bullet_pool.append(bullet)
 
 #endregion
@@ -214,7 +273,10 @@ func get_pooled_bullet_count() -> int:
 	return _bullet_pool.size()
 
 func retire_bullet(bullet: Node2D) -> void:
-	"""Retire an active bullet back to the pool"""
-	_return_bullet_to_pool(bullet)
+	"""Retire an active bullet back to the pool (used when hit or expired)"""
+	if _active_bullets.has(bullet):
+		_return_bullet_to_pool(bullet)
+		if bullet.get_parent():
+			bullet.get_parent().remove_child(bullet)
 
 #endregion

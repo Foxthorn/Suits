@@ -4,15 +4,21 @@ extends BaseTower
 ## Fires 5 shots per second at the nearest enemy
 ## Trades damage per shot for volume of fire
 
+#region Exports
+@export var tower_sprite: Texture2D = preload("res://assets/towers/gatling/tier1/gun_idle_00.png")
+
+#endregion
+
 #region Configuration
 const FIRING_ANIMATION_FRAMES: int = 4  # Number of rotation frames for visual feedback
 const BULLET_SPREAD_ANGLE: float = 0.1  # Small inaccuracy for visual interest (radians)
 
 #endregion
 
+
+
 #region Private Variables
 var _fire_animation_frame: float = 0.0
-var _tower_weapon_system: TowerWeaponSystem
 
 #endregion
 
@@ -23,9 +29,18 @@ func _ready() -> void:
 
 	super._ready()
 
-	# Initialize weapon system
-	_tower_weapon_system = TowerWeaponSystem.new()
-	_tower_weapon_system.initialize(tower_data)
+	# Override sprite with Gatling Gun specific sprite
+	if _sprite and tower_sprite:
+		_sprite.scale = Vector2(0.6, 0.6)  # Standard bullet size
+		_sprite.texture = tower_sprite
+
+	# Create weapon system if not assigned
+	if not self.tower_weapon_system:
+		self.tower_weapon_system = TowerWeaponSystem.new()
+		add_child(tower_weapon_system)
+
+	self.tower_weapon_system.initialize(tower_data)
+
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
@@ -51,7 +66,7 @@ func fire() -> void:
 	var final_direction = base_direction.rotated(spread)
 
 	# Fire the bullet via TowerWeaponSystem
-	_tower_weapon_system.fire(global_position, final_direction, tower_data.bullet_color)
+	self.tower_weapon_system.fire(global_position, final_direction, tower_data.bullet_color)
 
 	# Emit signal for audio/effects
 	fired.emit(global_position, final_direction)

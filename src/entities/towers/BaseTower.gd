@@ -7,6 +7,10 @@ class_name BaseTower extends CharacterBody2D
 @export var tower_type: TowerDatabase.TowerType = TowerDatabase.TowerType.GATLING_GUN
 @export var debug_draw: bool = false
 
+@export_group("Weapon")
+## Weapon system for managing firing
+@export var tower_weapon_system: TowerWeaponSystem
+
 #endregion
 
 #region Signals
@@ -58,8 +62,12 @@ func _physics_process(delta: float) -> void:
 
 		# Fire at target
 		if self.current_target:
+			print("[Tower %s] FIRING at target" % self.name)
 			fire()
 			self.fire_cooldown = tower_data.fire_rate
+		else:
+			if enemies_in_range.size() > 0:
+				print("[Tower %s] WARNING: Enemies in range but no target selected" % self.name)
 
 func _draw() -> void:
 	"""Debug visualization: draw detection range"""
@@ -122,18 +130,43 @@ func _setup_collision_layer() -> void:
 #region Detection & Targeting
 func _on_enemy_entered(area: Node2D) -> void:
 	"""Enemy entered detection range"""
+	# Handle both direct BaseEnemy and child nodes of BaseEnemy
+	var enemy: BaseEnemy = null
+
 	if area is BaseEnemy:
-		if not enemies_in_range.has(area):
-			enemies_in_range.append(area)
+		enemy = area
+	elif area.owner is BaseEnemy:
+		enemy = area.owner
+	elif area.get_parent() is BaseEnemy:
+		enemy = area.get_parent()
+
+	if enemy:
+		if not enemies_in_range.has(enemy):
+			enemies_in_range.append(enemy)
+			print("[Tower %s] Enemy entered range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
 			# Connect to enemy death signal to clean up
-			if not area.died.is_connected(_on_enemy_died):
-				area.died.connect(_on_enemy_died.bindv([area]))
+			if not enemy.died.is_connected(_on_enemy_died):
+				enemy.died.connect(_on_enemy_died.bindv([enemy]))
+		else:
+			print("[Tower %s] Enemy already in range list: %s" % [self.name, enemy.name])
 
 func _on_enemy_exited(area: Node2D) -> void:
 	"""Enemy left detection range"""
+	# Handle both direct BaseEnemy and child nodes of BaseEnemy
+	var enemy: BaseEnemy = null
+
 	if area is BaseEnemy:
-		enemies_in_range.erase(area)
-		if self.current_target == area:
+		enemy = area
+	elif area.owner is BaseEnemy:
+		enemy = area.owner
+	elif area.get_parent() is BaseEnemy:
+		enemy = area.get_parent()
+
+	if enemy:
+		enemies_in_range.erase(enemy)
+		print("[Tower %s] Enemy left range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
+		if self.current_target == enemy:
+			print("[Tower %s] Current target left range!" % self.name)
 			self.current_target = null
 
 func _on_enemy_died(dead_enemy: BaseEnemy) -> void:
@@ -147,15 +180,23 @@ func find_nearest_enemy() -> BaseEnemy:
 	var nearest: BaseEnemy = null
 	var nearest_dist: float = tower_data.range
 
+	if enemies_in_range.size() == 0:
+		print("[Tower %s] No enemies in range list" % self.name)
+		return null
+
 	for enemy in enemies_in_range:
 		if not is_instance_valid(enemy):
+			print("[Tower %s] Skipping invalid enemy instance" % self.name)
 			continue
 
 		var dist = global_position.distance_to(enemy.global_position)
 		if dist < nearest_dist:
 			nearest = enemy
 			nearest_dist = dist
+			print("[Tower %s] Found closer enemy: %s at distance %.1f" % [self.name, enemy.name, dist])
 
+	if not nearest:
+		print("[Tower %s] No valid enemy found (all out of range or invalid)" % self.name)
 	return nearest
 
 #endregion

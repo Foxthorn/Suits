@@ -1,8 +1,8 @@
 [gd_scene load_steps=8 format=3 uid="uid://bf3ckx0bvj6kq"]
 
-[ext_resource type="Script" uid="uid://c6b4geyrey0c8" path="res://demos/mechanics/TowerSystem/TowerSystemDemo.gd" id="1"]
+[ext_resource type="Script" uid="uid://dt6qf4o518qq0" path="res://demos/mechanics/TowerSystem/TowerSystemDemo.gd" id="1_g8ajt"]
 [ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2"]
-[ext_resource type="Script" uid="uid://d3xm2p4vj1234" path="res://src/systems/TowerSystem.gd" id="3"]
+[ext_resource type="Script" uid="uid://bs2tabflaxkg1" path="res://src/systems/TowerSystem.gd" id="3"]
 [ext_resource type="PackedScene" uid="uid://dmv3pmancj3wr" path="res://scenes/entities/mech/Mech.tscn" id="4"]
 [ext_resource type="PackedScene" uid="uid://bqxm7w8vp1234" path="res://scenes/entities/crops/BaseCrop.tscn" id="5"]
 [ext_resource type="Script" uid="uid://cygocd1g5i4q3" path="res://src/systems/PlantingSystem.gd" id="6"]
@@ -15,7 +15,7 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [node name="TowerSystemDemo" type="Node2D"]
-script = ExtResource("1")
+script = ExtResource("1_g8ajt")
 
 [node name="HexGrid" parent="." instance=ExtResource("2")]
 camera = NodePath("../Camera2D")
@@ -32,8 +32,6 @@ crop_scene = ExtResource("5")
 [node name="TowerSystem" type="Node" parent="." node_paths=PackedStringArray("hex_grid")]
 script = ExtResource("3")
 hex_grid = NodePath("../HexGrid")
-show_preview = true
-show_range_indicator = true
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(600, 500)

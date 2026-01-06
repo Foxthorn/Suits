@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dx40xd8lmpxuv"]
+[gd_scene load_steps=3 format=3 uid="uid://dx40xd8lmpxuv"]
 
-[ext_resource type="Script" path="res://src/entities/enemies/ShooterEnemy.gd" id="1_def45"]
+[ext_resource type="Script" uid="uid://bdrbdqn7rv1vt" path="res://src/entities/enemies/ShooterEnemy.gd" id="1_def45"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_uxfip"]
 
 [node name="ShooterEnemy" type="CharacterBody2D" groups=["enemies"]]
 script = ExtResource("1_def45")
@@ -9,3 +11,4 @@ enemy_type = 1
 [node name="Sprite2D" type="Sprite2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_uxfip")

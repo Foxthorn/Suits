@@ -49,8 +49,8 @@ const TOWER_GATLING_GUN_UPGRADE_LEVEL_1: int = 75  # Damage upgrade cost
 #endregion
 
 #region Gatling Gun Stats
-const TOWER_GATLING_GUN_RANGE: float = 250.0     # Detection radius in pixels
-const TOWER_GATLING_GUN_DAMAGE: float = 8.0      # Damage per shot
+const TOWER_GATLING_GUN_RANGE: float = 500.0     # Detection radius in pixels
+const TOWER_GATLING_GUN_DAMAGE: float = 10.0      # Damage per shot
 const TOWER_GATLING_GUN_FIRE_RATE: float = 0.2   # Time between shots (seconds) = 5 shots/sec
 const TOWER_GATLING_GUN_BULLET_SPEED: float = 350.0  # Projectile speed
 const TOWER_GATLING_GUN_BULLET_LIFETIME: float = 3.0  # Projectile max lifetime

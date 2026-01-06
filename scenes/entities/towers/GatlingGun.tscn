@@ -1,10 +1,24 @@
-[gd_scene load_steps=2 format=3 uid="uid://caqvuvl3bvkm0j4p8xfbt0jp4"]
+[gd_scene load_steps=5 format=3 uid="uid://d1dv004ubwpkh"]
 
-[ext_resource type="Script" path="res://src/entities/towers/GatlingGun.gd" id="1_2bvvn"]
+[ext_resource type="Script" uid="uid://blqv3qsdgiun0" path="res://src/entities/towers/GatlingGun.gd" id="1_2bvvn"]
+[ext_resource type="Script" uid="uid://xvk81f67h8ef" path="res://src/systems/TowerWeaponSystem.gd" id="2_jxhas"]
+[ext_resource type="Texture2D" uid="uid://cd7gvhxteddpn" path="res://assets/towers/gatling/tier1/gun_idle_00.png" id="3_wygcl"]
 
-[node name="GatlingGun" type="Node2D"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_vyqcf"]
+
+[node name="GatlingGun" type="CharacterBody2D" node_paths=PackedStringArray("tower_weapon_system")]
 script = ExtResource("1_2bvvn")
-tower_type = 0
-debug_draw = false
+tower_weapon_system = NodePath("TowerWeaponSystem")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_vyqcf")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 10
+scale = Vector2(2, 2)
+texture = ExtResource("3_wygcl")
 
 [node name="DebugTimer" type="Timer" parent="."]
+
+[node name="TowerWeaponSystem" type="Node" parent="."]
+script = ExtResource("2_jxhas")
