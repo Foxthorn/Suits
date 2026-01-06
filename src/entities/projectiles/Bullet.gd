@@ -18,7 +18,9 @@ signal expired()
 @export var damage: float = WeaponConfig.WEAPON_DAMAGE
 @export var speed: float = WeaponConfig.BULLET_SPEED
 @export var lifetime: float = WeaponConfig.BULLET_LIFETIME
+@export var bullet_type: WeaponConfig.BulletType = WeaponConfig.DEFAULT_BULLET_TYPE
 @export var debug_draw: bool = false
+@export var debug_show_region: bool = false  # Show sprite sheet region boundaries
 
 #endregion
 
@@ -27,6 +29,8 @@ var _velocity: Vector2 = Vector2.ZERO
 var _age: float = 0.0
 var _hit_targets: Array[Node] = []  # Track what we've already hit to avoid double-hits
 var _particle_cleanup_timer: Timer = null  # Timer for particle cleanup instead of await
+var _sprite: Sprite2D = null
+var _current_region: Rect2 = Rect2()  # Store current region for debug visualization
 
 #endregion
 
@@ -41,12 +45,17 @@ func _ready() -> void:
 	if not area_entered.is_connected(_on_area_entered):
 		area_entered.connect(_on_area_entered)
 
+	# Setup sprite
+	_setup_sprite()
+
 	# Debug collision configuration
 	if self.debug_draw:
 		print("[Bullet] Collision Layer: %d (Layer 2 - player_projectiles), Mask: %d (detects Layer 3 - enemies)" % [collision_layer, collision_mask])
 		print("[Bullet] Spawned at position: ", global_position, " with velocity: ", _velocity)
 		if area_entered.is_connected(_on_area_entered):
 			print("[Bullet] area_entered signal connected ✓")
+		if _sprite:
+			print("[Bullet] Sprite loaded and visible ✓")
 
 
 func _physics_process(delta: float) -> void:
@@ -68,7 +77,7 @@ func _physics_process(delta: float) -> void:
 		print("[Bullet] Expiring soon, age: %.2f/%.2f" % [_age, self.lifetime])
 
 func _process(_delta: float) -> void:
-	if self.debug_draw:
+	if self.debug_draw or self.debug_show_region:
 		queue_redraw()
 
 #endregion
@@ -199,17 +208,104 @@ func _expire() -> void:
 
 #endregion
 
+#region Sprite Management
+func _setup_sprite() -> void:
+	"""Load and configure bullet sprite from WeaponConfig sprite sheet system"""
+	# Get or create sprite node
+	if has_node("Sprite2D"):
+		_sprite = get_node("Sprite2D") as Sprite2D
+	else:
+		_sprite = Sprite2D.new()
+		add_child(_sprite)
+
+	# Get sprite sheet index and region from config
+	var sheet_index: int = WeaponConfig.BULLET_TYPE_SHEETS.get(self.bullet_type, 0)
+	var region: Rect2 = WeaponConfig.BULLET_TYPE_REGIONS.get(self.bullet_type, Rect2(20, 4, 20, 20))
+	_current_region = region  # Store for debug visualization
+
+	# Build sprite sheet path using the sheet index
+	var sprite_path = WeaponConfig.BULLET_SPRITE_SHEET_PATH % sheet_index
+	var sprite_texture = load(sprite_path) as Texture2D
+
+	if sprite_texture:
+		# Create AtlasTexture to extract specific region from sprite sheet
+		var atlas_texture = AtlasTexture.new()
+		atlas_texture.atlas = sprite_texture
+		atlas_texture.region = region
+
+		_sprite.texture = atlas_texture
+		# Scale up the extracted sprite for visibility
+		_sprite.scale = Vector2(2.0, 2.0)
+		_sprite.centered = true  # Center sprite on bullet position
+
+		if self.debug_draw:
+			var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
+			print("[Bullet] Loaded bullet type '%s' from sheet %d, region: %s" % [bullet_name, sheet_index, region])
+	else:
+		# Fallback: Create visual placeholder if sprite fails to load
+		_sprite.texture = _create_placeholder_texture()
+		_sprite.scale = Vector2(1.0, 1.0)
+		_sprite.centered = true
+		if self.debug_draw:
+			var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
+			print("[Bullet] WARNING: Failed to load sprite sheet %s for bullet type '%s', using placeholder" % [sprite_path, bullet_name])
+
+func _create_placeholder_texture() -> Texture2D:
+	"""Create a simple yellow circle as fallback if sprite fails to load"""
+	var image = Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for x in range(16):
+		for y in range(16):
+			var dist = Vector2(x - 8, y - 8).length()
+			if dist <= 7:
+				image.set_pixel(x, y, WeaponConfig.BULLET_COLOR)
+			else:
+				image.set_pixel(x, y, Color.TRANSPARENT)
+	return ImageTexture.create_from_image(image)
+
+#endregion
+
 #region Debug Visualization
 func _draw() -> void:
-	if not self.debug_draw or not visible:
+	if not visible:
 		return
 
-	# Draw bullet radius
-	draw_circle(Vector2.ZERO, WeaponConfig.BULLET_RADIUS, WeaponConfig.BULLET_COLOR)
+	# Draw velocity vector for aiming reference
+	if self.debug_draw:
+		if _velocity.length() > 0:
+			var velocity_visual = _velocity.normalized() * 30
+			draw_line(Vector2.ZERO, velocity_visual, Color.WHITE, 2.0)
 
-	# Draw velocity vector
-	if _velocity.length() > 0:
-		var velocity_visual = _velocity.normalized() * 30
-		draw_line(Vector2.ZERO, velocity_visual, Color.WHITE, 2.0)
+	# Draw sprite sheet region debug visualization
+	if self.debug_show_region:
+		_draw_region_debug()
+
+func _draw_region_debug() -> void:
+	"""Visualize the sprite sheet region being extracted"""
+	var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
+	var sheet_index: int = WeaponConfig.BULLET_TYPE_SHEETS.get(self.bullet_type, 0)
+
+	# Draw region boundaries relative to sprite center
+	var region = _current_region
+	var region_rect = Rect2(
+		-region.size.x / 2.0,
+		-region.size.y / 2.0,
+		region.size.x,
+		region.size.y
+	)
+
+	# Draw bright green border to show extracted region
+	draw_rect(region_rect, Color.GREEN, false, 2.0)
+
+	# Draw cross at center for reference
+	var cross_size = 10.0
+	draw_line(Vector2(-cross_size, 0), Vector2(cross_size, 0), Color.CYAN, 1.0)
+	draw_line(Vector2(0, -cross_size), Vector2(0, cross_size), Color.CYAN, 1.0)
+
+	# Draw info text
+	var info_text = "%s (Sheet %d)" % [bullet_name, sheet_index]
+	var region_text = "Region: x=%d y=%d w=%d h=%d" % [int(region.position.x), int(region.position.y), int(region.size.x), int(region.size.y)]
+
+	draw_string(ThemeDB.fallback_font, Vector2(-50, -30), info_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.YELLOW)
+	draw_string(ThemeDB.fallback_font, Vector2(-50, -15), region_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 
 #endregion

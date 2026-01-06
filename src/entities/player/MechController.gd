@@ -132,12 +132,15 @@ func _handle_rotation(delta: float) -> void:
 		rotation = target_rotation
 
 func _handle_weapon() -> void:
-	"""Handle weapon firing based on input"""
+	"""Handle weapon firing - supports continuous fire while holding fire button"""
 	if not weapon_system:
 		return
 
-	if Input.is_action_just_pressed("fire"):
-		weapon_system.fire(global_position, _mouse_direction)
+	# Check if fire button is held down
+	if Input.is_action_pressed("fire"):
+		# Fire if cooldown is ready (weapon handles its own fire rate)
+		if weapon_system.can_fire():
+			weapon_system.fire(global_position, _mouse_direction)
 
 #endregion
 
