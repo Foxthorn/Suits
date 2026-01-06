@@ -1,0 +1,208 @@
+class_name BaseTower
+extends Node2D
+## Base class for all tower types
+## Handles common tower logic: detection, firing, cooldown management
+## Subclasses override behavior while reusing core functionality
+
+#region Exported Properties
+@export var tower_type: TowerDatabase.TowerType = TowerDatabase.TowerType.GATLING_GUN
+@export var debug_draw: bool = false
+
+#endregion
+
+#region Signals
+signal fired(position: Vector2, direction: Vector2)
+signal target_changed(new_target: BaseEnemy)
+
+#endregion
+
+#region Private Variables
+var tower_data: TowerDatabase.TowerData
+var enemies_in_range: Array[BaseEnemy] = []
+var current_target: BaseEnemy = null
+var fire_cooldown: float = 0.0
+
+# Visual components
+var _sprite: Sprite2D
+var _detection_zone: Area2D
+var _range_indicator: CanvasItem
+
+#endregion
+
+#region Lifecycle
+func _ready() -> void:
+	# Load tower data from database
+	tower_data = TowerDatabase.get_tower(tower_type)
+
+	if not tower_data:
+		push_error("BaseTower: Failed to load tower data for type %s" % tower_type)
+		queue_free()
+		return
+
+	_setup_sprite()
+	_setup_detection_zone()
+	_setup_collision_layer()
+
+	print("BaseTower: Initialized %s at %v" % [tower_data.name, global_position])
+
+func _physics_process(delta: float) -> void:
+	# Update fire cooldown
+	if fire_cooldown > 0:
+		fire_cooldown -= delta
+	else:
+		var target = find_nearest_enemy()
+
+		# Target changed
+		if target != current_target:
+			current_target = target
+			target_changed.emit(current_target)
+
+		# Fire at target
+		if current_target:
+			fire()
+			fire_cooldown = tower_data.fire_rate
+
+func _draw() -> void:
+	"""Debug visualization: draw detection range"""
+	if debug_draw and tower_data:
+		draw_circle(Vector2.ZERO, tower_data.range, TowerConfig.TOWER_RANGE_INDICATOR_COLOR)
+
+#endregion
+
+#region Setup Methods
+func _setup_sprite() -> void:
+	"""Initialize tower sprite"""
+	_sprite = Sprite2D.new()
+	add_child(_sprite)
+
+	# Try to load configured sprite
+	var sprite_texture = tower_data.get_sprite()
+	if sprite_texture:
+		_sprite.texture = sprite_texture
+	else:
+		# Fallback to placeholder
+		_sprite.texture = _create_placeholder_texture(48, 48, Color(0.2, 0.5, 0.8))
+
+	_sprite.scale = Vector2.ONE * tower_data.size
+	_sprite.z_index = 10  # Draw above ground
+
+func _setup_detection_zone() -> void:
+	"""Initialize enemy detection area"""
+	_detection_zone = Area2D.new()
+	_detection_zone.name = "DetectionZone"
+	add_child(_detection_zone)
+
+	# Create circular collision shape for detection
+	var collision_shape = CollisionShape2D.new()
+	var circle_shape = CircleShape2D.new()
+	circle_shape.radius = tower_data.range
+	collision_shape.shape = circle_shape
+	_detection_zone.add_child(collision_shape)
+
+	# Configure collision layers
+	_detection_zone.collision_layer = 0  # Not on any layer
+	_detection_zone.collision_mask = GameConfig.COLLISION_LAYER_ENEMIES  # Detect enemies only
+
+	# Connect signals
+	_detection_zone.area_entered.connect(_on_enemy_entered)
+	_detection_zone.area_exited.connect(_on_enemy_exited)
+
+func _setup_collision_layer() -> void:
+	"""Configure collision layers and masks for tower"""
+	# Tower is on layer 6 (TOWERS)
+	collision_layer = GameConfig.COLLISION_LAYER_TOWERS
+	# Tower detects: world(1), enemies(3)
+	collision_mask = GameConfig.COLLISION_MASK_TOWER
+
+#endregion
+
+#region Detection & Targeting
+func _on_enemy_entered(area: Node2D) -> void:
+	"""Enemy entered detection range"""
+	if area is BaseEnemy:
+		if not enemies_in_range.has(area):
+			enemies_in_range.append(area)
+			# Connect to enemy death signal to clean up
+			if not area.died.is_connected(_on_enemy_died):
+				area.died.connect(_on_enemy_died.bindv([area]))
+
+func _on_enemy_exited(area: Node2D) -> void:
+	"""Enemy left detection range"""
+	if area is BaseEnemy:
+		enemies_in_range.erase(area)
+		if current_target == area:
+			current_target = null
+
+func _on_enemy_died(dead_enemy: BaseEnemy) -> void:
+	"""Clean up when enemy dies"""
+	enemies_in_range.erase(dead_enemy)
+	if current_target == dead_enemy:
+		current_target = null
+
+func find_nearest_enemy() -> BaseEnemy:
+	"""Find closest valid enemy in detection range"""
+	var nearest: BaseEnemy = null
+	var nearest_dist: float = tower_data.range
+
+	for enemy in enemies_in_range:
+		if not is_instance_valid(enemy):
+			continue
+
+		var dist = global_position.distance_to(enemy.global_position)
+		if dist < nearest_dist:
+			nearest = enemy
+			nearest_dist = dist
+
+	return nearest
+
+#endregion
+
+#region Firing (Abstract - Override in Subclasses)
+func fire() -> void:
+	"""Fire at current target. Override in subclasses for specific behavior"""
+	if not current_target:
+		return
+
+	# Calculate direction to target
+	var direction = (current_target.global_position - global_position).normalized()
+
+	# Emit signal for subclasses to handle
+	fired.emit(global_position, direction)
+
+	# Visual feedback
+	_flash_white()
+
+func _flash_white() -> void:
+	"""Brief white flash when firing (visual feedback)"""
+	if _sprite:
+		var original_color = _sprite.modulate
+		_sprite.modulate = Color.WHITE
+
+		await get_tree().create_timer(TowerConfig.TOWER_HIT_FLASH_DURATION).timeout
+		_sprite.modulate = original_color
+
+#endregion
+
+#region Public API
+func get_tower_data() -> TowerDatabase.TowerData:
+	"""Get tower configuration data"""
+	return tower_data
+
+func get_enemies_in_range() -> Array[BaseEnemy]:
+	"""Get list of enemies currently in detection range"""
+	return enemies_in_range.duplicate()
+
+func get_current_target() -> BaseEnemy:
+	"""Get the tower's current firing target"""
+	return current_target
+
+#endregion
+
+#region Utility
+func _create_placeholder_texture(width: int, height: int, color: Color) -> ImageTexture:
+	"""Create a simple colored square texture (placeholder)"""
+	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
+	image.fill(color)
+	return ImageTexture.create_from_image(image)
+
+#endregion

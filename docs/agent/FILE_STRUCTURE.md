@@ -37,36 +37,53 @@
 │   ├── game_config.gd           # Global game constants & balance values
 │   ├── crop_config.gd           # Crop-specific constants (NO magic numbers)
 │   ├── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths
-│   └── weapon_config.gd         # Weapon types, projectile balance values (✅ NEW)
-│   │   ├── DayNightCycle.gd
-│   │   └── UpgradeSystem.gd
-│   ├── entities/                # Inherited scenes + scripts
-│   │   ├── player/
-│   │   │   └── MechController.gd
-│   │   ├── enemies/
-│   │   │   ├── BaseEnemy.gd
-│   │   │   ├── RusherEnemy.gd
-│   │   │   └── ShooterEnemy.gd
-│   │   ├── projectiles/
-│   │   │   └── Bullet.gd            # Mech projectile with pooling (✅ NEW)
-│   │   └── crops/
-│   │   │   ├── BugBasic.tscn
-│   │   │   └── BugBoss.tscn
-│   │   ├── towers/
-│   │   ├── HUD.tscn
-│   │       └── BaseCrop.gd      # Base crop entity with growth states & harvest
-│       ├── Pool.gd              # Generic object pool
-│   │   ├── HexGridManager.gd    # Placement, highlighting, snapping
-│   │   ├── FarmSystem.gd
+│   ├── weapon_config.gd         # Weapon types, projectile balance values
+│   └── tower_config.gd          # Tower types, stats, projectile properties (✅ NEW - Step 8)
+├── src/
+│   ├── systems/
+│   │   ├── HexGrid.gd           # Hex grid system with camera control
+│   │   ├── EnemyDatabase.gd     # Enemy registry with extensible types
+│   │   ├── TowerDatabase.gd     # Tower registry with extensible types (✅ NEW - Step 8)
+│   │   ├── TowerWeaponSystem.gd # Tower projectile pooling and firing (✅ NEW - Step 8)
+│   │   ├── CropDatabase.gd      # Crop registry with extensible types
+│   │   ├── PlantingSystem.gd    # Crop placement mode
+│   │   └── WeaponSystem.gd      # Mech projectile pooling and firing
+│   └── entities/
+│       ├── player/
+│       │   └── MechController.gd
+│       ├── enemies/
+│       │   ├── BaseEnemy.gd
+│       │   ├── RusherEnemy.gd
+│       │   └── ShooterEnemy.gd
+│       ├── crops/
+│       │   └── BaseCrop.gd
+│       ├── towers/
+│       │   ├── BaseTower.gd     # Base tower class (✅ NEW - Step 8)
+│       │   └── GatlingGun.gd    # Rapid-fire tower (✅ NEW - Step 8)
+│       └── projectiles/
+│           ├── Bullet.gd
+│           └── TowerBullet.gd   # Tower projectile (✅ NEW - Step 8)
+├── scenes/
+│   ├── MainGame.tscn            # Root scene
 │   ├── world/
-│   │   └── HexGrid.tscn         # Hex grid system (TileMap + camera follow)
-│   │   ├── EnemyDatabase.gd     # Enemy registry with sprite sheet animation metadata (✅ NEW)
-│   │   ├── Pathfinding.gd       # Shared AStarGrid2D wrapper
-│   │   └── WaveSpawner.gd
-│   │   └── crops/
-│   │       └── BaseCrop.tscn    # Base crop scene (instantiated by PlantingSystem)
-│   └── levels/
-│       └── ProceduralLevel.tscn
+│   │   └── HexGrid.tscn         # Hex grid with TileMapLayer
+│   ├── entities/
+│   │   ├── mech/
+│   │   │   └── Mech.tscn        # Player mech entity
+│   │   ├── enemies/
+│   │   │   ├── BaseEnemy.tscn   # Base enemy scene
+│   │   │   ├── RusherEnemy.tscn # Fast melee attacker
+│   │   │   └── ShooterEnemy.tscn # Ranged attacker
+│   │   ├── crops/
+│   │   │   └── BaseCrop.tscn    # Crop growth entity
+│   │   ├── towers/
+│   │   │   ├── GatlingGun.tscn  # Rapid-fire turret (✅ NEW - Step 8)
+│   │   │   └── (more tower types here)
+│   │   └── projectiles/
+│   │       ├── Bullet.tscn      # Player projectile
+│   │       └── TowerBullet.tscn # Tower projectile (✅ NEW - Step 8)
+│   └── ui/
+│       └── HUD.tscn             # Main heads-up display
 ├── shaders/
 │   ├── hex_highlight.gdshader
 │   └── night_bloom.tres
@@ -88,12 +105,16 @@
 ├── tests/                       # Future unit tests (GUT or manual)
 └── README.md                    # User-facing project overview
 
+---
+
 ## Related Documentation
-- [ARCHITECTURE.md](/ARCHITECTURE.md) - System design and architectural decisions
+- [ARCHITECTURE.md](/docs/ARCHITECTURE.md) - System design and architectural decisions
 - [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) - Project vision and tech stack
 - [CODING_STANDARDS.md](CODING_STANDARDS.md) - Code style guidelines
 
 **Update Policy**: When adding new folders, files, or reorganizing structure, update both this file and relevant sections in ARCHITECTURE.md.
+
+---
 
 ## Naming & Grouping Rules (non-negotiable)
 - Scenes & scripts: PascalCase (MySystem.tscn + MySystem.gd)
@@ -101,15 +122,17 @@
 - Reusable entities → always inherited scenes in /src/entities/
 - Never put gameplay scripts at root or in scenes/ — only in /src/
 - Every new system gets its own folder under /src/systems/ or /src/entities/
-- All balance numbers live in config files (game_config.gd, crop_config.gd, etc.) — **NO MAGIC NUMBERS**
-- System-specific configs should be separate files (e.g., crop_config.gd for crops)
+- All balance numbers live in config files (game_config.gd, crop_config.gd, tower_config.gd, etc.) — **NO MAGIC NUMBERS**
+- System-specific configs should be separate files (e.g., crop_config.gd for crops, tower_config.gd for towers)
 - UI scenes always under /src/ui/, never mixed with gameplay
 - Demos/tutorials live in /demos/ — never reference from production code
 - Demo scenes can be messy/experimental — exempt from strict standards
-- All enemy types have dedicated scene files in /scenes/entities/enemies/
-- All database registries (CropDatabase, EnemyDatabase) are in /src/systems/
-- Entity base classes (BaseEnemy, BaseCrop) are in /src/entities/ with implementations
-- Entity scene files match class names: RusherEnemy.gd + RusherEnemy.tscn
+- All entity types (enemies, crops, towers) have dedicated scene files and scripts
+- All database registries (CropDatabase, EnemyDatabase, TowerDatabase) are in /src/systems/
+- Entity base classes (BaseEnemy, BaseCrop, BaseTower) are in /src/entities/ with implementations
+- Entity scene files match class names: RusherEnemy.gd + RusherEnemy.tscn, GatlingGun.gd + GatlingGun.tscn
+
+---
 
 ## Entity Inheritance Pattern
 
@@ -123,8 +146,7 @@ All enemy types follow this pattern:
    - Extend BaseEnemy
    - Set `enemy_type` before calling `super._ready()`
    - Override `_physics_process()` for unique behaviors
-3. **Scene Files** (`scenes/entities/enemi
-es/`):
+3. **Scene Files** (`scenes/entities/enemies/`):
    - One .tscn per enemy type (RusherEnemy.tscn, ShooterEnemy.tscn)
    - Loaded as PackedScenes by WaveManager
    - No hardcoded stats — all from EnemyDatabase
@@ -132,3 +154,40 @@ es/`):
    - Central config with all enemy types and stats
    - Sprite paths, animation frame counts, balance values
    - EnemyDatabase reads from this file and builds registry
+
+### Tower Entity Architecture (Step 8 - In Progress)
+All tower types follow this pattern:
+1. **BaseTower.gd**: Base class in `/src/entities/towers/` (✅ IMPLEMENTED - Step 8)
+   - Handles enemy detection via Area2D
+   - Manages targeting logic (nearest enemy)
+   - Manages fire rate and cooldown
+   - Loads stats from TowerDatabase
+   - Virtual `fire()` method for subclass override
+2. **Subclasses** (GatlingGun, etc.) (✅ IMPLEMENTED - Step 8):
+   - Extend BaseTower
+   - Set `tower_type` before calling `super._ready()`
+   - Override `fire()` for unique firing behavior
+   - Create TowerWeaponSystem instance for projectile management
+3. **Scene Files** (`scenes/entities/towers/`) (✅ IMPLEMENTED - Step 8):
+   - One .tscn per tower type (GatlingGun.tscn, etc.)
+   - Loaded as PackedScenes by TowerSystem (future)
+   - No hardcoded stats — all from TowerDatabase
+4. **Configuration** (`config/tower_config.gd`) (✅ IMPLEMENTED - Step 8):
+   - Central config with all tower types and stats
+   - Sprite paths, firing parameters, cost, visual feedback colors
+   - TowerDatabase reads from this file and builds registry
+
+### Crop Entity Architecture (Step 4 - Complete)
+All crop types follow this pattern:
+1. **BaseCrop.gd**: Base class in `/src/entities/crops/`
+   - Handles growth states (PLANTED, GROWING, HARVESTABLE)
+   - Manages sprite sheet animation across growth frames
+   - Loads stats from CropDatabase
+2. **Scene File** (`scenes/entities/crops/BaseCrop.tscn`):
+   - Single reusable scene instantiated by PlantingSystem
+   - Configured with crop_type on instantiation
+   - No hardcoded stats — all from CropDatabase
+3. **Configuration** (`config/crop_config.gd`):
+   - Central config with all crop types and stats
+   - Sprite paths, grow times, costs, values
+   - CropDatabase reads from this file and builds registry

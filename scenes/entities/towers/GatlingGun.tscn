@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://caqvuvl3bvkm0j4p8xfbt0jp4"]
+
+[ext_resource type="Script" path="res://src/entities/towers/GatlingGun.gd" id="1_2bvvn"]
+
+[node name="GatlingGun" type="Node2D"]
+script = ExtResource("1_2bvvn")
+tower_type = 0
+debug_draw = false
+
+[node name="DebugTimer" type="Timer" parent="."]

@@ -203,18 +203,41 @@
 
 ---
 
-## Step 8: Tower Placement & Auto-Targeting
+## Step 8: Tower Placement & Auto-Targeting 🔄 IN PROGRESS
 **Why Eighth:** Core tower-defense mechanic unlocked.
 
 ### Deliverables:
-- [ ] Create `res://scenes/entities/towers/BasicTurret.tscn` (Node2D or StaticBody2D)
-- [ ] Implement `BasicTurret.gd`:
-  - Cost: 75 credits
-  - Detection range: 300px (Area2D detection zone)
-  - Fires at nearest enemy in range every 1.0s
-  - Damage: 15 per shot
-  - Reuses Bullet.tscn with different color/speed
-- [ ] Tower placement system:
+- [x] Create tower type registry system (TowerDatabase.gd) ✅
+  - Extensible registration pattern
+  - TowerData immutable class with all tower config
+  - Automatic initialization on first access ✅
+- [x] Implement `BaseTower.gd` (base class for all towers) ✅
+  - Enemy detection via Area2D ✅
+  - Targeting logic (nearest enemy) ✅
+  - Fire rate management and cooldown ✅
+  - Sprite setup and collision layer configuration ✅
+  - Virtual `fire()` method for subclass override ✅
+- [x] Create GatlingGun tower (rapid-fire type) ✅
+  - Cost: 50 credits (vs 75 for generic turret)
+  - Detection range: 250px (slightly less than generic)
+  - Fires 5 shots/sec (0.2s fire rate) ✅
+  - Damage: 8 per shot (lower per-shot, higher volume) ✅
+  - Firing animation (sprite rotation) ✅
+  - Yellow/orange bullet color for visual distinction ✅
+- [x] Create tower projectile system (TowerWeaponSystem.gd) ✅
+  - Separate from player WeaponSystem
+  - 100-bullet object pool per tower
+  - Tower bullet spawning and color management ✅
+- [x] Create `TowerBullet.gd` projectile ✅
+  - Poolable for performance
+  - Collision detection and damage
+  - Distinct yellow/orange color from player bullets
+  - Particle effects on impact ✅
+- [x] Create `config/tower_config.gd` configuration ✅
+  - All tower balance values (costs, ranges, damage, fire rates)
+  - Placement visual feedback colors
+  - Future tower type placeholders (Sniper, Flame, Ice)
+- [ ] Tower placement system (TowerSystem.gd):
   - Press T → enter placement mode
   - Ghost preview follows mouse on valid tiles (not on crops, not on path)
   - Click to place if player has credits
@@ -222,6 +245,16 @@
 - [ ] Visual tower range indicator (dashed circle when placing)
 
 **Acceptance Test:** Place 2 towers during day → at night they auto-shoot enemies in range.
+
+**Implementation Notes (Completed Parts):**
+- TowerDatabase follows EnemyDatabase pattern for extensibility
+- BaseTower handles all common tower logic (detection, targeting, firing)
+- GatlingGun overrides fire() for unique bullet spread and animation
+- TowerWeaponSystem manages separate bullet pool (100 bullets) for performance
+- TowerBullet uses same collision system as player bullets but distinct visual color
+- All tower constants centralized in `config/tower_config.gd` (NO magic numbers)
+- Established tower system pattern allows easy addition of new tower types (Sniper, Flame, Ice)
+- Architecture matches EnemyDatabase + BaseEnemy + RusherEnemy pattern
 
 ---
 
@@ -308,6 +341,14 @@
 ✅ **Step 4** - Crop System (Planting, Growth, Harvest)
 ✅ **Step 6** - Enemy Spawning & Basic AI
 ✅ **Step 7** - Mech Weapon & Combat
+🔄 **Step 8** - Tower Placement & Auto-Targeting (IN PROGRESS)
+   - ✅ Tower database registry system (TowerDatabase.gd)
+   - ✅ Base tower class (BaseTower.gd) with detection and targeting
+   - ✅ GatlingGun rapid-fire tower implementation
+   - ✅ Tower weapon system and projectiles (TowerWeaponSystem.gd, TowerBullet.gd)
+   - ✅ Tower configuration (config/tower_config.gd)
+   - 🔜 Tower placement system (TowerSystem.gd) - NEXT TASK
+   - 🔜 Visual range indicator - NEXT TASK
 
 ---
 
