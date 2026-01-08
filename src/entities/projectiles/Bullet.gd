@@ -2,8 +2,8 @@ class_name Bullet
 extends Area2D
 ## Mech projectile - travels in straight line, damages enemies on hit
 ##
-## Part of the weapon system (Step 7). Reuses bullets via object pooling.
-## Each bullet tracks its age for lifetime management.
+## Part of the weapon system (Step 7). Projectiles track hits and self-destruct
+## after collision. Each bullet tracks its age for lifetime management.
 
 #region Signals
 ## Emitted when bullet hits a valid target
@@ -148,7 +148,7 @@ func _on_area_entered(area: Node2D) -> void:
 
 #endregion
 
-#region Setup & Pooling
+#region Setup
 ## Set bullet velocity and direction (call this after instantiation)
 func set_velocity(direction: Vector2, spd: float = WeaponConfig.BULLET_SPEED) -> void:
 	_velocity = direction.normalized() * spd
@@ -156,23 +156,6 @@ func set_velocity(direction: Vector2, spd: float = WeaponConfig.BULLET_SPEED) ->
 ## Set bullet velocity directly from angle
 func set_velocity_from_angle(angle: float, spd: float = WeaponConfig.BULLET_SPEED) -> void:
 	_velocity = Vector2.from_angle(angle) * spd
-
-## Reset bullet for reuse in pool
-func reset() -> void:
-	_age = 0.0
-	_velocity = Vector2.ZERO
-	_hit_targets.clear()
-	visible = false
-	set_physics_process(false)
-	monitoring = false  # Disable collision detection while in pool
-
-## Prepare bullet for firing (called when retrieving from pool)
-func prepare() -> void:
-	_age = 0.0
-	_hit_targets.clear()
-	visible = true
-	set_physics_process(true)
-	monitoring = true  # Enable collision detection when active
 
 #endregion
 
@@ -210,7 +193,7 @@ func _create_hit_effect(position: Vector2) -> void:
 	cleanup_timer.start()
 
 func _expire() -> void:
-	"""Bullet lifetime ended - clean up"""
+	"""Bullet lifetime ended or destroyed after collision - clean up"""
 	if self.debug_draw:
 		if _age >= self.lifetime:
 			print("[Bullet] EXPIRED after %.2f seconds (lifetime: %.2f)" % [_age, self.lifetime])
@@ -218,8 +201,14 @@ func _expire() -> void:
 			print("[Bullet] Destroyed after hit")
 
 	self.expired.emit()
-	reset()
-	# Bullet will be returned to pool by WeaponSystem or auto queue_free
+	queue_free()
+
+#endregion
+
+#region Cleanup
+func _on_screen_exited() -> void:
+	"""Disable physics when off-screen for performance"""
+	set_physics_process(false)
 
 #endregion
 

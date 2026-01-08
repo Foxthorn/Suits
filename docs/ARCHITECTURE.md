@@ -224,27 +224,34 @@ func set_damage_multiplier(multiplier: float) -> void
 
 ### Bullet (Projectile Entity)
 
-**Purpose**: Individual projectile with collision detection and damage.
+**Purpose**: Individual projectile with collision detection and direct damage application.
 
 **Location**: `src/entities/projectiles/Bullet.gd`
 
 **Key Responsibilities**:
 - Linear movement at constant velocity
 - Lifetime management (3 second default)
-- Enemy collision detection and damage
+- Enemy collision detection via Area2D
+- Direct damage application by calling `BaseEnemy.take_damage()`
 - Particle effect on impact
-- Pooling support
+- Self-cleanup and queue_free() after collision
 
 **Signals**:
-- `hit_enemy(enemy: BaseEnemy, damage: float)`
-- `expired()`
+- `hit_enemy(enemy: BaseEnemy, damage: float)` - Emitted when damage is applied
+- `expired()` - Emitted when bullet expires or is destroyed
 
 **Public API**:
 ```gdscript
 func set_velocity(direction: Vector2, spd: float = WeaponConfig.BULLET_SPEED) -> void
-func reset() -> void
-func prepare() -> void
+func set_velocity_from_angle(angle: float, spd: float = WeaponConfig.BULLET_SPEED) -> void
 ```
+
+**Collision Behavior**:
+- Bullets detect enemies via Area2D collision detection
+- On collision with BaseEnemy, calls `enemy.take_damage(damage)` directly
+- Creates impact particle effect at hit location
+- Self-destructs (queue_free) after applying damage
+- Tracks hit targets to prevent double-hits on same enemy
 
 ---
 
@@ -382,21 +389,22 @@ func get_pooled_bullet_count() -> int
 ---
 
 #### TowerBullet (`src/entities/projectiles/TowerBullet.gd`)
-**Purpose**: Tower-fired projectile with collision detection and damage (visually distinct from player bullets).
+**Purpose**: Tower-fired projectile with collision detection and direct damage application (visually distinct from player bullets).
 
 **Location**: `src/entities/projectiles/TowerBullet.gd` + `scenes/entities/projectiles/TowerBullet.tscn`
 
 **Key Responsibilities**:
 - Linear movement at tower-specific speed
 - Lifetime management (tower-configurable)
-- Enemy collision detection and damage application
+- Enemy collision detection via Area2D
+- Direct damage application by calling `BaseEnemy.take_damage()`
 - Particle effect on impact
-- Pooling support
+- Self-cleanup and queue_free() after collision
 - Color customization for visual feedback
 
 **Signals**:
-- `hit_enemy(enemy: BaseEnemy, damage: float)`
-- `expired()`
+- `hit_enemy(enemy: BaseEnemy, damage: float)` - Emitted when damage is applied
+- `expired()` - Emitted when bullet expires or is destroyed
 
 **Public API**:
 ```gdscript
@@ -404,14 +412,19 @@ func set_velocity(direction: Vector2, speed: float) -> void
 func set_color(color: Color) -> void
 func set_damage(damage: float) -> void
 func set_lifetime(duration: float) -> void
-func reset() -> void
-func prepare() -> void
 ```
+
+**Collision Behavior**:
+- Tower bullets detect enemies via Area2D collision detection
+- On collision with BaseEnemy, calls `enemy.take_damage(damage)` directly
+- Creates impact particle effect at hit location
+- Self-destructs (queue_free) after applying damage
+- Prevents double-hits on same enemy in single frame
 
 **Design Notes**:
 - Yellow/Orange color by default (visually distinct from white player bullets)
 - Configurable color allows tower type differentiation in future updates
-- Uses same collision system as player bullets (Layer 2, Mask enemies Layer 3)
+- Uses same collision detection approach as player bullets (Area2D with direct function calls)
 
 ---
 
@@ -920,19 +933,25 @@ WeaponSystem.can_fire() check
     ↓
 WeaponSystem.fire(from_position, direction)
     ↓
-Get Bullet from object pool
+Instantiate new Bullet or get from pool
     ↓
 Bullet.set_velocity(direction, speed)
     ↓
 Bullet moves via _physics_process
     ↓
-Bullet.area_entered(Enemy)
+Bullet.area_entered(Enemy) detected
     ↓
-Enemy.take_damage(damage)
+Bullet calls Enemy.take_damage(damage) directly
     ↓
-Bullet.expired signal → Return to pool
+Enemy.health -= damage
+    ↓
+Enemy emits health_changed signal
+    ↓
+Bullet creates hit effect and queue_free()
     ↓
 If enemy.health <= 0:
+    Enemy.die()
+    ↓
     Enemy.died.emit()
     ↓
     WaveManager._on_enemy_died()
@@ -1072,16 +1091,18 @@ Godot physics layers are used to control which entities can collide and interact
 **Design Note**: Bullets are Area2D nodes that only care about hitting enemies. World geometry doesn't stop bullets (they have 3-second lifetime instead). This simplifies targeting and feels more arcade-like.
 
 **Projectile Detection Implementation**:
-BaseEnemy uses a dedicated internal `ProjectileDetector` Area2D node for efficient bullet collision detection:
+- **Bullet Collision Layer**: `2 (player)`
+- **Bullet Collision Mask**: `3 (enemies)` - Only detects enemies
+- Bullets connect to `area_entered` signal to detect enemy collisions
+- On collision, projectile calls `enemy.take_damage(damage)` directly (not via signal)
+- Projectile creates visual feedback (particles) and queue_free() after hit
+
+BaseEnemy provides a dedicated `ProjectileDetector` Area2D for efficient detection:
 - **ProjectileDetector Collision Layer**: `4 (enemies)`
 - **ProjectileDetector Collision Mask**: `2 (player projectiles)`
-- This allows BaseEnemy to detect incoming bullets via `area_entered` signals
-- The ProjectileDetector is sized identically to the enemy's main collision shape for consistent hit detection
-- Signal handler: `_on_projectile_detector_hit(area: Node2D)` receives the Bullet's Area2D node
-
-This two-layer detection approach ensures both directions work correctly:
-1. **Bullet → Enemy**: Bullet's collision_mask=3 detects BaseEnemy (Layer 3)
-2. **Enemy → Bullet**: BaseEnemy's ProjectileDetector collision_mask=2 detects Bullet (Layer 2)
+- This two-layer detection approach ensures both directions work correctly:
+  1. **Bullet → Enemy**: Bullet's collision_mask=3 detects BaseEnemy (Layer 3)
+  2. **Enemy → Bullet**: BaseEnemy's ProjectileDetector collision_mask=2 detects Bullet (Layer 2)
 
 #### Enemies (Rusher, Shooter) — Layer 3
 

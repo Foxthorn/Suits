@@ -2,7 +2,7 @@ class_name TowerBullet
 extends Area2D
 ## Tower-fired projectile with collision detection and damage
 ## Similar to player Bullet but with distinct color for visual feedback
-## Poolable - resets state when returned to pool
+## Self-destructs after collision
 
 #region Signals
 signal hit_enemy(enemy: BaseEnemy, damage: float)
@@ -16,10 +16,10 @@ signal expired()
 #endregion
 
 #region Private Variables
+@onready var lifetime_timer: Timer = $Life
 var _velocity: Vector2 = Vector2.ZERO
 var _speed: float = ProjectileConfig.TOWER_BULLET_SPEED
 var _damage: float = ProjectileConfig.TOWER_BULLET_DAMAGE
-var _lifetime_remaining: float = 0.0
 var _color: Color = ProjectileConfig.TOWER_BULLET_COLOR
 var _sprite: Sprite2D
 var _has_hit: bool = false
@@ -29,7 +29,7 @@ var _has_hit: bool = false
 #region Lifecycle
 func _ready() -> void:
 	# Setup collision layers
-	collision_layer = GameConfig.COLLISION_LAYER_PLAYER_PROJECTILES
+	collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
 	collision_mask = GameConfig.COLLISION_MASK_PLAYER_PROJECTILES
 
 	# Create sprite if not present
@@ -42,16 +42,13 @@ func _ready() -> void:
 	if not area_entered.is_connected(_on_area_entered):
 		area_entered.connect(_on_area_entered)
 
-	_lifetime_remaining = lifetime
+	if self.lifetime_timer:
+		self.lifetime_timer.wait_time = self.lifetime
+		self.lifetime_timer.start()
 
 func _physics_process(delta: float) -> void:
 	# Update position
 	global_position += _velocity * delta
-
-	# Update lifetime
-	_lifetime_remaining -= delta
-	if _lifetime_remaining <= 0:
-		_expire()
 
 #endregion
 
@@ -61,9 +58,21 @@ func _on_area_entered(area: Node2D) -> void:
 	if _has_hit:
 		return
 
+	# Get the actual enemy - check if area is BaseEnemy or child of BaseEnemy
+	var enemy: BaseEnemy = null
+
+	# Direct hit on the enemy node itself
 	if area is BaseEnemy:
-		var enemy = area as BaseEnemy
-		_hit_enemy(enemy)
+		enemy = area as BaseEnemy
+	# Hit on collision shape (child of enemy)
+	elif area.get_parent() is BaseEnemy:
+		enemy = area.get_parent() as BaseEnemy
+
+	# Only process if we found a valid enemy
+	if enemy == null:
+		return
+
+	_hit_enemy(enemy)
 
 func _hit_enemy(enemy: BaseEnemy) -> void:
 	"""Apply damage to enemy and create hit effect"""
@@ -108,19 +117,7 @@ func _create_impact_particles() -> void:
 
 #endregion
 
-#region Pooling & Lifecycle
-func reset() -> void:
-	"""Reset bullet state for pooling"""
-	_velocity = Vector2.ZERO
-	_has_hit = false
-	_lifetime_remaining = lifetime
-
-func prepare() -> void:
-	"""Prepare bullet for reuse from pool"""
-	show()
-	_has_hit = false
-	_lifetime_remaining = lifetime
-
+#region Lifecycle & Setup
 func set_velocity(direction: Vector2, speed: float = ProjectileConfig.TOWER_BULLET_SPEED) -> void:
 	"""Set bullet velocity"""
 	_speed = speed
@@ -139,11 +136,11 @@ func set_damage(damage: float) -> void:
 func set_lifetime(duration: float) -> void:
 	"""Set bullet lifetime"""
 	lifetime = duration
-	_lifetime_remaining = duration
 
 func _expire() -> void:
-	"""Mark bullet as expired and return to pool"""
+	"""Mark bullet as expired and destroy"""
 	expired.emit()
+	queue_free()
 
 #endregion
 
@@ -155,3 +152,7 @@ func _create_placeholder_texture(width: int, height: int, color: Color) -> Image
 	return ImageTexture.create_from_image(image)
 
 #endregion
+
+
+func _on_timer_timeout() -> void:
+	_expire()
