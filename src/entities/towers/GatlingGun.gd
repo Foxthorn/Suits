@@ -34,11 +34,7 @@ func _ready() -> void:
 		_sprite.scale = Vector2(0.6, 0.6)  # Standard bullet size
 		_sprite.texture = tower_sprite
 
-	# Create weapon system if not assigned
-	if not self.tower_weapon_system:
-		self.tower_weapon_system = TowerWeaponSystem.new()
-		add_child(tower_weapon_system)
-
+	# Initialize weapon system (already created in scene via _ready NodePath)
 	self.tower_weapon_system.initialize(tower_data)
 
 

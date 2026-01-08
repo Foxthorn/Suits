@@ -29,7 +29,7 @@ var _has_hit: bool = false
 #region Lifecycle
 func _ready() -> void:
 	# Setup collision layers
-	collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
+	collision_layer = GameConfig.COLLISION_LAYER_PLAYER_PROJECTILES
 	collision_mask = GameConfig.COLLISION_MASK_PLAYER_PROJECTILES
 
 	# Create sprite if not present

@@ -26,7 +26,7 @@ var current_target: BaseEnemy = null
 var fire_cooldown: float = 0.0
 
 # Visual components
-var _sprite: Sprite2D
+@onready var _sprite: Sprite2D = $Sprite2D
 var _detection_zone: Area2D
 var _range_indicator: CanvasItem
 
@@ -89,8 +89,6 @@ func _draw() -> void:
 #region Setup Methods
 func _setup_sprite() -> void:
 	"""Initialize tower sprite"""
-	_sprite = Sprite2D.new()
-	add_child(_sprite)
 
 	# Load sprite as AtlasTexture from configured type
 	var sprite_texture = tower_data.get_sprite()

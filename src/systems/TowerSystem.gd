@@ -24,6 +24,7 @@ var _preview_node: Node2D = null  # Ghost preview with range indicator
 var _preview_sprite: Sprite2D = null
 var _range_indicator: CanvasItem = null
 var _placed_towers: Dictionary = {}  # hex_coords -> Tower instance
+@onready var _planting_system = get_tree().current_scene.find_child("PlantingSystem", true, false)
 
 # Tile validation
 const FARMABLE_TILE_ID: int = 0  # Adjust based on your TileMap setup
@@ -177,8 +178,7 @@ func can_place_tower_at(hex_coords: Vector2i) -> bool:
 		return false
 
 	# Check if PlantingSystem has a crop here (if it exists)
-	var planting_system = get_tree().current_scene.find_child("PlantingSystem", true, false)
-	if planting_system and planting_system.get_crop_at(hex_coords):
+	if _planting_system and _planting_system.get_crop_at(hex_coords):
 		return false
 
 	return true
@@ -193,13 +193,25 @@ func _place_tower_at(hex_coords: Vector2i, world_pos: Vector2) -> void:
 	"""Instantiate and place a tower at the given position"""
 	# Get the tower scene based on type
 	var tower_instance: BaseTower
+	var tower_scene_path: String = ""
 
 	match _selected_tower_type:
 		TowerDatabase.TowerType.GATLING_GUN:
-			tower_instance = GatlingGun.new()
+			tower_scene_path = "res://scenes/entities/towers/GatlingGun.tscn"
 		_:
 			push_error("TowerSystem: Unknown tower type: %s" % _selected_tower_type)
 			return
+
+	# Load and instantiate from PackedScene
+	var packed_scene: PackedScene = load(tower_scene_path)
+	if not packed_scene:
+		push_error("TowerSystem: Failed to load tower scene: %s" % tower_scene_path)
+		return
+
+	tower_instance = packed_scene.instantiate() as BaseTower
+	if not tower_instance:
+		push_error("TowerSystem: Failed to instantiate tower from scene: %s" % tower_scene_path)
+		return
 
 	# Setup tower
 	tower_instance.tower_type = _selected_tower_type
