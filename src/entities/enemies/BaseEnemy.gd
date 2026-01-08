@@ -138,11 +138,12 @@ func _setup_collision() -> void:
 	collision_shape.shape = circle
 	add_child(collision_shape)
 
-			# Setup projectile detector (Area2D for bullet collision)
+				# Setup projectile detector (Area2D for bullet collision)
 	projectile_detector = Area2D.new()
 	projectile_detector.name = "ProjectileDetector"
 	projectile_detector.collision_layer = GameConfig.COLLISION_LAYER_ENEMIES
-	projectile_detector.collision_mask = GameConfig.COLLISION_LAYER_PLAYER
+	# Detect both player bullets (Layer 5) and tower projectiles (Layer 5)
+	projectile_detector.collision_mask = GameConfig.COLLISION_LAYER_PLAYER_PROJECTILES
 	add_child(projectile_detector)
 
 	# Add collision shape to detector
@@ -412,10 +413,21 @@ func _move_toward_target(delta: float) -> void:
 #region Projectile Detection
 func _on_projectile_detector_hit(area: Node2D) -> void:
 	"""Handle collision with projectiles (triggered from projectile_detector Area2D)"""
-	# The area hitting us should be a Bullet
+	# Handle player bullets from WeaponSystem
 	if area is Bullet:
 		if self.debug_draw:
-			print("[BaseEnemy] %s detected projectile hit from Bullet" % _enemy_data.name)
+			print("[BaseEnemy] %s hit by player bullet (damage: %.0f)" % [_enemy_data.name, area.damage])
+		take_damage(area.damage)
+		return
+
+	# Handle tower projectiles from TowerWeaponSystem (dynamically created Area2D nodes)
+	# Tower bullets store damage as metadata
+	if area.name == "TowerBullet":
+		var damage: float = area.get_meta("damage", 0.0) as float
+		if damage > 0:
+			if self.debug_draw:
+				print("[BaseEnemy] %s hit by tower bullet (damage: %.0f)" % [_enemy_data.name, damage])
+			take_damage(damage)
 
 #endregion
 

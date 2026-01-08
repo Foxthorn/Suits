@@ -224,27 +224,270 @@ func set_damage_multiplier(multiplier: float) -> void
 
 ### Bullet (Projectile Entity)
 
-**Purpose**: Individual projectile with collision detection and damage.
+**Purpose**: Individual projectile with collision detection and direct damage application.
 
 **Location**: `src/entities/projectiles/Bullet.gd`
 
 **Key Responsibilities**:
 - Linear movement at constant velocity
 - Lifetime management (3 second default)
-- Enemy collision detection and damage
+- Enemy collision detection via Area2D
+- Direct damage application by calling `BaseEnemy.take_damage()`
 - Particle effect on impact
-- Pooling support
+- Self-cleanup and queue_free() after collision
 
 **Signals**:
-- `hit_enemy(enemy: BaseEnemy, damage: float)`
-- `expired()`
+- `hit_enemy(enemy: BaseEnemy, damage: float)` - Emitted when damage is applied
+- `expired()` - Emitted when bullet expires or is destroyed
 
 **Public API**:
 ```gdscript
 func set_velocity(direction: Vector2, spd: float = WeaponConfig.BULLET_SPEED) -> void
-func reset() -> void
-func prepare() -> void
+func set_velocity_from_angle(angle: float, spd: float = WeaponConfig.BULLET_SPEED) -> void
 ```
+
+**Collision Behavior**:
+- Bullets detect enemies via Area2D collision detection
+- On collision with BaseEnemy, calls `enemy.take_damage(damage)` directly
+- Creates impact particle effect at hit location
+- Self-destructs (queue_free) after applying damage
+- Tracks hit targets to prevent double-hits on same enemy
+
+---
+
+### Tower System (Step 8: In Development)
+
+**Purpose**: Automated tower defense mechanics with extensible tower types and auto-targeting.
+
+**Location**: `src/entities/towers/` + `src/systems/TowerDatabase.gd` + `src/systems/TowerWeaponSystem.gd`
+
+**Architecture**:
+
+#### TowerDatabase System (`src/systems/TowerDatabase.gd`)
+**Purpose**: Centralized registry for all tower types with extensible registration pattern.
+
+**Key Features**:
+- Static-only class with registry pattern (no instantiation needed)
+- Automatic initialization on first access
+- Extensible via `register_tower()` method
+- Loads all constants from `TowerConfig` automatically
+- Provides lookup methods for type-safe tower data access
+
+**Public API**:
+```gdscript
+static func get_tower(type: TowerType) -> TowerData
+static func get_tower_name(type: TowerType) -> String
+static func get_tower_cost(type: TowerType) -> int
+static func get_all_tower_types() -> Array[TowerType]
+static func register_tower(tower_data: TowerData) -> void
+```
+
+**TowerData Class**:
+Immutable data structure containing all tower configuration:
+- Core stats: `speed`, `range`, `damage`, `fire_rate`, `name`, `description`
+- Projectile: `bullet_speed`, `bullet_lifetime`, `bullet_color`
+- Visual: `sprite_path`, `size`, `collision_radius`
+- Debug: `debug_draw` flag for logging
+- Methods: `get_sprite()`
+
+**To Add New Tower Type**:
+1. Add to `TowerType` enum in TowerDatabase
+2. Add constants to `config/tower_config.gd`:
+   - `TOWER_NAME_COST`, `TOWER_NAME_RANGE`, `TOWER_NAME_DAMAGE`, etc.
+3. Call `TowerDatabase.register_tower()` in `_ensure_initialized()`
+
+---
+
+#### BaseTower (`src/entities/towers/BaseTower.gd`)
+**Purpose**: Base class for all tower types with common detection, targeting, and firing logic.
+
+**Location**: `src/entities/towers/BaseTower.gd`
+
+**Key Responsibilities**:
+- Load tower data from TowerDatabase on spawn
+- Enemy detection via Area2D (detection zone)
+- Targeting logic (nearest enemy)
+- Fire rate management and cooldown tracking
+- Sprite setup and collision layer configuration
+- Virtual `fire()` method for subclass behavior override
+
+**Signals**:
+- `fired(position: Vector2, direction: Vector2)` - Emitted when firing
+- `target_changed(new_target: BaseEnemy)` - Emitted when target switches
+
+**Exported Properties**:
+```gdscript
+@export var tower_type: TowerDatabase.TowerType = TowerDatabase.TowerType.GATLING_GUN
+@export var debug_draw: bool = false
+```
+
+**Key Methods**:
+```gdscript
+func fire() -> void                                      # Virtual - override in subclasses
+func find_nearest_enemy() -> BaseEnemy                  # Target selection
+func get_tower_data() -> TowerDatabase.TowerData        # Config access
+func get_enemies_in_range() -> Array[BaseEnemy]        # Current targets
+func get_current_target() -> BaseEnemy                  # Active target
+```
+
+**Collision Setup**:
+- Tower on Layer 5 (TOWERS)
+- Detects Layer 1 (world) + Layer 3 (enemies)
+- DetectionZone Area2D automatically configured to detect enemies only
+
+---
+
+#### GatlingGun (`src/entities/towers/GatlingGun.gd`)
+**Purpose**: Rapid-fire tower that trades damage for volume of fire.
+
+**Location**: `scenes/entities/towers/GatlingGun.tscn` + `src/entities/towers/GatlingGun.gd`
+
+**Stats** (from TowerConfig):
+- Cost: 50 credits (TOWER_GATLING_GUN_COST)
+- Range: 250 px (TOWER_GATLING_GUN_RANGE)
+- Damage: 8 per shot (TOWER_GATLING_GUN_DAMAGE)
+- Fire Rate: 0.2s (TOWER_GATLING_GUN_FIRE_RATE) = 5 shots/second
+- Bullet Speed: 350 px/s (TOWER_GATLING_GUN_BULLET_SPEED)
+- Bullet Color: Yellow/Orange (TOWER_GATLING_GUN_BULLET_COLOR)
+
+**Behavior**:
+- Extends BaseTower
+- Overrides `fire()` to add small random spread for visual interest
+- Includes firing animation (sprite rotation while active)
+- Uses TowerWeaponSystem for projectile spawning
+- High fire rate makes it ideal for dealing with enemy swarms
+
+**Design Notes**:
+- Lower cost than other towers encourages placement of multiple turrets
+- Lower damage per shot balanced by high fire rate
+- Smaller range than specialized towers
+
+---
+
+#### TowerWeaponSystem (`src/systems/TowerWeaponSystem.gd`)
+**Purpose**: Handles tower projectile spawning and pooling (separate from player WeaponSystem).
+
+**Location**: `src/systems/TowerWeaponSystem.gd`
+
+**Key Responsibilities**:
+- Projectile pooling for performance (100-bullet default pool per tower)
+- Tower bullet instantiation and reuse from pool
+- Projectile lifetime and color management
+- Signal emission for audio/VFX feedback
+
+**Signals**:
+- `tower_bullet_fired(bullet: Node2D, position: Vector2, direction: Vector2)`
+
+**Public API**:
+```gdscript
+func initialize(tower_data: TowerDatabase.TowerData) -> void
+func fire(from_position: Vector2, direction: Vector2, color: Color) -> void
+func get_active_bullet_count() -> int
+func get_pooled_bullet_count() -> int
+```
+
+---
+
+#### TowerBullet (`src/entities/projectiles/TowerBullet.gd`)
+**Purpose**: Tower-fired projectile with collision detection and direct damage application (visually distinct from player bullets).
+
+**Location**: `src/entities/projectiles/TowerBullet.gd` + `scenes/entities/projectiles/TowerBullet.tscn`
+
+**Key Responsibilities**:
+- Linear movement at tower-specific speed
+- Lifetime management (tower-configurable)
+- Enemy collision detection via Area2D
+- Direct damage application by calling `BaseEnemy.take_damage()`
+- Particle effect on impact
+- Self-cleanup and queue_free() after collision
+- Color customization for visual feedback
+
+**Signals**:
+- `hit_enemy(enemy: BaseEnemy, damage: float)` - Emitted when damage is applied
+- `expired()` - Emitted when bullet expires or is destroyed
+
+**Public API**:
+```gdscript
+func set_velocity(direction: Vector2, speed: float) -> void
+func set_color(color: Color) -> void
+func set_damage(damage: float) -> void
+func set_lifetime(duration: float) -> void
+```
+
+**Collision Behavior**:
+- Tower bullets detect enemies via Area2D collision detection
+- On collision with BaseEnemy, calls `enemy.take_damage(damage)` directly
+- Creates impact particle effect at hit location
+- Self-destructs (queue_free) after applying damage
+- Prevents double-hits on same enemy in single frame
+
+**Design Notes**:
+- Yellow/Orange color by default (visually distinct from white player bullets)
+- Configurable color allows tower type differentiation in future updates
+- Uses same collision detection approach as player bullets (Area2D with direct function calls)
+
+---
+
+#### TowerSystem (`src/systems/TowerSystem.gd`)
+**Purpose**: Tower placement mode, validation, and UI feedback (similar to PlantingSystem).
+
+**Location**: `src/systems/TowerSystem.gd` (✅ IMPLEMENTED - Step 8)
+
+**Key Responsibilities**:
+- Manage tower placement mode (enter/exit)
+- Validate tile placement against crops, other towers, and tile types
+- Display ghost preview with valid/invalid coloring (green=valid, red=invalid)
+- Deduct credits on successful placement via EconomyManager integration
+- Track all placed towers by hex coordinates
+- Emit signals for placement mode changes and tower placement events
+- Handle input for placement mode activation and cancellation
+
+**Signals**:
+- `tower_placed(hex_coords: Vector2i, tower_type: TowerDatabase.TowerType)` - Emitted when tower successfully placed
+- `placement_mode_changed(active: bool, tower_type: TowerDatabase.TowerType)` - Emitted on mode entry/exit
+
+**Exported Properties**:
+```gdscript
+@export var hex_grid: HexGrid              # Reference to hex grid for tile validation
+@export var show_preview: bool = true      # Show ghost preview on hover
+@export var show_range_indicator: bool = true  # Show detection range circle
+```
+
+**Key Methods**:
+```gdscript
+func enter_placement_mode(tower_type: TowerDatabase.TowerType) -> void
+func exit_placement_mode() -> void
+func can_place_tower_at(hex_coords: Vector2i) -> bool
+func get_tower_at(hex_coords: Vector2i) -> BaseTower
+func get_all_towers() -> Array[BaseTower]
+func get_tower_count() -> int
+func is_in_placement_mode() -> bool
+func get_selected_tower_type() -> TowerDatabase.TowerType
+```
+
+**Features**:
+- Ghost preview follows mouse cursor with semi-transparent sprite
+- Preview color changes based on tile validity (green for valid, red for invalid)
+- Range indicator visualization shows detection radius of towers during placement
+- Credit checking: Validates player has sufficient credits before placement
+- Tile validation: Checks for existing towers, crops, and valid tile types
+- Automatic tower instantiation: Creates tower instances and adds to scene
+- Seamless integration with EconomyManager for cost deduction
+- Seamless integration with HexGrid for tile interaction events
+- Seamless integration with PlantingSystem to prevent tower-on-crop conflicts
+
+**Input Actions**:
+- `ui_focus_next`: T key to enter/exit placement mode
+- `ui_cancel`: ESC key to cancel placement
+- Mouse click to place tower on valid tile
+- Right-click to cancel placement
+
+**Validation Rules**:
+- Tile must exist in hex grid
+- Tile must not already have a tower
+- Tile must not have a crop (from PlantingSystem)
+- Player must have sufficient credits
+- Tile must be valid tower placement location
 
 ---
 
@@ -690,19 +933,25 @@ WeaponSystem.can_fire() check
     ↓
 WeaponSystem.fire(from_position, direction)
     ↓
-Get Bullet from object pool
+Instantiate new Bullet or get from pool
     ↓
 Bullet.set_velocity(direction, speed)
     ↓
 Bullet moves via _physics_process
     ↓
-Bullet.area_entered(Enemy)
+Bullet.area_entered(Enemy) detected
     ↓
-Enemy.take_damage(damage)
+Bullet calls Enemy.take_damage(damage) directly
     ↓
-Bullet.expired signal → Return to pool
+Enemy.health -= damage
+    ↓
+Enemy emits health_changed signal
+    ↓
+Bullet creates hit effect and queue_free()
     ↓
 If enemy.health <= 0:
+    Enemy.die()
+    ↓
     Enemy.died.emit()
     ↓
     WaveManager._on_enemy_died()
@@ -842,16 +1091,18 @@ Godot physics layers are used to control which entities can collide and interact
 **Design Note**: Bullets are Area2D nodes that only care about hitting enemies. World geometry doesn't stop bullets (they have 3-second lifetime instead). This simplifies targeting and feels more arcade-like.
 
 **Projectile Detection Implementation**:
-BaseEnemy uses a dedicated internal `ProjectileDetector` Area2D node for efficient bullet collision detection:
+- **Bullet Collision Layer**: `2 (player)`
+- **Bullet Collision Mask**: `3 (enemies)` - Only detects enemies
+- Bullets connect to `area_entered` signal to detect enemy collisions
+- On collision, projectile calls `enemy.take_damage(damage)` directly (not via signal)
+- Projectile creates visual feedback (particles) and queue_free() after hit
+
+BaseEnemy provides a dedicated `ProjectileDetector` Area2D for efficient detection:
 - **ProjectileDetector Collision Layer**: `4 (enemies)`
 - **ProjectileDetector Collision Mask**: `2 (player projectiles)`
-- This allows BaseEnemy to detect incoming bullets via `area_entered` signals
-- The ProjectileDetector is sized identically to the enemy's main collision shape for consistent hit detection
-- Signal handler: `_on_projectile_detector_hit(area: Node2D)` receives the Bullet's Area2D node
-
-This two-layer detection approach ensures both directions work correctly:
-1. **Bullet → Enemy**: Bullet's collision_mask=3 detects BaseEnemy (Layer 3)
-2. **Enemy → Bullet**: BaseEnemy's ProjectileDetector collision_mask=2 detects Bullet (Layer 2)
+- This two-layer detection approach ensures both directions work correctly:
+  1. **Bullet → Enemy**: Bullet's collision_mask=3 detects BaseEnemy (Layer 3)
+  2. **Enemy → Bullet**: BaseEnemy's ProjectileDetector collision_mask=2 detects Bullet (Layer 2)
 
 #### Enemies (Rusher, Shooter) — Layer 3
 
@@ -1059,6 +1310,25 @@ func _on_screen_entered():
 - `config/game_config.gd`: Global game constants (day/night duration, economy multipliers, universal settings)
 - `config/crop_config.gd`: Crop-specific constants (stats, visuals, asset paths, harvest effects)
 - `config/enemy_config.gd`: Enemy types, stats, wave scaling, spawn rules, sprite sheet paths (✅ IMPLEMENTED)
+- `config/tower_config.gd`: Tower types, stats, projectile properties, placement visuals (✅ IMPLEMENTED - Step 8)
+
+**Tower Configuration Details** (new in `config/tower_config.gd`):
+```gdscript
+# Tower costs and economics
+const TOWER_GATLING_GUN_COST: int = 50
+
+# Gatling Gun stats
+const TOWER_GATLING_GUN_RANGE: float = 250.0
+const TOWER_GATLING_GUN_DAMAGE: float = 8.0
+const TOWER_GATLING_GUN_FIRE_RATE: float = 0.2  # 5 shots/sec
+const TOWER_GATLING_GUN_BULLET_SPEED: float = 350.0
+const TOWER_GATLING_GUN_BULLET_LIFETIME: float = 3.0
+
+# Visual feedback and placement
+const TOWER_RANGE_INDICATOR_COLOR: Color = Color(0.5, 0.8, 1.0, 0.3)
+const TOWER_PLACEMENT_VALID_COLOR: Color = Color(0.0, 1.0, 0.0, 0.5)
+const TOWER_PLACEMENT_INVALID_COLOR: Color = Color(1.0, 0.0, 0.0, 0.5)
+```
 
 **Enemy Configuration Details** (new in `config/enemy_config.gd`):
 ```gdscript
@@ -1082,8 +1352,8 @@ const SHOOTER_ATTACK_FRAMES: int = 6
 ```
 
 **Future Expansion** (when implemented):
-- `config/tower_config.gd`: Tower types, damage, range, costs
 - `config/wave_config.gd`: Advanced wave progression and difficulty curves
+- `config/upgrade_config.gd`: Upgrade costs, effects, and progression tiers
 
 **Benefits**:
 - **Separation of Concerns**: Each system's config is self-contained
@@ -1117,13 +1387,19 @@ const ENTITY_A_COLOR: Color = Color.RED
 3. ✅ **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support (COMPLETED - Step 6)
 4. ✅ **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH) (COMPLETED - Step 6)
 5. ✅ **CombatSystem**: Mech weapon and projectile system (COMPLETED - Step 7)
+6. ✅ **TowerSystem**: Tower database, base class, GatlingGun turret, placement mode (COMPLETED - Step 8)
+   - ✅ TowerDatabase with extensible registry
+   - ✅ BaseTower with detection and firing mechanics
+   - ✅ GatlingGun tower implementation
+   - ✅ TowerWeaponSystem and TowerBullet projectiles
+   - ✅ TowerSystem placement mode with validation and preview
 
 ### Next Systems to Implement
 
-6. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
-7. **TowerSystem**: Automated turret placement and targeting (Step 8)
-8. **SaveSystem**: Persistent progression between runs (Post-vertical slice)
-9. **AIDirector**: Dynamic difficulty adjustment (Post-vertical slice)
+7. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
+8. **TowerPlacement** (TowerSystem): Tower placement mode and validation (Step 8)
+9. **SaveSystem**: Persistent progression between runs (Post-vertical slice)
+10. **AIDirector**: Dynamic difficulty adjustment (Post-vertical slice)
 
 ### Planned Optimizations
 

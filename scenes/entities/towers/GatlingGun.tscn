@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://d1dv004ubwpkh"]
+
+[ext_resource type="Script" uid="uid://blqv3qsdgiun0" path="res://src/entities/towers/GatlingGun.gd" id="1_2bvvn"]
+[ext_resource type="Script" uid="uid://xvk81f67h8ef" path="res://src/systems/TowerWeaponSystem.gd" id="2_jxhas"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_vyqcf"]
+
+[node name="GatlingGun" type="CharacterBody2D" node_paths=PackedStringArray("tower_weapon_system")]
+script = ExtResource("1_2bvvn")
+tower_weapon_system = NodePath("TowerWeaponSystem")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_vyqcf")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 10
+scale = Vector2(2, 2)
+
+[node name="DebugTimer" type="Timer" parent="."]
+
+[node name="TowerWeaponSystem" type="Node" parent="."]
+script = ExtResource("2_jxhas")
