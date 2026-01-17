@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c4t01bya1mxc"]
+[gd_scene load_steps=10 format=3 uid="uid://c4t01bya1mxc"]
 
 [ext_resource type="Script" uid="uid://dsx5bt6kiil6y" path="res://scenes/MainGame.gd" id="1_x628s"]
 [ext_resource type="PackedScene" uid="uid://cqxm5y8bvwxre" path="res://scenes/world/HexGrid.tscn" id="2_7fyak"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" uid="uid://b3m7pt2ykwdws" path="res://scenes/world/DayNightTint.gd" id="4_1hpqh"]
 [ext_resource type="PackedScene" uid="uid://ctjyqdw1aq276" path="res://scenes/ui/HUD.tscn" id="5_7f7ne"]
 [ext_resource type="PackedScene" path="res://scenes/ui/UpgradeShop.tscn" id="6_upgradeshop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="7_pausemenu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DefeatScreen.tscn" id="8_defeatscreen"]
+[ext_resource type="PackedScene" path="res://scenes/ui/VictoryScreen.tscn" id="9_victoryscr"]
 
 [node name="MainGame" type="Node2D"]
 script = ExtResource("1_x628s")
@@ -36,3 +39,9 @@ script = ExtResource("4_1hpqh")
 [node name="UpgradeShop" parent="." instance=ExtResource("6_upgradeshop")]
 layout_mode = 3
 anchors_preset = 0
+
+[node name="PauseMenu" parent="." instance=ExtResource("7_pausemenu")]
+
+[node name="DefeatScreen" parent="." instance=ExtResource("8_defeatscreen")]
+
+[node name="VictoryScreen" parent="." instance=ExtResource("9_victoryscr")]

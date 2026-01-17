@@ -1,5 +1,12 @@
-# FILE_STRUCTURE.md — NEVER deviate without updating this file
+# FILE_STRUCTURE.md — Project Organization
 
+> **Living Document**: This file documents the folder and file organization for SUITS: Iron Harvest. Update this file whenever new folders, files, or structural reorganization occurs.
+
+---
+
+## Project File Tree
+
+```
 ├── .godot/                      # Godot cache (gitignored)
 ├── .github/
 │   └── PULL_REQUEST_TEMPLATE.md
@@ -7,13 +14,13 @@
 ├── docs/
 │   ├── agent/                   # AI agent instructions (ALWAYS read before coding)
 │   │   ├── PROJECT_CONTEXT.md   # Core vision, tech stack, coding standards
-│   │   ├── FILE_STRUCTURE.md    # This file — project organization rules
-│   │   ├── CODING_STANDARDS.md  # Code style and best practices
+│   │   ├── FILE_STRUCTURE.md    # This file — project organization
+│   │   ├── CODING_STANDARDS.md  # Code style, naming conventions, patterns
 │   │   └── step_summaries/      # Implementation summaries for vertical slice steps
 │   ├── verticalslice/           # Vertical slice planning and progress tracking
 │   │   ├── VERTICAL_SLICE.md    # 10-step implementation plan
 │   │   └── STEP_*_*.md          # Individual step completion summaries
-│   └── ARCHITECTURE.md          # System design and architectural decisions
+│   └── ARCHITECTURE.md          # System design, architectural decisions, data flow
 ├── assets/
 │   ├── imported/                # NEVER commit — .import folder is gitignored
 │   ├── raw/                     # Original .png/.gltf from Kenney / AI generation
@@ -30,7 +37,8 @@
 │   ├── TimeManager.gd           # Day/night cycle management
 │   ├── EconomyManager.gd        # Credits and economy system
 │   ├── WaveManager.gd           # Enemy wave spawning and tracking
-│   ├── ProgressManager.gd       # Upgrade purchase tracking (NEW - Step 5)
+│   ├── ProgressManager.gd       # Upgrade purchase tracking (Step 5)
+│   ├── GameStateManager.gd      # Game state, pause, win/loss conditions (Step 9)
 │   ├── SaveManager.gd           # Save/load persistence
 │   ├── AudioManager.gd          # Music and SFX control
 │   └── EventBus.gd              # Central signal hub (future)
@@ -40,7 +48,7 @@
 │   ├── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths
 │   ├── weapon_config.gd         # Weapon types, projectile balance values
 │   ├── tower_config.gd          # Tower types, stats, projectile properties (✅ Step 8)
-│   └── upgrade_config.gd        # Upgrade costs, effects, UI colors (NEW - Step 5)
+│   └── upgrade_config.gd        # Upgrade costs, effects, UI colors (Step 5)
 ├── src/
 │   ├── systems/
 │   │   ├── HexGrid.gd           # Hex grid system with camera control
@@ -52,7 +60,7 @@
 │   │   ├── PlantingSystem.gd    # Crop placement mode
 │   │   └── WeaponSystem.gd      # Mech projectile pooling and firing
 │   ├── ui/
-│   │   └── UpgradeShop.gd       # Upgrade shop UI controller (NEW - Step 5)
+│   │   └── UpgradeShop.gd       # Upgrade shop UI controller (Step 5)
 │   └── entities/
 │       ├── player/
 │       │   └── MechController.gd
@@ -89,7 +97,13 @@
 │   │       └── TowerBullet.tscn # Tower projectile (✅ Step 8)
 │   └── ui/
 │       ├── HUD.tscn             # Main heads-up display
-│       └── UpgradeShop.tscn     # Upgrade shop UI panel (NEW - Step 5)
+│       ├── UpgradeShop.tscn     # Upgrade shop UI panel (Step 5)
+│       ├── PauseMenu.tscn       # Pause menu UI (Step 9)
+│       ├── PauseMenu.gd         # Pause menu controller (Step 9)
+│       ├── DefeatScreen.tscn    # Defeat/game-over screen (Step 9)
+│       ├── DefeatScreen.gd      # Defeat screen controller (Step 9)
+│       ├── VictoryScreen.tscn   # Victory/win screen (Step 9)
+│       └── VictoryScreen.gd     # Victory screen controller (Step 9)
 ├── shaders/
 │   ├── hex_highlight.gdshader
 │   └── night_bloom.tres
@@ -114,91 +128,37 @@
 │   └── prototypes/              # Quick throwaway experiments
 ├── tests/                       # Future unit tests (GUT or manual)
 └── README.md                    # User-facing project overview
+```
 
 ---
 
 ## Related Documentation
-- [ARCHITECTURE.md](/docs/ARCHITECTURE.md) - System design and architectural decisions
-- [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) - Project vision and tech stack
-- [CODING_STANDARDS.md](CODING_STANDARDS.md) - Code style guidelines
 
-**Update Policy**: When adding new folders, files, or reorganizing structure, update both this file and relevant sections in ARCHITECTURE.md.
-
----
-
-## Naming & Grouping Rules (non-negotiable)
-- Scenes & scripts: PascalCase (MySystem.tscn + MySystem.gd)
-- Folders: snake_case
-- Reusable entities → always inherited scenes in /src/entities/
-- Never put gameplay scripts at root or in scenes/ — only in /src/
-- Every new system gets its own folder under /src/systems/ or /src/entities/
-- All balance numbers live in config files (game_config.gd, crop_config.gd, tower_config.gd, upgrade_config.gd, etc.) — **NO MAGIC NUMBERS**
-- System-specific configs should be separate files (e.g., crop_config.gd for crops, tower_config.gd for towers, upgrade_config.gd for upgrades)
-- UI scenes always under `/src/ui/`, never mixed with gameplay
-- UI scripts always under `/src/ui/`, never in scenes/
-- Demos/tutorials live in /demos/ — never reference from production code
-- Demo scenes can be messy/experimental — exempt from strict standards
-- All entity types (enemies, crops, towers) have dedicated scene files and scripts
-- All database registries (CropDatabase, EnemyDatabase, TowerDatabase) are in /src/systems/
-- Entity base classes (BaseEnemy, BaseCrop, BaseTower) are in /src/entities/ with implementations
-- Entity scene files match class names: RusherEnemy.gd + RusherEnemy.tscn, GatlingGun.gd + GatlingGun.tscn
+- **[ARCHITECTURE.md](/docs/ARCHITECTURE.md)** - System design, data flow, and architectural decisions
+- **[CODING_STANDARDS.md](CODING_STANDARDS.md)** - Naming conventions, code style, and patterns
+- **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)** - Project vision and tech stack
+- **[VERTICAL_SLICE.md](/docs/verticalslice/VERTICAL_SLICE.md)** - Implementation progress tracking
 
 ---
 
-## Entity Inheritance Pattern
+## Update Policy
 
-### Enemy Entity Architecture
-All enemy types follow this pattern:
-1. **BaseEnemy.gd**: Base class in `/src/entities/enemies/`
-   - Handles health, damage, death signals
-   - Manages sprite sheet animation (IDLE, WALK, ATTACK, HIT, DEATH states)
-   - Loads stats from EnemyDatabase
-2. **Subclasses** (RusherEnemy, ShooterEnemy, etc.):
-   - Extend BaseEnemy
-   - Set `enemy_type` before calling `super._ready()`
-   - Override `_physics_process()` for unique behaviors
-3. **Scene Files** (`scenes/entities/enemies/`):
-   - One .tscn per enemy type (RusherEnemy.tscn, ShooterEnemy.tscn)
-   - Loaded as PackedScenes by WaveManager
-   - No hardcoded stats — all from EnemyDatabase
-4. **Configuration** (`config/enemy_config.gd`):
-   - Central config with all enemy types and stats
-   - Sprite paths, animation frame counts, balance values
-   - EnemyDatabase reads from this file and builds registry
+When adding new folders, files, or reorganizing structure:
+1. Update this file with new paths and descriptions
+2. Update [ARCHITECTURE.md](/docs/ARCHITECTURE.md) if structural changes affect system design
+3. Update [CODING_STANDARDS.md](CODING_STANDARDS.md) if new naming conventions or patterns are established
+4. Update [VERTICAL_SLICE.md](/docs/verticalslice/VERTICAL_SLICE.md) if step deliverables are affected
 
-### Tower Entity Architecture (Step 8 - Complete)
-All tower types follow this pattern:
-1. **BaseTower.gd**: Base class in `/src/entities/towers/` (✅ COMPLETED - Step 8)
-   - Handles enemy detection via Area2D
-   - Manages targeting logic (nearest enemy)
-   - Manages fire rate and cooldown
-   - Loads stats from TowerDatabase
-   - Virtual `fire()` method for subclass override
-2. **Subclasses** (GatlingGun, etc.) (✅ COMPLETED - Step 8):
-   - Extend BaseTower
-   - Set `tower_type` before calling `super._ready()`
-   - Override `fire()` for unique firing behavior
-   - Create TowerWeaponSystem instance for projectile management
-3. **Scene Files** (`scenes/entities/towers/`) (✅ COMPLETED - Step 8):
-   - One .tscn per tower type (GatlingGun.tscn, etc.)
-   - Loaded as PackedScenes by TowerSystem
-   - No hardcoded stats — all from TowerDatabase
-4. **Configuration** (`config/tower_config.gd`) (✅ COMPLETED - Step 8):
-   - Central config with all tower types and stats
-   - Sprite paths, firing parameters, cost, visual feedback colors
-   - TowerDatabase reads from this file and builds registry
+---
 
-### Crop Entity Architecture (Step 4 - Complete)
-All crop types follow this pattern:
-1. **BaseCrop.gd**: Base class in `/src/entities/crops/`
-   - Handles growth states (PLANTED, GROWING, HARVESTABLE)
-   - Manages sprite sheet animation across growth frames
-   - Loads stats from CropDatabase
-2. **Scene File** (`scenes/entities/crops/BaseCrop.tscn`):
-   - Single reusable scene instantiated by PlantingSystem
-   - Configured with crop_type on instantiation
-   - No hardcoded stats — all from CropDatabase
-3. **Configuration** (`config/crop_config.gd`):
-   - Central config with all crop types and stats
-   - Sprite paths, grow times, costs, values
-   - CropDatabase reads from this file and builds registry
+## Key Organizational Principles
+
+- **Autoloads** (`/autoload/`) - Global singletons only, no gameplay logic should live here
+- **Configs** (`/config/`) - All balance values and constants, never hardcoded in scripts
+- **Systems** (`/src/systems/`) - Game logic systems like HexGrid, WaveManager, PlantingSystem
+- **Entities** (`/src/entities/`) - Reusable entity types (enemies, crops, towers, projectiles, etc.)
+- **Scenes** (`/scenes/`) - Scene files (.tscn) organized by hierarchy matching `/src/` organization
+- **UI** (`/scenes/ui/` + `/src/ui/`) - All user interface components
+- **Demos** (`/demos/`) - Experimental and demo scenes, NOT for production (can be messy)
+
+For more details on naming conventions and architectural patterns, see [CODING_STANDARDS.md](CODING_STANDARDS.md) and [ARCHITECTURE.md](/docs/ARCHITECTURE.md).

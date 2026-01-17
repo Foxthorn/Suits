@@ -21,6 +21,9 @@ var credits: int = GameConfig.STARTING_CREDITS:
 		credits = value
 		self.credits_changed.emit(credits)
 
+## Track total credits earned during gameplay (for stats)
+var _total_credits_earned: int = 0
+
 #endregion
 
 #region Initialization
@@ -37,6 +40,7 @@ func add_credits(amount: int) -> void:
 		return
 
 	self.credits += amount
+	_total_credits_earned += amount  # Track for victory stats
 	print("EconomyManager: +%d credits (total: %d)" % [amount, self.credits])
 
 ## Attempt to spend credits (returns true if successful)
@@ -69,7 +73,12 @@ func set_credits(amount: int) -> void:
 ## Reset to starting credits (for new game)
 func reset() -> void:
 	self.credits = GameConfig.STARTING_CREDITS
+	_total_credits_earned = 0  # Reset stats too
 	print("EconomyManager: Reset to %d credits" % self.credits)
+
+## Get total credits earned during this session (for victory stats)
+func get_total_credits_earned() -> int:
+	return _total_credits_earned
 
 #endregion
 
@@ -121,5 +130,14 @@ func get_upgrade_cost(upgrade_id: String) -> int:
 func can_afford_upgrade(upgrade_id: String) -> bool:
 	var cost = self.get_upgrade_cost(upgrade_id)
 	return self.can_afford(cost)
+
+#endregion
+
+#region Statistics
+## Get number of upgrades purchased this session
+func get_purchased_upgrades_count() -> int:
+	if ProgressManager:
+		return ProgressManager.purchased_upgrades.size()
+	return 0
 
 #endregion

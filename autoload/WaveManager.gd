@@ -19,6 +19,7 @@ var current_wave: int = 0
 var enemies_in_wave: Array[BaseEnemy] = []
 var is_wave_active: bool = false
 var _initial_enemy_count: int = 0  # Track for wave progress calculation
+var _enemies_defeated_total: int = 0  # Track for victory stats
 
 #endregion
 
@@ -176,6 +177,7 @@ func _on_enemy_died(enemy: BaseEnemy) -> void:
 
 	if enemy in self.enemies_in_wave:
 		self.enemies_in_wave.erase(enemy)
+		_enemies_defeated_total += 1  # Track total kills for stats
 
 	# Check if all enemies defeated
 	if self.enemies_in_wave.is_empty():
@@ -225,5 +227,15 @@ func get_wave_progress() -> float:
 	var enemies_defeated: int = self._initial_enemy_count - self.enemies_in_wave.size()
 	var progress: float = float(enemies_defeated) / float(self._initial_enemy_count)
 	return clamp(progress, 0.0, 1.0)
+
+
+func get_current_wave() -> int:
+	"""Return current wave number"""
+	return self.current_wave
+
+
+func get_enemies_defeated_count() -> int:
+	"""Return total number of enemies defeated (for victory stats)"""
+	return self._enemies_defeated_total
 
 #endregion

@@ -21,6 +21,7 @@ var _is_placement_mode: bool = false
 var _selected_crop_type: CropDatabase.CropType = CropDatabase.CropType.WHEAT
 var _preview_sprite: Sprite2D = null  # Ghost preview node
 var _planted_crops: Dictionary = {}  # hex_coords -> BaseCrop instance
+var _crops_harvested_total: int = 0  # Track for victory stats
 
 # Tile validation
 const FARMABLE_TILE_ID: int = 0  # Adjust this based on your TileMap setup
@@ -209,6 +210,7 @@ func _on_crop_harvested(crop_type: CropDatabase.CropType, value: int, hex_coords
 	"""Handle crop harvest - cleanup and awards"""
 	# Remove from tracking
 	_planted_crops.erase(hex_coords)
+	_crops_harvested_total += 1  # Track for victory stats
 
 	# Award credits to player (economy integration)
 	EconomyManager.add_credits(value)
@@ -258,6 +260,10 @@ func is_in_placement_mode() -> bool:
 ## Get currently selected crop type
 func get_selected_crop_type() -> CropDatabase.CropType:
 	return _selected_crop_type
+
+## Get total crops harvested (for victory stats)
+func get_crops_harvested_count() -> int:
+	return _crops_harvested_total
 
 #endregion
 

@@ -92,3 +92,8 @@ func get_all_upgrades() -> Array:
 ## Check if player can still purchase an upgrade (not already owned)
 func can_purchase(upgrade_id: String) -> bool:
 	return not has_purchased(upgrade_id)
+
+
+## Get count of purchased upgrades (for victory stats)
+func get_purchased_upgrades_count() -> int:
+	return purchased_upgrades.size()

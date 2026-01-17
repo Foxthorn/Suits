@@ -69,6 +69,7 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 | `TimeManager` | Day/night cycle | Phase management, timer progression, wave blocking |
 | `EconomyManager` | Player economy | Credits tracking, spending validation, upgrade purchasing |
 | `ProgressManager` | Upgrade persistence | Track purchased upgrades, prevent duplicate purchases |
+| `GameStateManager` | Game state & pause/menus | Game state (PLAYING, PAUSED, DEFEAT, VICTORY), pause control, win/loss triggers |
 | `SaveManager` | Persistence | Save/load game state, player progression |
 | `WaveManager` | Wave spawning & scaling | Enemy spawn calculation, wave tracking, progression signals |
 | `AudioManager` | Audio playback | Music, SFX, volume control |
@@ -862,6 +863,75 @@ const WHEAT_SPRITE: String = "Wheat.png"
 
 
 
+### GameStateManager System (Autoload)
+
+**Purpose**: Central manager for game state transitions, pause/resume, and win/loss conditions with victory statistics tracking.
+
+**Location**: `autoload/GameStateManager.gd`
+
+**Key Responsibilities**:
+- Track game state (PLAYING, PAUSED, DEFEAT, VICTORY, LOADING)
+- Manage pause/resume via ESC key input
+- Trigger defeat condition when mech is destroyed
+- Trigger victory condition when all waves completed
+- Gather and emit victory statistics for victory screen
+- Control Engine.time_scale for pause functionality
+- Emit state change signals for UI coordination
+
+**State Enum**:
+```gdscript
+enum State {
+    PLAYING,
+    PAUSED,
+    DEFEAT,
+    VICTORY,
+    LOADING
+}
+```
+
+**Signals**:
+- `state_changed(new_state: State)` - Emitted on any state transition
+- `game_paused()` - Emitted when game is paused (state → PAUSED)
+- `game_resumed()` - Emitted when game is resumed (state → PLAYING)
+- `defeat_triggered(reason: String)` - Emitted when defeat occurs with failure reason
+- `victory_triggered(stats: Dictionary)` - Emitted when victory occurs with final stats
+
+**Public API**:
+```gdscript
+func pause_game() -> void                         # Pause and show pause menu
+func resume_game() -> void                        # Resume from pause
+func trigger_defeat(reason: String) -> void      # Trigger loss condition
+func trigger_victory(stats: Dictionary) -> void   # Trigger win condition
+func restart_game() -> void                       # Reload current scene
+func quit_game() -> void                          # Exit to desktop
+func get_current_state() -> State                 # Query current state
+func is_game_paused() -> bool                     # Convenience pause check
+func get_current_night() -> int                   # Get current night number
+func get_nights_survived() -> int                 # Get nights survived count
+```
+
+**Victory Statistics Dictionary**:
+```gdscript
+{
+    "nights_survived": int,           # Total nights survived (1-3)
+    "total_credits_earned": int,      # Total credits earned this session
+    "enemies_defeated": int,          # Total enemies killed
+    "crops_harvested": int,           # Total crops harvested
+    "towers_built": int,              # Total towers placed
+    "upgrades_purchased": int         # Total upgrades purchased
+}
+```
+
+**Design Notes**:
+- Listens to `MechController.died` signal to trigger defeat
+- Listens to `WaveManager.wave_completed` signal to detect victory (Night 3, Wave 3)
+- Listens to `TimeManager.night_started` signal to track progression
+- Gathers stats from EconomyManager, WaveManager, PlantingSystem, ProgressManager
+- Sets `Engine.time_scale = 0.0` on pause, `1.0` on resume
+- Prevents input processing in UI systems by checking GameStateManager.current_state
+
+---
+
 ### EventBus System (Autoload)
 
 **Purpose**: Global signal hub for decoupled system communication.
@@ -895,6 +965,67 @@ func _on_wave_completed(wave_number: int):
 ---
 
 ## Data Flow
+
+### Game State Transitions (Pause/Defeat/Victory)
+
+```
+ESC key pressed → GameStateManager._input()
+    ↓
+if current_state == PLAYING:
+    pause_game() → Engine.time_scale = 0.0
+    ↓
+    state_changed.emit(PAUSED)
+    ↓
+    game_paused.emit()
+    ↓
+    PauseMenu becomes visible
+
+if current_state == PAUSED:
+    resume_game() → Engine.time_scale = 1.0
+    ↓
+    state_changed.emit(PLAYING)
+    ↓
+    game_resumed.emit()
+    ↓
+    PauseMenu becomes hidden
+
+---
+
+Mech.died signal → GameStateManager._on_mech_died()
+    ↓
+trigger_defeat(reason)
+    ↓
+current_state = DEFEAT
+    ↓
+state_changed.emit(DEFEAT)
+    ↓
+defeat_triggered.emit(reason)
+    ↓
+    DefeatScreen becomes visible
+    ↓
+Player clicks Restart → GameStateManager.restart_game() → reload scene
+
+---
+
+WaveManager.wave_completed(3) AND TimeManager.current_night == 3
+    ↓
+GameStateManager._on_wave_completed(3)
+    ↓
+if night_num == 3 and wave_num == 3:
+    _gather_victory_stats() → collect final stats
+    ↓
+    trigger_victory(stats)
+    ↓
+    current_state = VICTORY
+    ↓
+    state_changed.emit(VICTORY)
+    ↓
+    victory_triggered.emit(stats)
+    ↓
+    VictoryScreen becomes visible with stats
+    ↓
+Player clicks Play Again → GameStateManager.restart_game() → reload scene
+```
 
 ### Farming System Flow
 
@@ -1021,10 +1152,48 @@ MainGame (Node2D)
 │   └── (weapons, effects as children)
 ├── Camera2D (shared, managed by HexGrid)
 ├── DayNightTint (CanvasModulate)
-└── HUD (HUD.tscn instance)
-    ├── HealthBar
-    ├── ResourceDisplay
-    └── WaveTimer
+├── HUD (HUD.tscn instance)
+│   ├── HealthBar
+│   ├── ResourceDisplay
+│   └── WaveTimer
+├── PauseMenu (Control instance) - Pause UI overlay
+│   ├── Background (ColorRect)
+│   ├── CenterContainer
+│   │   └── PanelContainer
+│   │       └── VBoxContainer
+│   │           ├── PauseLabel
+│   │           ├── ResumeButton
+│   │           ├── RestartButton
+│   │           └── QuitButton
+├── DefeatScreen (Control instance) - Defeat/Game Over UI
+│   ├── Background (ColorRect)
+│   ├── CenterContainer
+│   │   └── PanelContainer
+│   │       └── VBoxContainer
+│   │           ├── TitleLabel ("YOU WERE DEFEATED")
+│   │           ├── ReasonLabel (failure reason)
+│   │           ├── StatsPanel
+│   │           │   └── StatsLabel (session statistics)
+│   │           ├── RestartButton
+│   │           └── QuitButton
+└── VictoryScreen (Control instance) - Victory/Win UI
+    ├── Background (ColorRect)
+    ├── CenterContainer
+    │   └── PanelContainer
+    │       └── ScrollContainer
+    │           └── VBoxContainer
+    │               ├── TitleLabel ("VICTORY!")
+    │               ├── SubtitleLabel
+    │               ├── StatsPanel
+    │               │   └── StatsContainer (dynamically populated)
+    │               │       ├── NightsSurvivedLabel
+    │               │       ├── EnemiesDefeatedLabel
+    │               │       ├── CreditsEarnedLabel
+    │               │       ├── CropsHarvestedLabel
+    │               │       ├── TowersBuiltLabel
+    │               │       └── UpgradesPurchasedLabel
+    │               ├── PlayAgainButton
+    │               └── QuitButton
 ```
 
 ### Entity Hierarchy (Standard Pattern)
@@ -1384,21 +1553,29 @@ const ENTITY_A_COLOR: Color = Color.RED
 
 1. **FarmingSystem**: Crop planting, growth, harvesting
 2. **WaveManager**: Enemy spawning and wave progression
-3. **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support
-4. **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH)
-5. **CombatSystem**: Mech weapon and projectile system
-6. **TowerSystem**: Tower database, base class, GatlingGun turret, placement mode
+3. **EconomyManager**: Credit tracking, economy transactions, upgrade purchasing
+4. **ProgressManager**: Upgrade persistence and tracking
+5. **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support
+6. **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH)
+7. **CombatSystem**: Mech weapon and projectile system
+8. **TowerSystem**: Tower database, base class, GatlingGun turret, placement mode
    - TowerDatabase with extensible registry
    - BaseTower with detection and firing mechanics
    - GatlingGun tower implementation
    - TowerWeaponSystem and TowerBullet projectiles
    - TowerSystem placement mode with validation and preview
+9. **GameStateManager**: Game state machine, pause/resume, defeat/victory conditions (✅ Step 9 COMPLETED)
+   - State tracking (PLAYING, PAUSED, DEFEAT, VICTORY, LOADING)
+   - ESC key pause/resume integration
+   - Victory statistics gathering
+   - Signal-driven UI coordination for pause/defeat/victory screens
+10. **UI Screen Controllers**: Pause, Defeat, Victory screens with player input handling
 
 ### Planned Systems
 
-- **UpgradeSystem**: Mech and tower upgrade trees
 - **SaveSystem**: Persistent progression between runs
 - **AIDirector**: Dynamic difficulty adjustment
+- **Advanced UI**: Main menu, settings, achievements
 
 ### Planned Optimizations
 
@@ -1414,11 +1591,23 @@ const ENTITY_A_COLOR: Color = Color.RED
 When making architectural changes, update the relevant sections:
 
 1. **System changes**: Update [Key Systems](#key-systems) with new responsibilities
-2. **Communication changes**: Update [Signal Flow](#system-diagrams) diagrams
+2. **Communication changes**: Update [Signal Flow](#system-diagrams) diagrams and [Data Flow](#data-flow)
 3. **Performance patterns**: Update [Performance Considerations](#performance-considerations)
 4. **Structure changes**: Update [Scene Hierarchy](#scene-hierarchy)
-5. **Future plans**: Update [Future Architecture Plans](#future-architecture-plans) as systems are implemented
+5. **State management changes**: Update [Game State Transitions](#data-flow) flow diagram
+6. **Future plans**: Update [Implemented Systems](#architecture-roadmap) as systems are completed
+
+**Important**: Update this file whenever:
+- New autoload systems are added (add to Autoload Singletons table)
+- New major systems are implemented (add to Key Systems section)
+- Signal flows between systems change (update Data Flow diagrams)
+- UI hierarchy is modified (update Scene Hierarchy)
+- Completion milestones are reached (update Architecture Roadmap)
 
 ---
 
-**Related Docs**: [PROJECT_CONTEXT.md](docs/agent/PROJECT_CONTEXT.md), [CODING_STANDARDS.md](docs/agent/CODING_STANDARDS.md)
+**Related Docs**:
+- [PROJECT_CONTEXT.md](docs/agent/PROJECT_CONTEXT.md) - Project vision and requirements
+- [CODING_STANDARDS.md](docs/agent/CODING_STANDARDS.md) - Code quality guidelines
+- [FILE_STRUCTURE.md](docs/agent/FILE_STRUCTURE.md) - Project folder organization
+- [VERTICAL_SLICE.md](docs/verticalslice/VERTICAL_SLICE.md) - Implementation progress tracking

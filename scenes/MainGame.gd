@@ -7,6 +7,9 @@ extends Node2D
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: CanvasLayer = $HUD
 @onready var upgrade_shop: UpgradeShop = $UpgradeShop
+@onready var pause_menu: Control = $PauseMenu
+@onready var defeat_screen: Control = $DefeatScreen
+@onready var victory_screen: Control = $VictoryScreen
 
 
 func _ready() -> void:
@@ -58,24 +61,19 @@ func _on_mech_health_changed(current_hp: float, max_hp: float) -> void:
 
 
 func _on_mech_died() -> void:
-	"""Handle mech death"""
+	"""Handle mech death - GameStateManager will show defeat screen"""
 	print("[MainGame] Mech destroyed! Game Over")
-	# TODO: Step 9 - Show defeat screen
-	print("[MainGame] Mech destroyed! Game Over")
-	# Disable mech controls instead of pausing entire tree
-	if mech:
-		mech.set_controls_enabled(false)
-	# TODO: Step 9 - Show defeat screen
 
 
 ## Input handling - Tab for shop, debug keys
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
-		# Tab to toggle upgrade shop
+		# Tab to toggle upgrade shop (only when game is playing)
 		if event.keycode == KEY_TAB and not event.echo:
-			if upgrade_shop:
-				upgrade_shop.toggle_shop()
-				get_viewport().set_input_as_handled()
+			if GameStateManager and GameStateManager.current_state == GameStateManager.State.PLAYING:
+				if upgrade_shop:
+					upgrade_shop.toggle_shop()
+					get_viewport().set_input_as_handled()
 
 		# Debug: Press R to reset mech health
 		if event.keycode == KEY_R and not event.echo:

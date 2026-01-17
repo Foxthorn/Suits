@@ -21,6 +21,7 @@ TimeManager="*res://autoload/TimeManager.gd"
 EconomyManager="*res://autoload/EconomyManager.gd"
 WaveManager="*res://autoload/WaveManager.gd"
 ProgressManager="*res://autoload/ProgressManager.gd"
+GameStateManager="*res://autoload/GameStateManager.gd"
 
 [input]
 
