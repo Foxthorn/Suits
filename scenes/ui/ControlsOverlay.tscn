@@ -1,0 +1,145 @@
+[gd_scene load_steps=2 format=3 uid="uid://dqg0v1xbq34cj"]
+
+[ext_resource type="Script" path="res://scenes/ui/ControlsOverlay.gd" id="1_controls_script"]
+
+[node name="ControlsOverlay" type="CanvasLayer"]
+script = ExtResource("1_controls_script")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -200.0
+offset_right = 250.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/PanelContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Control/PanelContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "CONTROLS"
+horizontal_alignment = 1
+custom_minimum_size = Vector2(0, 50)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Control/PanelContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ControlsList" type="VBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Movement" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Movement"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "WASD / Arrows"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Movement"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Move"
+autowrap_mode = 2
+
+[node name="Action" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Action"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "Left Click"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Action"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Attack / Interact"
+autowrap_mode = 2
+
+[node name="Camera" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Camera"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "Scroll"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Camera"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Zoom In/Out"
+autowrap_mode = 2
+
+[node name="Shop" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Shop"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "S"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Shop"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Toggle Shop"
+autowrap_mode = 2
+
+[node name="Pause" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Pause"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "ESC / P"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Pause"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Pause / Menu"
+autowrap_mode = 2
+
+[node name="FooterContainer" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+alignment = 1
+
+[node name="CloseHint" type="Label" parent="Control/PanelContainer/VBoxContainer/FooterContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Press C or click to close"
+custom_minimum_size = Vector2(0, 30)

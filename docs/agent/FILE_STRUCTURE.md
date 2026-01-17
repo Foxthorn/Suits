@@ -103,7 +103,9 @@
 │       ├── DefeatScreen.tscn    # Defeat/game-over screen (Step 9)
 │       ├── DefeatScreen.gd      # Defeat screen controller (Step 9)
 │       ├── VictoryScreen.tscn   # Victory/win screen (Step 9)
-│       └── VictoryScreen.gd     # Victory screen controller (Step 9)
+│       ├── VictoryScreen.gd     # Victory screen controller (Step 9)
+│       ├── ControlsOverlay.tscn # Controls reference overlay (Step 9)
+│       └── ControlsOverlay.gd   # Controls overlay controller (Step 9)
 ├── shaders/
 │   ├── hex_highlight.gdshader
 │   └── night_bloom.tres

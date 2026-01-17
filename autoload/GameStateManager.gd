@@ -73,15 +73,19 @@ func _input(event: InputEvent) -> void:
 			resume_game()
 		get_tree().root.set_input_as_handled()
 
-## Pause the game and show pause menu
-func pause_game() -> void:
+## Pause the game
+## If show_pause_menu is true, emits game_paused signal to show PauseMenu
+## If false, pauses silently (for DefeatScreen, VictoryScreen, etc.)
+func pause_game(show_pause_menu: bool = true) -> void:
 	if current_state != State.PLAYING:
 		return
 
 	current_state = State.PAUSED
 	Engine.time_scale = 0.0
 	state_changed.emit(current_state)
-	game_paused.emit()
+
+	if show_pause_menu:
+		game_paused.emit()
 
 ## Resume the game from pause
 func resume_game() -> void:

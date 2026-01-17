@@ -46,8 +46,11 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = MOUSE_FILTER_IGNORE  # Don't intercept input when hidden
 
-	# Connect to GameStateManager
+	# Connect to GameStateManager signals
 	if GameStateManager:
+		# Listen to game_paused signal (only user-initiated pauses)
+		GameStateManager.game_paused.connect(_show_pause_menu)
+		# Listen to state changes to hide menu on state transitions
 		GameStateManager.state_changed.connect(_on_game_state_changed)
 	else:
 		push_error("PauseMenu: GameStateManager autoload not found!")
@@ -60,8 +63,6 @@ func _ready() -> void:
 func _on_game_state_changed(new_state: GameStateManager.State) -> void:
 	"""Called when game state changes"""
 	match new_state:
-		GameStateManager.State.PAUSED:
-			_show_pause_menu()
 		GameStateManager.State.PLAYING:
 			_hide_pause_menu()
 		_:

@@ -78,6 +78,9 @@ func _on_quit_pressed() -> void:
 #region Display Control
 func _show_victory_screen() -> void:
 	"""Show the victory screen with animations and stats"""
+	# Pause the game silently (no pause menu shown)
+	GameStateManager.pause_game(false)
+
 	visible = true
 	mouse_filter = MOUSE_FILTER_STOP  # Capture input when visible
 

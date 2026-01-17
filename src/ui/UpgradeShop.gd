@@ -60,6 +60,9 @@ func _input(event: InputEvent) -> void:
 #region Shop Management
 ## Show the shop
 func show_shop() -> void:
+	# Pause the game silently when opening shop
+	GameStateManager.pause_game(false)
+
 	show()
 	_update_all_buttons()
 	print("[UpgradeShop] Shop opened")
@@ -67,6 +70,9 @@ func show_shop() -> void:
 
 ## Hide the shop
 func hide_shop() -> void:
+	# Resume the game when closing shop
+	GameStateManager.resume_game()
+
 	hide()
 	shop_closed.emit()
 	print("[UpgradeShop] Shop closed")

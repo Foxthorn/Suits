@@ -898,17 +898,34 @@ enum State {
 
 **Public API**:
 ```gdscript
-func pause_game() -> void                         # Pause and show pause menu
-func resume_game() -> void                        # Resume from pause
-func trigger_defeat(reason: String) -> void      # Trigger loss condition
-func trigger_victory(stats: Dictionary) -> void   # Trigger win condition
-func restart_game() -> void                       # Reload current scene
-func quit_game() -> void                          # Exit to desktop
-func get_current_state() -> State                 # Query current state
-func is_game_paused() -> bool                     # Convenience pause check
-func get_current_night() -> int                   # Get current night number
-func get_nights_survived() -> int                 # Get nights survived count
+func pause_game(show_pause_menu: bool = true) -> void  # Pause; only show menu if true
+func resume_game() -> void                              # Resume from pause
+func trigger_defeat(reason: String) -> void             # Trigger loss condition
+func trigger_victory(stats: Dictionary) -> void          # Trigger win condition
+func restart_game() -> void                             # Reload current scene
+func quit_game() -> void                                # Exit to desktop
+func get_current_state() -> State                       # Query current state
+func is_game_paused() -> bool                           # Convenience pause check
+func get_current_night() -> int                         # Get current night number
+func get_nights_survived() -> int                       # Get nights survived count
 ```
+
+**Pause Mechanics**:
+- **User-Initiated Pause (ESC key)**: `pause_game()` or `pause_game(true)` → Shows PauseMenu
+  - Sets Engine.time_scale to 0.0
+  - Emits `game_paused()` signal to show PauseMenu
+  - Emits `state_changed(PAUSED)` signal for UI coordination
+
+- **Silent Pause (DefeatScreen, VictoryScreen, UpgradeShop)**: `pause_game(false)` → No pause menu
+  - Sets Engine.time_scale to 0.0
+  - Does NOT emit `game_paused()` signal (so PauseMenu stays hidden)
+  - Emits `state_changed(PAUSED)` signal for UI coordination
+  - Used when other UI screens need to freeze gameplay without showing pause menu
+
+- **Resume**: `resume_game()` → Always resumes to PLAYING
+  - Sets Engine.time_scale to 1.0
+  - Emits `game_resumed()` signal
+  - Emits `state_changed(PLAYING)` signal
 
 **Victory Statistics Dictionary**:
 ```gdscript
@@ -929,6 +946,45 @@ func get_nights_survived() -> int                 # Get nights survived count
 - Gathers stats from EconomyManager, WaveManager, PlantingSystem, ProgressManager
 - Sets `Engine.time_scale = 0.0` on pause, `1.0` on resume
 - Prevents input processing in UI systems by checking GameStateManager.current_state
+
+---
+
+### ControlsOverlay System
+
+**Purpose**: Displays on-screen controls and keybinding reference to the player.
+
+**Location**: `scenes/ui/ControlsOverlay.gd` + `scenes/ui/ControlsOverlay.tscn`
+
+**Class**: `ControlsOverlay` (CanvasLayer-based UI controller)
+
+**Key Responsibilities**:
+- Show/hide controls overlay with fade-in animation
+- Display all input actions and their keybindings
+- Handle C key toggle and ESC key to close
+- Block game input while overlay is visible
+
+**Input Actions**:
+- `controls_show`: C key to toggle controls overlay open/closed
+- `ui_cancel`: ESC key to close overlay when visible
+
+**Public API**:
+```gdscript
+func _show_controls() -> void  # Display overlay with animation
+func _hide_controls() -> void  # Hide overlay
+```
+
+**Design Notes**:
+- Integrated into MainGame.tscn as ControlsOverlay node (CanvasLayer)
+- Can be toggled at any time during gameplay
+- Overlays game with semi-transparent background panel
+- Lists all key controls:
+  - Movement: WASD / Arrow keys
+  - Action: Left Click to attack/interact
+  - Camera: Mouse Scroll to zoom
+  - Shop: S key to toggle shop
+  - Pause: ESC / P key to pause/menu
+- Closes on C key or ESC key press
+- Uses Tween-based fade-in animation on show
 
 ---
 
@@ -1144,56 +1200,21 @@ camera.position = some_target_position
 ```
 MainGame (Node2D)
 ├── HexGrid (HexGrid.tscn instance)
-│   ├── TileMapLayer (renders hex grid)
-│   └── (manages camera reference)
+│   └── TileMapLayer (hex grid visuals)
 ├── Mech (Mech.tscn instance)
-│   ├── CollisionShape2D
-│   ├── Sprite2D
-│   └── (weapons, effects as children)
-├── Camera2D (shared, managed by HexGrid)
-├── DayNightTint (CanvasModulate)
+│   └── (weapons, effects, collision shapes)
+├── Camera2D (shared camera, managed by HexGrid)
+├── DayNightTint (CanvasModulate for visual cycling)
 ├── HUD (HUD.tscn instance)
-│   ├── HealthBar
-│   ├── ResourceDisplay
-│   └── WaveTimer
-├── PauseMenu (Control instance) - Pause UI overlay
-│   ├── Background (ColorRect)
-│   ├── CenterContainer
-│   │   └── PanelContainer
-│   │       └── VBoxContainer
-│   │           ├── PauseLabel
-│   │           ├── ResumeButton
-│   │           ├── RestartButton
-│   │           └── QuitButton
-├── DefeatScreen (Control instance) - Defeat/Game Over UI
-│   ├── Background (ColorRect)
-│   ├── CenterContainer
-│   │   └── PanelContainer
-│   │       └── VBoxContainer
-│   │           ├── TitleLabel ("YOU WERE DEFEATED")
-│   │           ├── ReasonLabel (failure reason)
-│   │           ├── StatsPanel
-│   │           │   └── StatsLabel (session statistics)
-│   │           ├── RestartButton
-│   │           └── QuitButton
-└── VictoryScreen (Control instance) - Victory/Win UI
-    ├── Background (ColorRect)
-    ├── CenterContainer
-    │   └── PanelContainer
-    │       └── ScrollContainer
-    │           └── VBoxContainer
-    │               ├── TitleLabel ("VICTORY!")
-    │               ├── SubtitleLabel
-    │               ├── StatsPanel
-    │               │   └── StatsContainer (dynamically populated)
-    │               │       ├── NightsSurvivedLabel
-    │               │       ├── EnemiesDefeatedLabel
-    │               │       ├── CreditsEarnedLabel
-    │               │       ├── CropsHarvestedLabel
-    │               │       ├── TowersBuiltLabel
-    │               │       └── UpgradesPurchasedLabel
-    │               ├── PlayAgainButton
-    │               └── QuitButton
+│   └── (health bar, credits, timer displays)
+├── PauseMenu (PauseMenu.tscn instance)
+│   └── (pause UI overlay)
+├── DefeatScreen (DefeatScreen.tscn instance)
+│   └── (defeat/game-over UI with stats)
+├── VictoryScreen (VictoryScreen.tscn instance)
+│   └── (victory/win UI with final statistics)
+└── ControlsOverlay (ControlsOverlay.tscn instance)
+    └── (controls reference overlay)
 ```
 
 ### Entity Hierarchy (Standard Pattern)

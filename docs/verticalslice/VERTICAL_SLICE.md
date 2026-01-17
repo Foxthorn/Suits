@@ -338,24 +338,42 @@
 
 ---
 
-## Step 9: Win/Loss Conditions & Game Loop
+## Step 9: Win/Loss Conditions & Game Loop ✅ COMPLETED
 **Why Ninth:** Makes it an actual game with stakes.
 
 ### Deliverables:
-- [ ] Implement loss condition:
-  - Mech HP reaches 0 → pause game → show "DEFEAT" screen
-  - Button: "Restart" (reload scene)
-- [ ] Implement win condition:
-  - Survive 3 full night waves → pause → show "VICTORY" screen
-  - Display stats: Total credits earned, enemies killed, crops harvested
-- [ ] Add basic pause menu (ESC key):
-  - Resume
-  - Restart
-  - Quit to desktop
-- [ ] Ensure game loop works:
-  - Day 1 → plant → night 1 → defend → day 2 → expand → night 2 → defend → day 3 → night 3 → WIN
+- [x] Implement loss condition: ✅
+  - Mech HP reaches 0 → pause game → show "DEFEAT" screen ✅
+  - Button: "Restart" (reload scene) ✅
+- [x] Implement win condition: ✅
+  - Survive 3 full night waves → pause → show "VICTORY" screen ✅
+  - Display stats: Total credits earned, enemies killed, crops harvested ✅
+- [x] Add basic pause menu (ESC key): ✅
+  - Resume ✅
+  - Restart ✅
+  - Quit to desktop ✅
+- [x] Ensure game loop works: ✅
+  - Day 1 → plant → night 1 → defend → day 2 → expand → night 2 → defend → day 3 → night 3 → WIN ✅
 
-**Acceptance Test:** Play full 3-wave cycle → either die and restart, or win and see victory screen.
+**Acceptance Test:** Play full 3-wave cycle → either die and restart, or win and see victory screen. ✅
+
+**Implementation Notes:**
+- GameStateManager.gd: Autoload singleton implementing centralized state machine
+- State enum: PLAYING, PAUSED, DEFEAT, VICTORY, LOADING
+- ESC key: Toggles pause via `Engine.time_scale` control (non-destructive pause)
+- Defeat trigger: Connected to Mech `died` signal, gathers final statistics
+- Victory trigger: Connected to WaveManager, fires after 3 night waves completed
+- Victory statistics gathered across 4 systems:
+  - EconomyManager.get_total_credits_earned() - Total credits earned
+  - WaveManager.get_enemies_defeated_count() - Total enemies killed
+  - ProgressManager.get_purchased_upgrades_count() - Upgrades purchased
+  - PlantingSystem.get_crops_harvested_count() - Crops harvested
+- PauseMenu.gd: Modal pause UI with resume/restart/quit options
+- DefeatScreen.gd: Shows on defeat with failure reason and session statistics
+- VictoryScreen.gd: Shows on victory with detailed end-game statistics
+- Signal-driven architecture: GameStateManager.state_changed coordinates all UI visibility
+- Input handling: Routed through GameStateManager state checks to prevent input during pause/defeat/victory
+- UpgradeShop disabled: Tab key disabled during pause/defeat/victory states to prevent shop access during paused states
 
 ---
 
@@ -497,6 +515,25 @@
    - ✅ TowerSystem placement mode with preview and validation
    - ✅ Demo scenes (TowerSystem/)
    - 🔜 Visual tower range indicator - Future enhancement
+
+✅ **Step 9** - Win/Loss Conditions & Game Loop (COMPLETED)
+   - ✅ GameStateManager.gd autoload with state machine (PLAYING, PAUSED, DEFEAT, VICTORY, LOADING)
+   - ✅ ESC key pause/resume with Engine.time_scale control
+   - ✅ Defeat screen with restart button and session statistics
+   - ✅ Victory screen with end-game statistics display
+   - ✅ Victory statistics tracking:
+      - Total credits earned (EconomyManager)
+      - Total enemies defeated (WaveManager)
+      - Upgrades purchased (ProgressManager)
+      - Crops harvested (PlantingSystem)
+   - ✅ PauseMenu.gd with resume/restart/quit options
+   - ✅ DefeatScreen.gd with failure reason and statistics
+   - ✅ VictoryScreen.gd with detailed end-game statistics
+   - ✅ Signal-driven architecture (state_changed signal coordinates UI visibility)
+   - ✅ Input handling routed through GameStateManager state checks
+   - ✅ UpgradeShop disabled during pause/defeat/victory states
+   - ✅ Mech integration: `died` signal triggers defeat state
+   - ✅ WaveManager integration: 3-wave completion triggers victory
 
 ---
 
