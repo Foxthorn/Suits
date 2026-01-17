@@ -6,6 +6,7 @@ extends Node2D
 @onready var mech: MechController = $Mech
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: CanvasLayer = $HUD
+@onready var upgrade_shop: UpgradeShop = $UpgradeShop
 
 
 func _ready() -> void:
@@ -67,9 +68,16 @@ func _on_mech_died() -> void:
 	# TODO: Step 9 - Show defeat screen
 
 
-## Debug: Press R to reset mech health
+## Input handling - Tab for shop, debug keys
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
+		# Tab to toggle upgrade shop
+		if event.keycode == KEY_TAB and not event.echo:
+			if upgrade_shop:
+				upgrade_shop.toggle_shop()
+				get_viewport().set_input_as_handled()
+
+		# Debug: Press R to reset mech health
 		if event.keycode == KEY_R and not event.echo:
 			if mech:
 				mech.set_health(mech.max_health)

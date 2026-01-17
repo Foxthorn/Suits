@@ -2,6 +2,10 @@ class_name GameConfig
 ## Global game configuration constants
 ## All tunable gameplay values live here - NO MAGIC NUMBERS in gameplay code!
 
+#region DEBUG
+const DEBUG_MODE: bool = true
+#endregion
+
 #region Mech / Player Settings
 const MECH_MOVE_SPEED: float = 200.0  # pixels per second
 const MECH_MAX_HEALTH: float = 100.0

@@ -67,7 +67,8 @@ These systems are available globally via `Autoload` and manage cross-cutting con
 | `EventBus` | Central signal hub | Global event routing (wave_started, day_ended, etc.) |
 | `GameConfig` | Configuration constants | All balance values, enums, and tunable settings |
 | `TimeManager` | Day/night cycle | Phase management, timer progression, wave blocking |
-| `EconomyManager` | Player economy | Credits tracking, spending validation, balance management |
+| `EconomyManager` | Player economy | Credits tracking, spending validation, upgrade purchasing |
+| `ProgressManager` | Upgrade persistence | Track purchased upgrades, prevent duplicate purchases |
 | `SaveManager` | Persistence | Save/load game state, player progression |
 | `WaveManager` | Wave spawning & scaling | Enemy spawn calculation, wave tracking, progression signals |
 | `AudioManager` | Audio playback | Music, SFX, volume control |
@@ -255,7 +256,7 @@ func set_velocity_from_angle(angle: float, spd: float = WeaponConfig.BULLET_SPEE
 
 ---
 
-### Tower System (Step 8: In Development)
+### Tower System
 
 **Purpose**: Automated tower defense mechanics with extensible tower types and auto-targeting.
 
@@ -431,7 +432,7 @@ func set_lifetime(duration: float) -> void
 #### TowerSystem (`src/systems/TowerSystem.gd`)
 **Purpose**: Tower placement mode, validation, and UI feedback (similar to PlantingSystem).
 
-**Location**: `src/systems/TowerSystem.gd` (✅ IMPLEMENTED - Step 8)
+**Location**: `src/systems/TowerSystem.gd`
 
 **Key Responsibilities**:
 - Manage tower placement mode (enter/exit)
@@ -522,7 +523,7 @@ func set_wave_active(active: bool) -> void
 
 ### EconomyManager System (Autoload)
 
-**Purpose**: Manages player credits, spending validation, and economic transactions.
+**Purpose**: Manages player credits, spending validation, economic transactions, and upgrade purchasing.
 
 **Location**: `autoload/EconomyManager.gd`
 
@@ -662,7 +663,7 @@ func get_health_percent() -> float                             # Returns 0.0-1.0
 - Direct movement toward mech at high speed
 - Plays WALK animation during movement
 - Plays IDLE animation when stationary
-- Plays ATTACK animation when dealing damage (TODO: implement collision detection)
+- Plays ATTACK animation when dealing damage
 - Plays HIT animation when taking damage
 - Plays DEATH animation before being removed
 
@@ -691,7 +692,6 @@ func get_health_percent() -> float                             # Returns 0.0-1.0
 - Plays ATTACK animation when firing projectile
 - Plays HIT animation when taking damage
 - Plays DEATH animation before being removed
-- (TODO: Implement actual projectile spawning in Step 7)
 
 ---
 
@@ -708,7 +708,7 @@ func get_health_percent() -> float                             # Returns 0.0-1.0
 
 **Purpose**: Manages enemy wave spawning, difficulty scaling, and wave progression with proper entity instantiation.
 
-**Location**: `autoload/WaveManager.gd` (✅ IMPLEMENTED)
+**Location**: `autoload/WaveManager.gd`
 
 **Key Responsibilities**:
 - Calculate enemy counts per wave using exponential scaling formula
@@ -770,7 +770,7 @@ Wave 3: 11 enemies
 
 ### Farming System
 
-**Purpose**: Manages crop planting, growth, and harvest mechanics (✅ COMPLETED Step 4)
+**Purpose**: Manages crop planting, growth, and harvest mechanics
 
 **Key Components**:
 
@@ -922,7 +922,7 @@ Player clicks harvestable crop → BaseCrop.harvested signal
 EconomyManager.add_credits(value)
 ```
 
-### Combat System Flow (Step 7: Mech Weapon)
+### Combat System Flow
 
 ```
 Player clicks → Input.is_action_pressed("fire")
@@ -1309,8 +1309,8 @@ func _on_screen_entered():
 **Current Structure**:
 - `config/game_config.gd`: Global game constants (day/night duration, economy multipliers, universal settings)
 - `config/crop_config.gd`: Crop-specific constants (stats, visuals, asset paths, harvest effects)
-- `config/enemy_config.gd`: Enemy types, stats, wave scaling, spawn rules, sprite sheet paths (✅ IMPLEMENTED)
-- `config/tower_config.gd`: Tower types, stats, projectile properties, placement visuals (✅ IMPLEMENTED - Step 8)
+- `config/enemy_config.gd`: Enemy types, stats, wave scaling, spawn rules, sprite sheet paths
+- `config/tower_config.gd`: Tower types, stats, projectile properties, placement visuals
 
 **Tower Configuration Details** (new in `config/tower_config.gd`):
 ```gdscript
@@ -1378,28 +1378,27 @@ const ENTITY_A_COLOR: Color = Color.RED
 
 ---
 
-## Future Architecture Plans
+## Architecture Roadmap
 
-### Completed Systems
+### Implemented Systems
 
-1. ✅ **FarmingSystem**: Crop planting, growth, harvesting (COMPLETED - Step 4)
-2. ✅ **WaveManager**: Enemy spawning and wave progression (COMPLETED - Step 6)
-3. ✅ **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support (COMPLETED - Step 6)
-4. ✅ **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH) (COMPLETED - Step 6)
-5. ✅ **CombatSystem**: Mech weapon and projectile system (COMPLETED - Step 7)
-6. ✅ **TowerSystem**: Tower database, base class, GatlingGun turret, placement mode (COMPLETED - Step 8)
-   - ✅ TowerDatabase with extensible registry
-   - ✅ BaseTower with detection and firing mechanics
-   - ✅ GatlingGun tower implementation
-   - ✅ TowerWeaponSystem and TowerBullet projectiles
-   - ✅ TowerSystem placement mode with validation and preview
+1. **FarmingSystem**: Crop planting, growth, harvesting
+2. **WaveManager**: Enemy spawning and wave progression
+3. **EnemyDatabase**: Centralized enemy type registry with sprite sheet animation support
+4. **BaseEnemy with Animation States**: Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH)
+5. **CombatSystem**: Mech weapon and projectile system
+6. **TowerSystem**: Tower database, base class, GatlingGun turret, placement mode
+   - TowerDatabase with extensible registry
+   - BaseTower with detection and firing mechanics
+   - GatlingGun tower implementation
+   - TowerWeaponSystem and TowerBullet projectiles
+   - TowerSystem placement mode with validation and preview
 
-### Next Systems to Implement
+### Planned Systems
 
-7. **UpgradeSystem**: Mech and tower upgrade trees (Step 5)
-8. **TowerPlacement** (TowerSystem): Tower placement mode and validation (Step 8)
-9. **SaveSystem**: Persistent progression between runs (Post-vertical slice)
-10. **AIDirector**: Dynamic difficulty adjustment (Post-vertical slice)
+- **UpgradeSystem**: Mech and tower upgrade trees
+- **SaveSystem**: Persistent progression between runs
+- **AIDirector**: Dynamic difficulty adjustment
 
 ### Planned Optimizations
 

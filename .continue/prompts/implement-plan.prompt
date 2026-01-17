@@ -1,0 +1,9 @@
+---
+name: plan
+description: Prompt for generating a detailed plan of action
+---
+
+Follow this plan exactly that we agreed on earlier:
+
+Implement it step-by-step.
+Ask for confirmation before making any big changes.

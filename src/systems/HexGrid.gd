@@ -26,12 +26,6 @@ signal tile_hovered(hex_coords: Vector2i, world_pos: Vector2)
 ## Reference to the Camera2D node (must be set from parent scene)
 @export var camera: Camera2D
 
-## Whether to enable debug visualization
-@export var debug_mode: bool = false:
-	set(value):
-		debug_mode = value
-		queue_redraw()
-
 ## Color for debug hex coordinate display
 @export var debug_text_color: Color = Color.YELLOW
 
@@ -87,7 +81,7 @@ func _ready() -> void:
 	if not self.tile_map_layer:
 		push_error("HexGrid: TileMapLayer not found! Grid functions will not work.")
 
-	if self.debug_mode:
+	if GameConfig.DEBUG_MODE:
 		print("HexGrid initialized - Debug mode enabled")
 		if self.mech_node:
 			print("HexGrid: Camera will follow Mech at: ", self.mech_node.get_path())
@@ -156,7 +150,7 @@ func _handle_mouse_clicks(event: InputEvent) -> void:
 
 			self.tile_clicked.emit(hex_coords, world_pos)
 
-			if self.debug_mode:
+			if GameConfig.DEBUG_MODE:
 				print("Clicked hex: ", hex_coords, " at world pos: ", world_pos)
 
 			queue_redraw()
@@ -169,7 +163,7 @@ func _handle_mouse_hover() -> void:
 		_current_hover_hex = hex_coords
 		self.tile_hovered.emit(hex_coords, world_pos)
 
-		if self.debug_mode:
+		if GameConfig.DEBUG_MODE:
 			queue_redraw()
 
 #endregion
@@ -284,7 +278,7 @@ func is_tile_valid_for_placement(hex: Vector2i) -> bool:
 
 #region Debug Visualization
 func _draw() -> void:
-	if not self.debug_mode or not self.tile_map_layer:
+	if not GameConfig.DEBUG_MODE or not self.tile_map_layer:
 		return
 
 	# Draw hex coordinates on hovered tile
@@ -352,13 +346,13 @@ func set_follow_target(target: Node2D) -> void:
 	self.mech_node = target
 	_is_following_mech = true
 	_manual_camera_offset = Vector2.ZERO
-	if self.debug_mode and target:
+	if GameConfig.DEBUG_MODE and target:
 		print("HexGrid: Now following target at: ", target.get_path())
 
 ## Stop following the mech and switch to manual camera control
 func stop_following() -> void:
 	_is_following_mech = false
-	if self.debug_mode:
+	if GameConfig.DEBUG_MODE:
 		print("HexGrid: Stopped following mech - manual camera control enabled")
 
 ## Resume following the mech
@@ -366,7 +360,7 @@ func resume_following() -> void:
 	if self.mech_node:
 		_is_following_mech = true
 		_manual_camera_offset = Vector2.ZERO
-		if self.debug_mode:
+		if GameConfig.DEBUG_MODE:
 			print("HexGrid: Resumed following mech")
 	else:
 		push_warning("HexGrid: Cannot resume following - no mech node set")

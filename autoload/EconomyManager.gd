@@ -9,6 +9,9 @@ signal credits_changed(new_amount: int)
 ## Emitted when player tries to spend but can't afford
 signal insufficient_credits(attempted_cost: int, current_credits: int)
 
+## Emitted when upgrade is successfully purchased
+signal upgrade_purchased(upgrade_id: String, cost: int)
+
 #endregion
 
 #region Variables
@@ -67,5 +70,56 @@ func set_credits(amount: int) -> void:
 func reset() -> void:
 	self.credits = GameConfig.STARTING_CREDITS
 	print("EconomyManager: Reset to %d credits" % self.credits)
+
+#endregion
+
+#region Upgrade System
+## Attempt to purchase an upgrade (returns true if successful)
+func purchase_upgrade(upgrade_id: String) -> bool:
+	if not UpgradeConfig:
+		push_error("EconomyManager: UpgradeConfig not loaded")
+		return false
+
+	# Determine cost based on upgrade ID
+	var cost: int = 0
+	match upgrade_id:
+		"repair_mech":
+			cost = UpgradeConfig.UPGRADE_REPAIR_COST
+		"weapon_damage":
+			cost = UpgradeConfig.UPGRADE_WEAPON_DAMAGE_COST
+		"max_hp":
+			cost = UpgradeConfig.UPGRADE_MAX_HP_COST
+		_:
+			push_error("EconomyManager: Unknown upgrade ID: %s" % upgrade_id)
+			return false
+
+	# Attempt to spend credits
+	if not self.spend_credits(cost):
+		return false
+
+	# Upgrade purchased successfully
+	self.upgrade_purchased.emit(upgrade_id, cost)
+	print("EconomyManager: Upgrade purchased: %s (cost: %d)" % [upgrade_id, cost])
+	return true
+
+
+## Get cost of specific upgrade
+func get_upgrade_cost(upgrade_id: String) -> int:
+	match upgrade_id:
+		"repair_mech":
+			return UpgradeConfig.UPGRADE_REPAIR_COST
+		"weapon_damage":
+			return UpgradeConfig.UPGRADE_WEAPON_DAMAGE_COST
+		"max_hp":
+			return UpgradeConfig.UPGRADE_MAX_HP_COST
+		_:
+			push_error("EconomyManager: Unknown upgrade ID: %s" % upgrade_id)
+			return 0
+
+
+## Check if player can afford specific upgrade
+func can_afford_upgrade(upgrade_id: String) -> bool:
+	var cost = self.get_upgrade_cost(upgrade_id)
+	return self.can_afford(cost)
 
 #endregion

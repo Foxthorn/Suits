@@ -163,26 +163,39 @@
 
 ---
 
-## Step 5: Economy & Upgrade System (Credits & Shop)
+## Step 5: Economy & Upgrade System (Credits & Shop) ✅ COMPLETED
 **Why Fifth:** Money makes the combat systems possible.
 
 ### Deliverables:
-- [ ] Create autoload `res://autoload/EconomyManager.gd`
-  - `var credits: int = 100` (starting cash)
-  - Functions: `add_credits(amount)`, `spend_credits(amount) -> bool`
-  - Signal: `credits_changed(new_amount)`
-- [ ] Connect crop harvests → `EconomyManager.add_credits(value)`
-- [ ] Create simple UI panel `res://scenes/ui/HUD.tscn`:
-  - Credits display (top-left)
-  - Current phase & timer (top-center)
-  - Mech health bar (bottom-center)
-- [ ] Create basic upgrade shop panel (press TAB to open during day):
-  - "Repair Mech" button (cost 50, restores 50 HP)
-  - "Weapon Damage +10%" (cost 100, persistent)
-  - "Max HP +25" (cost 150, persistent)
-- [ ] Persist upgrades in `res://autoload/ProgressManager.gd` (even just vars for now)
+- [x] Create autoload `res://autoload/EconomyManager.gd` ✅
+  - `var credits: int = 100` (starting cash) ✅
+  - Functions: `add_credits(amount)`, `spend_credits(amount) -> bool` ✅
+  - Signal: `credits_changed(new_amount)` ✅
+  - Extended methods: `purchase_upgrade()`, `get_upgrade_cost()`, `can_afford_upgrade()` ✅
+  - New signal: `upgrade_purchased(upgrade_id, cost)` ✅
+- [x] Connect crop harvests → `EconomyManager.add_credits(value)` ✅
+- [x] Create simple UI panel `res://scenes/ui/HUD.tscn` ✅:
+  - Credits display (top-left) ✅
+  - Current phase & timer (top-center) ✅
+  - Mech health bar (bottom-center) ✅
+- [x] Create basic upgrade shop panel (press TAB to open during day) ✅:
+  - "Repair Mech" button (cost 50, restores 50 HP) ✅
+  - "Weapon Damage +10%" (cost 100, persistent) ✅
+  - "Max HP +25" (cost 150, persistent) ✅
+- [x] Persist upgrades in `res://autoload/ProgressManager.gd` ✅
+- [x] Create UpgradeShop UI controller (`src/ui/UpgradeShop.gd`) ✅
+- [x] Create UpgradeConfig (`config/upgrade_config.gd`) ✅
 
-**Acceptance Test:** Harvest crops → see credits increase → buy upgrade → tooltip shows effect.
+**Acceptance Test:** Harvest crops → see credits increase → buy upgrade via TAB shop → upgrade effects apply. ✅
+
+**Implementation Notes**:
+- ProgressManager.gd: Autoload that tracks purchased upgrades with registry pattern
+- UpgradeShop.gd: UI controller with real-time affordability feedback (green/red button states)
+- UpgradeConfig.gd: Centralized upgrade costs, effects, and UI colors (NO magic numbers)
+- EconomyManager extended: Added purchase_upgrade(), get_upgrade_cost(), can_afford_upgrade() methods
+- Integration: UpgradeShop connects to both EconomyManager and ProgressManager for two-phase purchase validation
+- Mech integration: UpgradeShop applies effects via mech methods (heal, set_weapon_damage_multiplier, upgrade_max_health)
+- TAB key input: Toggles upgrade shop open/closed (pause-free shopping during day phase)
 
 ---
 
@@ -444,6 +457,16 @@
    - ✅ TimeManager integration (crops only grow during DAY)
    - ✅ EconomyManager integration (cost/harvest revenue)
    - ✅ Demo scenes (CropSystem/)
+
+✅ **Step 5** - Economy & Upgrade System (COMPLETED)
+   - ✅ ProgressManager.gd autoload with upgrade registry
+   - ✅ UpgradeShop.gd UI with real-time affordability feedback
+   - ✅ UpgradeConfig.gd with all upgrade balance values
+   - ✅ EconomyManager integration with purchase validation
+   - ✅ TAB key to toggle shop (pause-free shopping during day)
+   - ✅ Three upgrade types: Repair, Weapon Damage, Max HP
+   - ✅ Persistent upgrade tracking via ProgressManager
+   - ✅ Mech method integration for applying upgrades
 
 ✅ **Step 6** - Enemy Spawning & Basic AI (COMPLETED)
    - ✅ EnemyDatabase registry system with extensible enemy types

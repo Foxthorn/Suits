@@ -30,6 +30,7 @@
 │   ├── TimeManager.gd           # Day/night cycle management
 │   ├── EconomyManager.gd        # Credits and economy system
 │   ├── WaveManager.gd           # Enemy wave spawning and tracking
+│   ├── ProgressManager.gd       # Upgrade purchase tracking (NEW - Step 5)
 │   ├── SaveManager.gd           # Save/load persistence
 │   ├── AudioManager.gd          # Music and SFX control
 │   └── EventBus.gd              # Central signal hub (future)
@@ -38,17 +39,20 @@
 │   ├── crop_config.gd           # Crop-specific constants (NO magic numbers)
 │   ├── enemy_config.gd          # Enemy types, stats, animation frames, sprite paths
 │   ├── weapon_config.gd         # Weapon types, projectile balance values
-│   └── tower_config.gd          # Tower types, stats, projectile properties (✅ NEW - Step 8)
+│   ├── tower_config.gd          # Tower types, stats, projectile properties (✅ Step 8)
+│   └── upgrade_config.gd        # Upgrade costs, effects, UI colors (NEW - Step 5)
 ├── src/
 │   ├── systems/
 │   │   ├── HexGrid.gd           # Hex grid system with camera control
 │   │   ├── EnemyDatabase.gd     # Enemy registry with extensible types
-│   │   ├── TowerDatabase.gd     # Tower registry with extensible types (✅ NEW - Step 8)
-│   │   ├── TowerSystem.gd       # Tower placement mode and validation (✅ NEW - Step 8)
-│   │   ├── TowerWeaponSystem.gd # Tower projectile pooling and firing (✅ NEW - Step 8)
+│   │   ├── TowerDatabase.gd     # Tower registry with extensible types (✅ Step 8)
+│   │   ├── TowerSystem.gd       # Tower placement mode and validation (✅ Step 8)
+│   │   ├── TowerWeaponSystem.gd # Tower projectile pooling and firing (✅ Step 8)
 │   │   ├── CropDatabase.gd      # Crop registry with extensible types
 │   │   ├── PlantingSystem.gd    # Crop placement mode
 │   │   └── WeaponSystem.gd      # Mech projectile pooling and firing
+│   ├── ui/
+│   │   └── UpgradeShop.gd       # Upgrade shop UI controller (NEW - Step 5)
 │   └── entities/
 │       ├── player/
 │       │   └── MechController.gd
@@ -59,11 +63,11 @@
 │       ├── crops/
 │       │   └── BaseCrop.gd
 │       ├── towers/
-│       │   ├── BaseTower.gd     # Base tower class (✅ NEW - Step 8)
-│       │   └── GatlingGun.gd    # Rapid-fire tower (✅ NEW - Step 8)
+│       │   ├── BaseTower.gd     # Base tower class (✅ Step 8)
+│       │   └── GatlingGun.gd    # Rapid-fire tower (✅ Step 8)
 │       └── projectiles/
 │           ├── Bullet.gd
-│           └── TowerBullet.gd   # Tower projectile (✅ NEW - Step 8)
+│           └── TowerBullet.gd   # Tower projectile (✅ Step 8)
 ├── scenes/
 │   ├── MainGame.tscn            # Root scene
 │   ├── world/
@@ -78,13 +82,14 @@
 │   │   ├── crops/
 │   │   │   └── BaseCrop.tscn    # Crop growth entity
 │   │   ├── towers/
-│   │   │   ├── GatlingGun.tscn  # Rapid-fire turret (✅ NEW - Step 8)
+│   │   │   ├── GatlingGun.tscn  # Rapid-fire turret (✅ Step 8)
 │   │   │   └── (more tower types here)
 │   │   └── projectiles/
 │   │       ├── Bullet.tscn      # Player projectile
-│   │       └── TowerBullet.tscn # Tower projectile (✅ NEW - Step 8)
+│   │       └── TowerBullet.tscn # Tower projectile (✅ Step 8)
 │   └── ui/
-│       └── HUD.tscn             # Main heads-up display
+│       ├── HUD.tscn             # Main heads-up display
+│       └── UpgradeShop.tscn     # Upgrade shop UI panel (NEW - Step 5)
 ├── shaders/
 │   ├── hex_highlight.gdshader
 │   └── night_bloom.tres
@@ -99,7 +104,7 @@
 │   │   ├── CropSystem/          # Complete crop planting system demo
 │   │   │   ├── CropSystemDemo.tscn
 │   │   │   └── CropSystemDemo.gd
-│   │   └── TowerSystem/         # Complete tower placement and firing demo (✅ NEW - Step 8)
+│   │   └── TowerSystem/         # Complete tower placement and firing demo (✅ Step 8)
 │   │       ├── TowerSystemDemo.tscn
 │   │       ├── TowerSystemDemo.gd
 │   │       └── README.md
@@ -127,9 +132,10 @@
 - Reusable entities → always inherited scenes in /src/entities/
 - Never put gameplay scripts at root or in scenes/ — only in /src/
 - Every new system gets its own folder under /src/systems/ or /src/entities/
-- All balance numbers live in config files (game_config.gd, crop_config.gd, tower_config.gd, etc.) — **NO MAGIC NUMBERS**
-- System-specific configs should be separate files (e.g., crop_config.gd for crops, tower_config.gd for towers)
-- UI scenes always under /src/ui/, never mixed with gameplay
+- All balance numbers live in config files (game_config.gd, crop_config.gd, tower_config.gd, upgrade_config.gd, etc.) — **NO MAGIC NUMBERS**
+- System-specific configs should be separate files (e.g., crop_config.gd for crops, tower_config.gd for towers, upgrade_config.gd for upgrades)
+- UI scenes always under `/src/ui/`, never mixed with gameplay
+- UI scripts always under `/src/ui/`, never in scenes/
 - Demos/tutorials live in /demos/ — never reference from production code
 - Demo scenes can be messy/experimental — exempt from strict standards
 - All entity types (enemies, crops, towers) have dedicated scene files and scripts
@@ -160,24 +166,24 @@ All enemy types follow this pattern:
    - Sprite paths, animation frame counts, balance values
    - EnemyDatabase reads from this file and builds registry
 
-### Tower Entity Architecture (Step 8 - In Progress)
+### Tower Entity Architecture (Step 8 - Complete)
 All tower types follow this pattern:
-1. **BaseTower.gd**: Base class in `/src/entities/towers/` (✅ IMPLEMENTED - Step 8)
+1. **BaseTower.gd**: Base class in `/src/entities/towers/` (✅ COMPLETED - Step 8)
    - Handles enemy detection via Area2D
    - Manages targeting logic (nearest enemy)
    - Manages fire rate and cooldown
    - Loads stats from TowerDatabase
    - Virtual `fire()` method for subclass override
-2. **Subclasses** (GatlingGun, etc.) (✅ IMPLEMENTED - Step 8):
+2. **Subclasses** (GatlingGun, etc.) (✅ COMPLETED - Step 8):
    - Extend BaseTower
    - Set `tower_type` before calling `super._ready()`
    - Override `fire()` for unique firing behavior
    - Create TowerWeaponSystem instance for projectile management
-3. **Scene Files** (`scenes/entities/towers/`) (✅ IMPLEMENTED - Step 8):
+3. **Scene Files** (`scenes/entities/towers/`) (✅ COMPLETED - Step 8):
    - One .tscn per tower type (GatlingGun.tscn, etc.)
-   - Loaded as PackedScenes by TowerSystem (future)
+   - Loaded as PackedScenes by TowerSystem
    - No hardcoded stats — all from TowerDatabase
-4. **Configuration** (`config/tower_config.gd`) (✅ IMPLEMENTED - Step 8):
+4. **Configuration** (`config/tower_config.gd`) (✅ COMPLETED - Step 8):
    - Central config with all tower types and stats
    - Sprite paths, firing parameters, cost, visual feedback colors
    - TowerDatabase reads from this file and builds registry

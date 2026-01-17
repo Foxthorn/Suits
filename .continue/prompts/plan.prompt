@@ -1,0 +1,12 @@
+---
+name: plan
+description: Prompt for generating a detailed plan of action
+---
+
+Think step-by-step and create a very detailed plan for implementing {{{ input }}}.
+Include:
+- Files that need to be created/modified
+- Key architectural decisions
+- Security considerations
+- Suggested folder structure changes
+Do NOT write any code yet — just the plan.

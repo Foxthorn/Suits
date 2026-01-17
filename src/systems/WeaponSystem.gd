@@ -27,7 +27,6 @@ signal cooldown_started(cooldown_time: float)
 var _fire_cooldown: float = 0.0
 var _damage_base: float = WeaponConfig.WEAPON_DAMAGE
 var _bullets_container: Node  # Container for active bullets
-var debug_draw: bool = false
 
 #endregion
 
@@ -38,7 +37,7 @@ func _ready() -> void:
 	_bullets_container.name = "ActiveBullets"
 	add_child(_bullets_container)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[WeaponSystem] Initialized")
 
 func _physics_process(delta: float) -> void:
@@ -70,7 +69,7 @@ func fire(from_position: Vector2, direction: Vector2) -> void:
 	_fire_cooldown = WeaponConfig.WEAPON_FIRE_RATE
 	self.bullet_fired.emit(bullet, from_position, direction)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[WeaponSystem] Fired bullet from %s in direction %s" % [from_position, direction])
 
 ## Check if weapon is ready to fire
@@ -91,13 +90,13 @@ func get_fire_rate() -> float:
 ## Apply damage upgrade
 func upgrade_damage(bonus: float) -> void:
 	_damage_base += bonus
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[WeaponSystem] Damage upgraded to %.1f (bonus: %.1f)" % [_damage_base, bonus])
 
 ## Set damage multiplier (for percentage upgrades)
 func set_damage_multiplier(multiplier: float) -> void:
 	self.damage_multiplier = multiplier
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[WeaponSystem] Damage multiplier set to %.2f" % multiplier)
 
 ## Get current effective damage

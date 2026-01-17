@@ -19,7 +19,6 @@ signal expired()
 @export var speed: float = WeaponConfig.BULLET_SPEED
 @export var lifetime: float = WeaponConfig.BULLET_LIFETIME
 @export var bullet_type: WeaponConfig.BulletType = WeaponConfig.DEFAULT_BULLET_TYPE
-@export var debug_draw: bool = false
 @export var debug_show_region: bool = false  # Show sprite sheet region boundaries
 
 #endregion
@@ -64,7 +63,7 @@ func _ready() -> void:
 	_setup_sprite()
 
 	# Debug collision configuration
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[Bullet] Collision Layer: %d (Layer 2 - player_projectiles), Mask: %d (detects Layer 3 - enemies)" % [collision_layer, collision_mask])
 		print("[Bullet] Spawned at position: ", global_position, " with velocity: ", _velocity)
 		if area_entered.is_connected(_on_area_entered):
@@ -88,11 +87,11 @@ func _physics_process(delta: float) -> void:
 		_expire()
 		return
 
-	if self.debug_draw and _age > self.lifetime * 0.9:
+	if GameConfig.DEBUG_MODE and _age > self.lifetime * 0.9:
 		print("[Bullet] Expiring soon, age: %.2f/%.2f" % [_age, self.lifetime])
 
 func _process(_delta: float) -> void:
-	if self.debug_draw or self.debug_show_region:
+	if GameConfig.DEBUG_MODE or self.debug_show_region:
 		queue_redraw()
 
 #endregion
@@ -100,12 +99,12 @@ func _process(_delta: float) -> void:
 #region Collision & Damage
 func _on_area_entered(area: Node2D) -> void:
 	"""Handle collision with enemies or obstacles"""
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[Bullet] area_entered fired! Area: %s (type: %s, parent: %s)" % [area.name, area.get_class(), area.get_parent().name if area.get_parent() else "none"])
 
 	# Skip if we've already hit this target
 	if area in _hit_targets:
-		if self.debug_draw:
+		if GameConfig.DEBUG_MODE:
 			print("[Bullet] Already hit this target, skipping")
 		return
 
@@ -115,29 +114,29 @@ func _on_area_entered(area: Node2D) -> void:
 	# Direct hit on the enemy node itself
 	if area is BaseEnemy:
 		enemy = area as BaseEnemy
-		if self.debug_draw:
+		if GameConfig.DEBUG_MODE:
 			print("[Bullet] Direct hit on BaseEnemy: %s" % enemy.name)
 	# Hit on collision shape (child of enemy)
 	elif area.get_parent() is BaseEnemy:
 		enemy = area.get_parent() as BaseEnemy
-		if self.debug_draw:
+		if GameConfig.DEBUG_MODE:
 			print("[Bullet] Hit on child of BaseEnemy: %s (child: %s)" % [enemy.name, area.name])
 
 	# Only process if we found a valid enemy
 	if enemy == null:
-		if self.debug_draw:
+		if GameConfig.DEBUG_MODE:
 			print("[Bullet] No BaseEnemy found in collision! Area type: %s, Parent: %s" % [area.get_class(), area.get_parent().get_class() if area.get_parent() else "null"])
 		return
 
 	_hit_targets.append(enemy)
 
 	# Deal damage
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[Bullet] Dealing %.0f damage to %s (HP: %.0f → %.0f)" % [self.damage, enemy.name, enemy.health, enemy.health - self.damage])
 	enemy.take_damage(self.damage)
 	self.hit_enemy.emit(enemy, self.damage)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("[Bullet] Hit enemy: ", enemy.name, " for ", self.damage, " damage")
 
 	# Create hit effect
@@ -194,7 +193,7 @@ func _create_hit_effect(position: Vector2) -> void:
 
 func _expire() -> void:
 	"""Bullet lifetime ended or destroyed after collision - clean up"""
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		if _age >= self.lifetime:
 			print("[Bullet] EXPIRED after %.2f seconds (lifetime: %.2f)" % [_age, self.lifetime])
 		else:
@@ -242,7 +241,7 @@ func _setup_sprite() -> void:
 		_sprite.scale = Vector2(2.0, 2.0)
 		_sprite.centered = true  # Center sprite on bullet position
 
-		if self.debug_draw:
+		if GameConfig.DEBUG_MODE:
 			var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
 			print("[Bullet] Loaded bullet type '%s' from sheet %d, region: %s" % [bullet_name, sheet_index, region])
 	else:
@@ -252,7 +251,7 @@ func _setup_sprite() -> void:
 		_sprite.centered = true
 		var bullet_name = WeaponConfig.BulletType.keys()[self.bullet_type]
 		push_warning("Bullet[%s] Failed to load sprite sheet: %s - using placeholder" % [bullet_name, sprite_path])
-		if self.debug_draw:
+		if GameConfig.DEBUG_MODE:
 			print("[Bullet] WARNING: Failed to load sprite sheet %s for bullet type '%s', using placeholder" % [sprite_path, bullet_name])
 
 func _preload_all_sprite_sheets() -> void:
@@ -303,7 +302,7 @@ func _draw() -> void:
 		return
 
 	# Draw velocity vector for aiming reference
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		if _velocity.length() > 0:
 			var velocity_visual = _velocity.normalized() * 30
 			draw_line(Vector2.ZERO, velocity_visual, Color.WHITE, 2.0)

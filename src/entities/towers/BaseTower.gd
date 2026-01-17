@@ -5,7 +5,6 @@ class_name BaseTower extends CharacterBody2D
 
 #region Exported Properties
 @export var tower_type: TowerDatabase.TowerType = TowerDatabase.TowerType.GATLING_GUN
-@export var debug_draw: bool = false
 
 @export_group("Weapon")
 ## Weapon system for managing firing
@@ -54,7 +53,7 @@ func _ready() -> void:
 	_setup_detection_zone()
 	_setup_collision_layer()
 
-	if debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("BaseTower: Initialized %s at %v" % [tower_data.name, global_position])
 
 func _physics_process(delta: float) -> void:
@@ -71,17 +70,17 @@ func _physics_process(delta: float) -> void:
 
 		# Fire at target
 		if self.current_target:
-			if debug_draw:
+			if GameConfig.DEBUG_MODE:
 				print("[Tower %s] FIRING at target" % self.name)
 			fire()
 			self.fire_cooldown = tower_data.fire_rate
 		else:
-			if debug_draw and enemies_in_range.size() > 0:
+			if GameConfig.DEBUG_MODE and enemies_in_range.size() > 0:
 				print("[Tower %s] WARNING: Enemies in range but no target selected" % self.name)
 
 func _draw() -> void:
 	"""Debug visualization: draw detection range"""
-	if debug_draw and tower_data:
+	if GameConfig.DEBUG_MODE and tower_data:
 		draw_circle(Vector2.ZERO, tower_data.range, TowerConfig.TOWER_RANGE_INDICATOR_COLOR)
 
 #endregion
@@ -151,7 +150,7 @@ func _on_enemy_entered(area: Node2D) -> void:
 	if enemy:
 		if not enemies_in_range.has(enemy):
 			enemies_in_range.append(enemy)
-			if debug_draw:
+			if GameConfig.DEBUG_MODE:
 				print("[Tower %s] Enemy entered range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
 			# Connect to enemy death signal to clean up
 			if not enemy.died.is_connected(_on_enemy_died):
@@ -171,10 +170,10 @@ func _on_enemy_exited(area: Node2D) -> void:
 
 	if enemy:
 		enemies_in_range.erase(enemy)
-		if debug_draw:
+		if GameConfig.DEBUG_MODE:
 			print("[Tower %s] Enemy left range: %s (total in range: %d)" % [self.name, enemy.name, enemies_in_range.size()])
 		if self.current_target == enemy:
-			if debug_draw:
+			if GameConfig.DEBUG_MODE:
 				print("[Tower %s] Current target left range!" % self.name)
 			self.current_target = null
 
