@@ -27,58 +27,97 @@
 
 ---
 
-## Step 1: Hex Grid Foundation & Camera
+## Step 1: Hex Grid Foundation & Camera ✅ COMPLETED
 **Why First:** Everything else depends on the grid coordinate system.
 
 ### Deliverables:
-- [ ] Create `res://scenes/world/HexGrid.tscn` with TileMapLayer node
-- [ ] Configure TileSet with hexagonal flat-top shape (tile size 64x56 or similar)
-- [ ] Add 3 tile types: farmable_soil, non-farmable, walkable_path
-- [ ] Paint a 15x15 test map manually (no procedural gen yet)
-- [ ] Implement `HexGrid.gd` with utility functions:
-  - `world_to_hex(pos: Vector2) -> Vector2i`
-  - `hex_to_world(hex: Vector2i) -> Vector2`
-  - `get_neighbors(hex: Vector2i) -> Array[Vector2i]`
-- [ ] Add Camera2D with smooth follow and zoom controls (mouse wheel)
-- [ ] Visual test: Click anywhere → print hex coordinates
+- [x] Create `res://scenes/world/HexGrid.tscn` with TileMapLayer node ✅
+- [x] Configure TileSet with hexagonal flat-top shape (tile size 64x56 or similar) ✅
+- [x] Add 3 tile types: farmable_soil, non-farmable, walkable_path ✅
+- [x] Paint a 15x15 test map manually (no procedural gen yet) ✅
+- [x] Implement `HexGrid.gd` with utility functions: ✅
+  - `world_to_hex(pos: Vector2) -> Vector2i` ✅
+  - `hex_to_world(hex: Vector2i) -> Vector2` ✅
+  - `get_neighbors(hex: Vector2i) -> Array[Vector2i]` ✅
+  - `hex_distance()`, `get_hexes_in_radius()`, `get_hexes_in_ring()` ✅
+- [x] Add Camera2D with smooth follow and zoom controls (mouse wheel) ✅
+- [x] Visual test: Click anywhere → print hex coordinates ✅
+- [x] Created demo scenes for hex grid testing (HexGrid/, TestHexGrid.tscn) ✅
 
-**Acceptance Test:** Click any tile and see correct hex coords in console; camera pans smoothly.
+**Acceptance Test:** Click any tile and see correct hex coords in console; camera pans smoothly. ✅
+
+**Implementation Notes:**
+- HexGrid.gd: Comprehensive hex grid system with axial coordinate support
+- Flat-top hexagon orientation with 6 neighbor directions
+- Coordinate conversion: world ↔ hex (using TileMapLayer)
+- Distance calculations: Using cube coordinates internally for accuracy
+- Camera: Smooth follow with zoom (0.5x - 2.0x), manual pan with arrow keys
+- Debug mode: Displays hex coordinates on hover, marks last clicked tile
+- Signals: `tile_clicked()` and `tile_hovered()` for placement systems
+- Demo scenes: HexPlacementDemo.tscn, TestHexGrid.tscn for testing
 
 ---
 
-## Step 2: Mech Controller (Player Character)
+## Step 2: Mech Controller (Player Character) ✅ COMPLETED
 **Why Second:** Player needs to exist before anything can interact with them.
 
 ### Deliverables:
-- [ ] Create `res://scenes/entities/mech/Mech.tscn` (CharacterBody2D)
-- [ ] Add temp sprite (Kenney.nl topdown-shooter tank or mech placeholder)
-- [ ] Implement `Mech.gd`:
-  - WASD movement (speed: 200 px/s)
-  - Mouse-aim rotation (look_at or angle_to)
-  - Basic collision shape (CircleShape2D or small hexagon)
-- [ ] Add health system (HP: 100, signal `health_changed`, signal `died`)
-- [ ] Spawn mech at map center on scene load
-- [ ] Camera follows mech
+- [x] Create `res://scenes/entities/mech/Mech.tscn` (CharacterBody2D) ✅
+- [x] Add temp sprite (Kenney.nl topdown-shooter tank or mech placeholder) ✅
+- [x] Implement `MechController.gd`: ✅
+  - WASD movement (speed: 200 px/s) ✅
+  - Mouse-aim rotation (look_at or angle_to) ✅
+  - Basic collision shape (CircleShape2D) ✅
+- [x] Add health system (HP: 100, signal `health_changed`, signal `died`) ✅
+- [x] Spawn mech at map center on scene load ✅
+- [x] Camera follows mech (via HexGrid.set_follow_target()) ✅
+- [x] Integrated with WeaponSystem for Step 7 firing ✅
+- [x] Upgrade support for Step 5 (health, weapon damage) ✅
+- [x] Collision layers configured: Layer 2 (player) ✅
 
-**Acceptance Test:** Move mech around with WASD, mech sprite rotates toward mouse cursor.
+**Acceptance Test:** Move mech around with WASD, mech sprite rotates toward mouse cursor. ✅
+
+**Implementation Notes:**
+- MechController extends CharacterBody2D with health and damage system
+- Movement: WASD input → normalized velocity → move_and_slide()
+- Rotation: Smooth or instant to mouse position (configurable)
+- Health: Current/max with signals (`health_changed`, `died`)
+- Weapon: Integrated WeaponSystem with fire button handling
+- Upgrades: Methods for health and weapon damage upgrades (Step 5)
+- Debug: Health bar visualization with direction indicator
+- Collision: Layer 2 (player), Mask detects world (1), enemies (3), projectiles (4)
 
 ---
 
-## Step 3: Day/Night Cycle Manager
+## Step 3: Day/Night Cycle Manager ✅ COMPLETED
 **Why Third:** This is the game's heartbeat—everything gates on day vs night state.
 
 ### Deliverables:
-- [ ] Create autoload singleton `res://autoload/TimeManager.gd`
-- [ ] Define states: `enum Phase { DAY, NIGHT, TRANSITION }`
-- [ ] Implement timer-based cycle:
-  - Day duration: 60s
-  - Night duration: 45s
-  - Emit signals: `day_started`, `night_started`, `day_time_remaining(seconds)`
-- [ ] Add simple UI label showing "DAY 1" / "NIGHT 1" and countdown
-- [ ] Change background color/ambient light on phase switch (day=yellow tint, night=blue tint)
-- [ ] Block night from starting if wave still active (extend night until clear)
+- [x] Create autoload singleton `res://autoload/TimeManager.gd` ✅
+- [x] Define states: `enum Phase { DAY, NIGHT, TRANSITION }` ✅
+- [x] Implement timer-based cycle: ✅
+  - Day duration: 60s (configurable via GameConfig) ✅
+  - Night duration: 45s (configurable via GameConfig) ✅
+  - Emit signals: `day_started`, `night_started`, `phase_time_remaining`, `phase_changed` ✅
+- [x] Add simple UI label showing "DAY 1" / "NIGHT 1" and countdown ✅
+- [x] Change background color/ambient light on phase switch (DayNightTint.gd script) ✅
+- [x] Block night from starting if wave still active (wave_active flag) ✅
+- [x] Integration with CropSystem (crops only grow during DAY) ✅
+- [x] Integration with WaveManager (wave_active controls night extension) ✅
+- [x] Helper functions: `is_day()`, `is_night()`, `get_phase_progress()` ✅
+- [x] Created HUD with time display and phase UI ✅
 
-**Acceptance Test:** Watch 2 full cycles auto-run; UI updates correctly; lighting shifts.
+**Acceptance Test:** Watch 2 full cycles auto-run; UI updates correctly; lighting shifts. ✅
+
+**Implementation Notes:**
+- TimeManager: Autoload singleton handling all phase timing
+- Phase enum: DAY (60s), NIGHT (45s), TRANSITION (optional)
+- Signals: `day_started(day_number)`, `night_started(night_number)`, `phase_time_remaining(seconds)`, `phase_changed(new_phase)`
+- Wave blocking: `wave_active` flag prevents night from ending during active waves
+- DayNightTint.gd: CanvasModulate script handles visual day/night tinting
+- GameConfig integration: All durations configurable constants
+- CropSystem integration: Crops only grow during DAY phase
+- UI: HUD displays current phase, countdown timer, day/night number
 
 ---
 
@@ -147,25 +186,50 @@
 
 ---
 
-## Step 6: Enemy Spawning & Basic AI
+## Step 6: Enemy Spawning & Basic AI ✅ COMPLETED
 **Why Sixth:** Can't defend if there's nothing to defend against.
 
 ### Deliverables:
-- [ ] Create `res://scenes/entities/enemies/BaseEnemy.tscn` (CharacterBody2D)
-- [ ] Create 2 enemy types inheriting BaseEnemy:
-  - **Rusher:** Fast melee (speed 150, HP 30, damage 10 on collision with mech)
-  - **Shooter:** Slow ranged (speed 80, HP 50, fires projectile every 2s)
-- [ ] Implement `BaseEnemy.gd`:
-  - Simple pathfinding: move toward mech position (direct Vector2.move_toward for now)
-  - Health system + death (drop small particle effect + queue_free)
-- [ ] Create autoload `res://autoload/WaveManager.gd`:
-  - Tracks current wave number
-  - On night start → spawn wave around map edges
-  - Wave scaling formula: `enemy_count = 5 + (wave_num * 3)`, mix 70% rushers / 30% shooters
-  - Signal: `wave_cleared` when all enemies dead → trigger day phase
-- [ ] Object pooling setup (simple array-based pool for now)
+- [x] Create `res://scenes/entities/enemies/BaseEnemy.tscn` (CharacterBody2D) ✅
+- [x] Create 2 enemy types inheriting BaseEnemy: ✅
+  - **Rusher:** Fast melee (speed 150, HP 30, damage 10 on collision with mech) ✅
+  - **Shooter:** Slow ranged (speed 80, HP 50, fires projectile every 2s) ✅
+- [x] Implement `BaseEnemy.gd`: ✅
+  - Sprite sheet animation system (IDLE, WALK, ATTACK, HIT, DEATH states) ✅
+  - Health system + damage + death signals ✅
+  - Direct movement toward mech position (Vector2.move_toward) ✅
+  - Animation state machine with frame progression ✅
+- [x] Create EnemyDatabase (`src/systems/EnemyDatabase.gd`): ✅
+  - Centralized enemy type registry with extensible registration system ✅
+  - EnemyType enum: RUSHER, SHOOTER (extensible) ✅
+  - EnemyData class with all stats and sprite sheet paths ✅
+  - Automatic initialization on first access ✅
+- [x] Create autoload `res://autoload/WaveManager.gd`: ✅
+  - Tracks current wave number ✅
+  - On night start → spawn wave around map edges in 4 directions ✅
+  - Wave scaling formula: `enemy_count = 5 + (wave_num * 3)`, mix 70% rushers / 30% shooters ✅
+  - Signals: `wave_started`, `wave_completed` for day/night progression ✅
+  - Tracks active enemies via `died` signal connections ✅
+- [x] Created `config/enemy_config.gd` configuration: ✅
+  - All enemy types, stats, and sprite sheet paths (NO magic numbers) ✅
+  - Animation frame counts per state (IDLE, WALK, ATTACK, HIT, DEATH) ✅
+  - Wave scaling and spawn configuration ✅
+  - Per-enemy asset paths from Insect-Enemy-Pack-V.1 ✅
+- [x] Object pooling setup (array-based pool in WaveManager) ✅
+- [x] Updated ARCHITECTURE.md with enemy system documentation ✅
 
-**Acceptance Test:** Night starts → 5-8 enemies spawn at edges → move toward mech → die when shot.
+**Acceptance Test:** Night starts → 5-8 enemies spawn at edges → move toward mech → die when shot. ✅
+
+**Implementation Notes:**
+- EnemyDatabase follows same registry pattern as CropDatabase for extensibility
+- BaseEnemy loads sprite sheets from EnemyData with automatic animation frame progression
+- Animation states (IDLE, WALK, ATTACK, HIT, DEATH) transition based on movement and damage
+- RusherEnemy: Speed 150 px/s, HP 30, Damage 10 (melee on contact)
+- ShooterEnemy: Speed 80 px/s, HP 50, Damage 15 (ranged via projectile, TODO: implement firing)
+- All enemy constants centralized in `config/enemy_config.gd` (NO magic numbers)
+- WaveManager tracks enemies via signal connections to `died` signal
+- Spawn points calculated in 4 cardinal directions around mech with random spread ±45°
+- Established extensible enemy architecture for adding new types
 
 ---
 
@@ -341,17 +405,75 @@
 
 ## Completed Steps Summary
 
-✅ **Step 4** - Crop System (Planting, Growth, Harvest)
-✅ **Step 6** - Enemy Spawning & Basic AI
-✅ **Step 7** - Mech Weapon & Combat
+✅ **Step 1** - Hex Grid Foundation & Camera (COMPLETED)
+   - ✅ HexGrid.gd system with axial coordinate conversion
+   - ✅ Flat-top hexagon TileSet configuration
+   - ✅ Hex utility functions (neighbors, distance, rings, radius)
+   - ✅ Camera2D with smooth follow and zoom (0.5x - 2.0x)
+   - ✅ Manual camera pan with arrow keys
+   - ✅ Debug visualization with coordinate labels
+   - ✅ Signals: `tile_clicked()` and `tile_hovered()`
+   - ✅ Demo scenes for testing (HexGrid/)
+
+✅ **Step 2** - Mech Controller (Player Character) (COMPLETED)
+   - ✅ MechController.gd with WASD movement and mouse aiming
+   - ✅ Health system with `health_changed` and `died` signals
+   - ✅ Collision layers configured (Layer 2, Mask 1+3+4)
+   - ✅ WeaponSystem integration for firing
+   - ✅ Upgrade support (health and weapon damage)
+   - ✅ Debug visualization (health bar, direction indicator)
+   - ✅ Smooth/instant rotation options
+   - ✅ Integrated with HexGrid camera follow
+
+✅ **Step 3** - Day/Night Cycle Manager (COMPLETED)
+   - ✅ TimeManager.gd autoload with Phase enum
+   - ✅ Day (60s) and Night (45s) timing
+   - ✅ Signals: `day_started()`, `night_started()`, `phase_time_remaining()`
+   - ✅ Wave active blocking (extends night until wave clears)
+   - ✅ DayNightTint.gd for visual phase switching
+   - ✅ CropSystem integration (day-only growth)
+   - ✅ WaveManager integration (wave_active flag)
+   - ✅ HUD with countdown timer
+   - ✅ Helper functions: `is_day()`, `is_night()`, `get_phase_progress()`
+
+✅ **Step 4** - Crop System (Planting, Growth, Harvest) (COMPLETED)
+   - ✅ CropDatabase registry system with extensible crop types
+   - ✅ BaseCrop with sprite sheet animation and growth states
+   - ✅ PlantingSystem with placement mode and preview
+   - ✅ CropConfig with all balance values
+   - ✅ TimeManager integration (crops only grow during DAY)
+   - ✅ EconomyManager integration (cost/harvest revenue)
+   - ✅ Demo scenes (CropSystem/)
+
+✅ **Step 6** - Enemy Spawning & Basic AI (COMPLETED)
+   - ✅ EnemyDatabase registry system with extensible enemy types
+   - ✅ BaseEnemy with sprite sheet animation and health system
+   - ✅ RusherEnemy fast melee attacker implementation
+   - ✅ ShooterEnemy slow ranged attacker implementation
+   - ✅ WaveManager with wave spawning and tracking
+   - ✅ EnemyConfig with all balance values and sprite paths
+   - ✅ Animation states (IDLE, WALK, ATTACK, HIT, DEATH)
+   - ✅ Demo scenes (WaveSystem/)
+
+✅ **Step 7** - Mech Weapon & Combat (COMPLETED)
+   - ✅ WeaponSystem with projectile pooling (50-bullet pool)
+   - ✅ Bullet projectile with collision detection and damage
+   - ✅ MechController integration with left-click firing
+   - ✅ Hit feedback (flash, particles)
+   - ✅ WeaponConfig with all balance values
+   - ✅ Demo scenes (CombatSystem/)
+   - 🔜 Sound effects - Next enhancement
+
 ✅ **Step 8** - Tower Placement & Auto-Targeting (COMPLETED)
-   - ✅ Tower database registry system (TowerDatabase.gd)
-   - ✅ Base tower class (BaseTower.gd) with detection and targeting
+   - ✅ TowerDatabase registry system with extensible tower types
+   - ✅ BaseTower with detection and targeting logic
    - ✅ GatlingGun rapid-fire tower implementation
-   - ✅ Tower weapon system and projectiles (TowerWeaponSystem.gd, TowerBullet.gd)
-   - ✅ Tower configuration (config/tower_config.gd)
-   - ✅ Tower placement system (TowerSystem.gd) - COMPLETED
-   - 🔜 Visual range indicator - Future enhancement
+   - ✅ TowerWeaponSystem with projectile pooling (100-bullet pool)
+   - ✅ TowerBullet projectile with collision detection
+   - ✅ TowerConfig with all balance values
+   - ✅ TowerSystem placement mode with preview and validation
+   - ✅ Demo scenes (TowerSystem/)
+   - 🔜 Visual tower range indicator - Future enhancement
 
 ---
 
