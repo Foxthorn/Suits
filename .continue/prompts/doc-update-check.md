@@ -13,13 +13,13 @@ description: Quick validation that ARCHITECTURE.md, FILE_STRUCTURE.md, and relat
 
 | Change Type | ARCHITECTURE.md | FILE_STRUCTURE.md | CODING_STANDARDS.md | VERTICAL_SLICE.md |
 |---|---|---|---|---|
-| New systems added | ✅ Key Systems | ✅ autoload/config/ | ✅ If pattern new | ✅ Checkboxes |
-| New entity type | ✅ Key Systems | ✅ src/entities/ | ✅ If pattern new | ✅ Checkboxes |
-| Signal flows changed | ✅ Diagrams/Data Flow | — | ✅ If pattern new | ✅ Checkboxes |
-| Scene hierarchy changed | ✅ Scene Hierarchy | — | — | — |
-| Config files added | ✅ Performance section | ✅ config/ | ✅ Config pattern | — |
-| New folders | — | ✅ Folder tree | — | — |
-| Step completed | ✅ Future Architecture Plans | — | — | ✅ Check deliverables |
+| New systems added | ✅ Key Systems | ✅ autoload/config/ | ✅ Checkboxes |
+| New entity type | ✅ Key Systems | ✅ src/entities/ | ✅ Checkboxes |
+| Signal flows changed | ✅ Diagrams/Data Flow | — | ✅ Checkboxes |
+| Scene hierarchy changed | ✅ Scene Hierarchy | — | — |
+| Config files added | ✅ Performance section | ✅ config/ | — |
+| New folders | — | ✅ Folder tree | — |
+| Step completed | ✅ Future Architecture Plans | — | ✅ Check deliverables |
 
 ---
 
@@ -51,7 +51,6 @@ Changes Detected:
 Status:
 ✅ ARCHITECTURE.md - [Updated / No update needed]
 ✅ FILE_STRUCTURE.md - [Updated / No update needed]
-✅ CODING_STANDARDS.md - [Updated / No update needed]
 ✅ VERTICAL_SLICE.md - [Updated / No update needed]
 
 Recommendation: [READY TO COMMIT] or [UPDATE DOCS FIRST]
@@ -83,18 +82,6 @@ Update these sections if changes affect them:
 
 ---
 
-## CODING_STANDARDS.md Updates
-
-Update only if new patterns are established:
-
-- Type hint patterns
-- Naming conventions (ensure Classes `PascalCase`, files `PascalCase.gd`, folders `snake_case`)
-- Configuration pattern (all consts follow `const NAME: Type = value`)
-- Signal & event naming conventions
-- NO magic numbers in code (all in configs)
-
----
-
 ## VERTICAL_SLICE.md Updates
 
 Update only if step deliverables completed:
@@ -121,5 +108,4 @@ Update only if step deliverables completed:
 
 - [ARCHITECTURE.md](/ARCHITECTURE.md) - System design and architectural decisions
 - [FILE_STRUCTURE.md](/FILE_STRUCTURE.md) - Project folder organization
-- [CODING_STANDARDS.md](/docs/agent/CODING_STANDARDS.md) - Code style guidelines
 - [VERTICAL_SLICE.md](/docs/verticalslice/VERTICAL_SLICE.md) - Implementation progress tracking
