@@ -4,6 +4,12 @@ class_name ControlsOverlay
 
 extends CanvasLayer
 
+#region References
+@onready var background_control: Control = $Control
+@onready var panel: PanelContainer = $Control/PanelContainer
+
+#endregion
+
 #region Variables
 var _is_visible_target: bool = false
 
@@ -14,7 +20,10 @@ func _ready() -> void:
 	# Start hidden
 	visible = false
 
-	# Connect to input events
+	# Connect background click detection
+	if background_control:
+		background_control.gui_input.connect(_on_background_gui_input)
+
 	print("ControlsOverlay: Initialized")
 
 #endregion
@@ -45,7 +54,7 @@ func _hide_controls() -> void:
 #endregion
 
 #region Input Handling
-## Handle input to show/hide controls
+## Handle keyboard input to show/hide controls
 func _input(event: InputEvent) -> void:
 	if not visible:
 		# Only handle C key when hidden, let other inputs pass through
@@ -61,7 +70,16 @@ func _input(event: InputEvent) -> void:
 		get_tree().root.set_input_as_handled()
 		return
 
-	# Don't consume mouse clicks - let them pass to UI buttons
-	# Click outside the panel will close it naturally as user closes and clicks button
+## Handle mouse input on background (click outside panel to close)
+func _on_background_gui_input(event: InputEvent) -> void:
+	if not visible:
+		return
+
+	# Only handle mouse clicks
+	if event is InputEventMouseButton and event.pressed:
+		# Check if click is outside the panel
+		if not panel.get_global_rect().has_point(background_control.get_global_mouse_position()):
+			_hide_controls()
+			get_tree().root.set_input_as_handled()
 
 #endregion

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b1x8iw7qvk7"]
 
-[ext_resource type="Script" path="res://scenes/ui/PauseMenu.gd" id="1_hvckt"]
+[ext_resource type="Script" path="res://src/ui/PauseMenu.gd" id="1_hvckt"]
 
 [node name="PauseMenu" type="Control"]
 layout_mode=1
@@ -9,6 +9,7 @@ anchors_top=0.0
 anchors_right=1.0
 anchors_bottom=1.0
 mouse_filter=2
+visible=false
 script=ExtResource("1_hvckt")
 
 [node name="Background" type="ColorRect" parent="."]

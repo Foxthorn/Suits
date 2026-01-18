@@ -60,7 +60,12 @@
 │   │   ├── PlantingSystem.gd    # Crop placement mode
 │   │   └── WeaponSystem.gd      # Mech projectile pooling and firing
 │   ├── ui/
-│   │   └── UpgradeShop.gd       # Upgrade shop UI controller (Step 5)
+│   │   ├── UpgradeShop.gd       # Upgrade shop UI controller (Step 5)
+│   │   ├── HUD.gd              # Main HUD display controller
+│   │   ├── PauseMenu.gd        # Pause menu controller (Step 9)
+│   │   ├── DefeatScreen.gd     # Defeat screen controller (Step 9)
+│   │   ├── VictoryScreen.gd    # Victory screen controller (Step 9)
+│   │   └── ControlsOverlay.gd  # Controls overlay controller (Step 9)
 │   └── entities/
 │       ├── player/
 │       │   └── MechController.gd
@@ -99,13 +104,9 @@
 │       ├── HUD.tscn             # Main heads-up display
 │       ├── UpgradeShop.tscn     # Upgrade shop UI panel (Step 5)
 │       ├── PauseMenu.tscn       # Pause menu UI (Step 9)
-│       ├── PauseMenu.gd         # Pause menu controller (Step 9)
 │       ├── DefeatScreen.tscn    # Defeat/game-over screen (Step 9)
-│       ├── DefeatScreen.gd      # Defeat screen controller (Step 9)
 │       ├── VictoryScreen.tscn   # Victory/win screen (Step 9)
-│       ├── VictoryScreen.gd     # Victory screen controller (Step 9)
-│       ├── ControlsOverlay.tscn # Controls reference overlay (Step 9)
-│       └── ControlsOverlay.gd   # Controls overlay controller (Step 9)
+│       └── ControlsOverlay.tscn # Controls reference overlay (Step 9)
 ├── shaders/
 │   ├── hex_highlight.gdshader
 │   └── night_bloom.tres

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dqg0v1xbq34cj"]
 
-[ext_resource type="Script" path="res://scenes/ui/ControlsOverlay.gd" id="1_controls_script"]
+[ext_resource type="Script" path="res://src/ui/ControlsOverlay.gd" id="1_controls_script"]
 
 [node name="ControlsOverlay" type="CanvasLayer"]
 script = ExtResource("1_controls_script")

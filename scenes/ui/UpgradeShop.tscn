@@ -1,13 +1,10 @@
 [gd_scene load_steps=2 format=3 uid="uid://bxkaxaiw8xvqk"]
 
-[ext_resource type="Script" uid="uid://u81jx7d8v0cdxn" path="res://src/ui/UpgradeShop.gd" id="1_lknsc"]
+[ext_resource type="Script" uid="uid://brjkabve2rk7b" path="res://src/ui/UpgradeShop.gd" id="1_lknsc"]
 
 [node name="UpgradeShop" type="Control"]
-layout_mode = 1
-anchors_left = 0.5
-anchors_top = 0.5
-anchors_right = 0.5
-anchors_bottom = 0.5
+layout_mode = 3
+anchors_preset = 0
 offset_left = -200.0
 offset_top = -200.0
 offset_right = 200.0
@@ -16,18 +13,10 @@ script = ExtResource("1_lknsc")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
-anchors_left = 0.0
-anchors_top = 0.0
-anchors_right = 1.0
-anchors_bottom = 1.0
 color = Color(0, 0, 0, 0.7)
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_left = 0.5
-anchors_top = 0.5
-anchors_right = 0.5
-anchors_bottom = 0.5
 offset_left = -150.0
 offset_top = -150.0
 offset_right = 150.0
@@ -39,8 +28,8 @@ theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
-text = "UPGRADES"
 theme_override_font_sizes/font_size = 24
+text = "UPGRADES"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -49,9 +38,8 @@ layout_mode = 2
 
 [node name="CreditsLabel" type="Label" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
-text = "Credits: 100"
 theme_override_font_sizes/font_size = 14
-horizontal_alignment = 0
+text = "Credits: 100"
 
 [node name="SeparatorH2" type="HSeparator" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
@@ -62,7 +50,7 @@ theme_override_constants/separation = 8
 
 [node name="CloseLabel" type="Label" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
-text = "Press TAB to close"
-theme_override_font_sizes/font_size = 10
-horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "Press TAB to close"
+horizontal_alignment = 1

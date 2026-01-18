@@ -39,9 +39,7 @@ signal position_changed(new_position: Vector2)
 ## Weapon system for managing firing
 @export var weapon_system: WeaponSystem
 
-@export_group("Debug")
-## Show debug visuals (health bar, direction indicator)
-@export var debug_draw: bool = false
+
 
 #endregion
 
@@ -71,14 +69,14 @@ func _ready() -> void:
 	# Emit initial health state
 	self.health_changed.emit(self.current_health, self.max_health)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("MechController: Collision Layer %d (Layer 2 - player), Mask: %d (detects world, enemies, enemy_projectiles)" % [collision_layer, collision_mask])
 		print("MechController: Initialized at position ", global_position)
 		print("MechController: Weapon system ready")
 
 
 func _process(_delta: float) -> void:
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		queue_redraw()
 
 func _physics_process(delta: float) -> void:
@@ -154,7 +152,7 @@ func take_damage(amount: float) -> void:
 
 	self.health_changed.emit(self.current_health, self.max_health)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("MechController: Took %.1f damage. Health: %.1f/%.1f" % [amount, self.current_health, self.max_health])
 
 	# Check for death
@@ -173,7 +171,7 @@ func heal(amount: float) -> void:
 
 	self.health_changed.emit(self.current_health, self.max_health)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("MechController: Healed %.1f. Health: %.1f/%.1f" % [amount, self.current_health, self.max_health])
 
 ## Set health to a specific value
@@ -223,7 +221,7 @@ func upgrade_max_health(amount: float) -> void:
 	self.current_health += amount  # Also heal by the upgrade amount
 	self.health_changed.emit(self.current_health, self.max_health)
 
-	if self.debug_draw:
+	if GameConfig.DEBUG_MODE:
 		print("MechController: Max health upgraded to %.1f" % self.max_health)
 
 ## Get current max health
@@ -244,7 +242,7 @@ func set_weapon_damage_multiplier(multiplier: float) -> void:
 
 #region Debug Visualization
 func _draw() -> void:
-	if not self.debug_draw:
+	if not GameConfig.DEBUG_MODE:
 		return
 
 	# Draw health bar above mech

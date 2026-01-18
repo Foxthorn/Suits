@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ctjyqdw1aq276"]
 
-[ext_resource type="Script" uid="uid://dufrbanff8h7j" path="res://scenes/ui/HUD.gd" id="1_kw0id"]
+[ext_resource type="Script" path="res://src/ui/HUD.gd" id="1_kw0id"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_kw0id")
@@ -57,7 +57,7 @@ theme_override_font_sizes/font_size = 20
 text = "Wave: 0"
 
 [node name="BottomCenter" type="CenterContainer" parent="."]
-anchors_preset = -1
+anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0

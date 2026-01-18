@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dsmjuftmv0f6k"]
 
-[ext_resource type="Script" path="res://scenes/ui/DefeatScreen.gd" id="1_defeatscreen"]
+[ext_resource type="Script" path="res://src/ui/DefeatScreen.gd" id="1_defeatscreen"]
 
 [node name="DefeatScreen" type="Control"]
 layout_mode=1
@@ -9,6 +9,7 @@ anchors_top=0.0
 anchors_right=1.0
 anchors_bottom=1.0
 mouse_filter=2
+visible=false
 script=ExtResource("1_defeatscreen")
 
 [node name="Background" type="ColorRect" parent="."]

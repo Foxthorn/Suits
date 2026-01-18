@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c0eyrjk1qs5f7"]
 
-[ext_resource type="Script" path="res://scenes/ui/VictoryScreen.gd" id="1_victoryscr"]
+[ext_resource type="Script" path="res://src/ui/VictoryScreen.gd" id="1_victoryscr"]
 
 [node name="VictoryScreen" type="Control"]
 layout_mode=1
@@ -9,6 +9,7 @@ anchors_top=0.0
 anchors_right=1.0
 anchors_bottom=1.0
 mouse_filter=2
+visible=false
 script=ExtResource("1_victoryscr")
 
 [node name="Background" type="ColorRect" parent="."]
