@@ -116,6 +116,40 @@ theme_override_font_sizes/font_size = 14
 text = "Toggle Shop"
 autowrap_mode = 2
 
+[node name="Crops" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Crops"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "1 / 2 / 3"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Crops"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Select Crop / Left Click to Place / Right Click to Cancel"
+autowrap_mode = 2
+
+[node name="Towers" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
+layout_mode = 2
+
+[node name="Key" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Towers"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+theme_override_font_sizes/font_size = 16
+text = "T"
+theme_override_colors/font_color = Color(0.8, 0.8, 1, 1)
+
+[node name="Description" type="Label" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList/Towers"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "Enter Tower Placement / Left Click to Place / Right Click to Cancel"
+autowrap_mode = 2
+
 [node name="Pause" type="HBoxContainer" parent="Control/PanelContainer/VBoxContainer/ScrollContainer/ControlsList"]
 layout_mode = 2
 

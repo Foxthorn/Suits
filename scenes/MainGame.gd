@@ -10,10 +10,14 @@ extends Node2D
 @onready var pause_menu: Control = $PauseMenu
 @onready var defeat_screen: Control = $DefeatScreen
 @onready var victory_screen: Control = $VictoryScreen
+@onready var planting_system: PlantingSystem = $PlantingSystem
 
 
 func _ready() -> void:
 	print("[MainGame] Initializing...")
+
+	# Setup PlantingSystem dependencies
+	_setup_planting_system()
 
 	# Center mech on the grid
 	_position_mech_at_center()
@@ -22,6 +26,11 @@ func _ready() -> void:
 	if mech and hud:
 		mech.health_changed.connect(_on_mech_health_changed)
 		mech.died.connect(_on_mech_died)
+
+	# Connect PlantingSystem signals
+	if planting_system:
+		planting_system.crop_planted.connect(_on_crop_planted)
+		planting_system.placement_mode_changed.connect(_on_placement_mode_changed)
 
 	# Initialize camera at mech position (HexGrid will handle following)
 	if camera and mech:
@@ -33,6 +42,27 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	# Camera following is now handled by HexGrid
 	pass
+
+
+func _setup_planting_system() -> void:
+	"""Initialize and validate PlantingSystem dependencies"""
+	if not planting_system:
+		push_error("[MainGame] PlantingSystem not found in scene!")
+		return
+
+	# Setup hex_grid reference if not already set
+	if not planting_system.hex_grid:
+		planting_system.hex_grid = hex_grid
+		print("[MainGame] Assigned hex_grid to PlantingSystem")
+
+	# Setup crop_scene reference if not already set
+	if not planting_system.crop_scene:
+		planting_system.crop_scene = load("res://scenes/entities/crops/BaseCrop.tscn")
+		if not planting_system.crop_scene:
+			push_error("[MainGame] Could not load BaseCrop.tscn!")
+			return
+		print("[MainGame] Loaded BaseCrop.tscn for PlantingSystem")
+
 
 
 func _position_mech_at_center() -> void:
@@ -65,6 +95,23 @@ func _on_mech_died() -> void:
 	print("[MainGame] Mech destroyed! Game Over")
 
 
+func _on_crop_planted(hex_coords: Vector2i, crop_type: CropDatabase.CropType) -> void:
+	"""Handle crop planted event from PlantingSystem"""
+	if hud and hud.has_method("on_crop_planted"):
+		hud.on_crop_planted(crop_type)
+	print("[MainGame] Crop planted at %v: %s" % [hex_coords, CropDatabase.get_crop_name(crop_type)])
+
+
+func _on_placement_mode_changed(active: bool, crop_type: CropDatabase.CropType) -> void:
+	"""Handle placement mode changes from PlantingSystem"""
+	if active:
+		var crop_data := CropDatabase.get_crop(crop_type)
+		if crop_data:
+			print("[MainGame] Placement mode ACTIVE - %s (Cost: %d)" % [crop_data.name, crop_data.cost])
+	else:
+		print("[MainGame] Placement mode INACTIVE")
+
+
 ## Input handling - Tab for shop, debug keys
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
@@ -74,15 +121,3 @@ func _input(event: InputEvent) -> void:
 				if upgrade_shop:
 					upgrade_shop.toggle_shop()
 					get_viewport().set_input_as_handled()
-
-		# Debug: Press R to reset mech health
-		if event.keycode == KEY_R and not event.echo:
-			if mech:
-				mech.set_health(mech.max_health)
-				print("[MainGame] DEBUG: Mech health restored")
-
-		# Debug: Press T to test damage
-		if event.keycode == KEY_T and not event.echo:
-			if mech:
-				mech.take_damage(20.0)
-				print("[MainGame] DEBUG: Mech took 20 damage")

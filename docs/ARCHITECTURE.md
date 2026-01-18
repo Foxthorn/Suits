@@ -125,6 +125,26 @@ Enemy.took_damage() → Enemy.health <= 0
 
 ## Key Systems
 
+### MainGame System
+
+**Purpose**: Central orchestrator integrating all core systems
+
+**Location**: `scenes/MainGame.gd`
+
+**Key Responsibilities**:
+- Setup and validate PlantingSystem with dependency injection
+- Setup and validate TowerSystem with dependency injection
+- Connect PlantingSystem signals to HUD for feedback
+- Forward mech health/death events to HUD and GameStateManager
+
+**Implementation Notes**:
+- Dependency Setup Phase: Validates hex_grid, crop_scene, and autoloads at startup
+- Signal Connections: PlantingSystem signals connected to HUD methods
+- Error Handling: Comprehensive validation with helpful debug messages
+- All phases logged for debugging (shows what's working vs what failed)
+
+---
+
 ### HexGrid System
 
 **Purpose**: Manages hexagonal grid logic, tile queries, coordinate conversion, and camera control.
