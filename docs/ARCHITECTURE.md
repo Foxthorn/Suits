@@ -939,6 +939,13 @@ func get_nights_survived() -> int                       # Get nights survived co
 }
 ```
 
+**UI Screen Controllers** (All moved to `src/ui/` for code organization):
+- `PauseMenu.gd` - Pause menu controller with resume/restart/quit options
+- `DefeatScreen.gd` - Defeat screen with failure reason and session statistics
+- `VictoryScreen.gd` - Victory screen with end-game statistics display
+- `HUD.gd` - Main HUD display with health, credits, and phase information
+- `ControlsOverlay.gd` - Controls reference overlay (moved to `src/ui/`)
+
 **Design Notes**:
 - Listens to `MechController.died` signal to trigger defeat
 - Listens to `WaveManager.wave_completed` signal to detect victory (Night 3, Wave 3)
@@ -946,6 +953,7 @@ func get_nights_survived() -> int                       # Get nights survived co
 - Gathers stats from EconomyManager, WaveManager, PlantingSystem, ProgressManager
 - Sets `Engine.time_scale = 0.0` on pause, `1.0` on resume
 - Prevents input processing in UI systems by checking GameStateManager.current_state
+- UI controller scripts moved from `scenes/ui/` to `src/ui/` (architectural improvement for code/scene separation)
 
 ---
 
@@ -953,7 +961,7 @@ func get_nights_survived() -> int                       # Get nights survived co
 
 **Purpose**: Displays on-screen controls and keybinding reference to the player.
 
-**Location**: `scenes/ui/ControlsOverlay.gd` + `scenes/ui/ControlsOverlay.tscn`
+**Location**: `src/ui/ControlsOverlay.gd` (script) + `scenes/ui/ControlsOverlay.tscn` (scene)
 
 **Class**: `ControlsOverlay` (CanvasLayer-based UI controller)
 
@@ -975,6 +983,7 @@ func _hide_controls() -> void  # Hide overlay
 
 **Design Notes**:
 - Integrated into MainGame.tscn as ControlsOverlay node (CanvasLayer)
+- ControlsOverlay.tscn scene references script at `src/ui/ControlsOverlay.gd`
 - Can be toggled at any time during gameplay
 - Overlays game with semi-transparent background panel
 - Lists all key controls:
@@ -985,6 +994,7 @@ func _hide_controls() -> void  # Hide overlay
   - Pause: ESC / P key to pause/menu
 - Closes on C key or ESC key press
 - Uses Tween-based fade-in animation on show
+- Enhanced with click-outside-to-close functionality for better UX
 
 ---
 
